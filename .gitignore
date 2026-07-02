@@ -1,0 +1,120 @@
+# =============================================================================
+# === General / OS Files
+# =============================================================================
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+
+# =============================================================================
+# === Frontend (React / Node.js)
+# =============================================================================
+
+# Dependencies
+/react-app/node_modules
+/react-app/.pnp
+/react-app/.pnp.js
+
+# Build output
+/react-app/build
+/react-app/dist
+
+# Environment variables
+/react-app/.env
+/react-app/.env.local
+/react-app/.env.development.local
+/react-app/.env.test.local
+/react-app/.env.production.local
+
+
+# =============================================================================
+# === Backend (ASP.NET Core / Rider / Visual Studio)
+# =============================================================================
+
+# Build results
+**/[Bb]in/
+**/[Oo]bj/
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Secrets
+/ASP_Server/secrets.json
+/ASP_Server/appsettings.Development.json
+
+# Rider / VS Code temporary files
+.idea/
+.vscode/
+
+
+# =============================================================================
+# === IDEs & Editors
+# =============================================================================
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Visual Studio
+.vs/
+
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
