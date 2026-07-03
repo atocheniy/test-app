@@ -1,4 +1,4 @@
-FROM mcr.microsoft.comdotnetsdk10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR src
 
 COPY [serverserverserver.csproj, serverserver]
@@ -13,7 +13,7 @@ RUN dotnet build server.csproj -c Release -o appbuild
 FROM build AS publish
 RUN dotnet publish server.csproj -c Release -o apppublish pUseAppHost=false
 
-FROM mcr.microsoft.comdotnetaspnet10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR app
 COPY --from=publish apppublish .
 
