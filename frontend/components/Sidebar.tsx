@@ -19,7 +19,7 @@ export default function Sidebar() {
     const router = useRouter();
 
     return (
-         <aside className="w-78  text-white p-3 flex flex-col h-screen sticky top-0">
+         <aside className="w-78 text-white p-3 flex flex-col h-screen sticky top-0">
             <div>
                 <div className="p-6 mb-4 border border-white/5 bg-white/5 rounded-2xl text-sm text-zinc-400"></div>
                 <nav>
