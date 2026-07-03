@@ -1,8 +1,29 @@
 'use client';
+import { AuthService } from '@/services/authService';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import Cookies from 'js-cookie';
 
 export default function Login() {
     const router = useRouter();
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleLogin = async () => {
+        try 
+        {
+            setError("");
+            await AuthService.login({ email, password });
+            router.push('/feed');  
+        } 
+        catch (err: any) 
+        {
+            console.error(err);
+            setError("Неверный логин или пароль");
+        }
+    };
 
   return (
    <div className="min-h-screen flex items-center justify-center p-4 relative">
@@ -21,13 +42,14 @@ export default function Login() {
 
         <form className="space-y-4 relative z-10" onSubmit={(e) => {
             e.preventDefault();
-            router.push('/feed');
+            handleLogin();
         }}>
           <div className="space-y-1.5">
             <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Username or Email</label>
             <input
               type="text"
               placeholder="name@example.com"
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
             />
           </div>
@@ -42,6 +64,7 @@ export default function Login() {
             <input
               type="password"
               placeholder="••••••••"
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
             />
           </div>
@@ -52,6 +75,10 @@ export default function Login() {
           >
             Sign In
           </button>
+
+          <div className="relative my-6 z-10 flex items-center justify-center">
+            {error && <p className="align-center text-red-500 text-xs mt-2">{error}</p>}
+          </div>
         </form>
 
         <div className="relative my-6 z-10 flex items-center justify-center">

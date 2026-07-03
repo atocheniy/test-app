@@ -1,8 +1,40 @@
 'use client';
+import { AuthService } from '@/services/authService';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function Register() {
     const router = useRouter();
+
+    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
+    const [error, setError] = useState('');
+
+    const handleRegister = async () => {
+        setError('');
+
+        if (!email || !password || !fullName) {
+            setError('Заполните все поля');
+            return;
+        }
+        if (password !== confirmPass) {
+            setError('Пароли не совпадают');
+            return;
+        }
+
+        try 
+        {
+            await AuthService.register({ email, password, fullName });
+            router.push('/feed');  
+        } 
+        catch (err: any) 
+        {
+            console.error(err);
+            setError(err.response?.data?.message || "Ошибка регистрации");
+        }
+    };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 relative">
@@ -31,13 +63,14 @@ export default function Register() {
 
         <form className="space-y-4 relative z-10" onSubmit={(e) => {
             e.preventDefault()
-            router.push('/feed');
+            handleRegister();
         }}>
           <div className="space-y-1.5">
             <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Username</label>
             <input
               type="text"
               placeholder="Name"
+              onChange={(e) => setFullName(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
             />
           </div>
@@ -47,6 +80,7 @@ export default function Register() {
             <input
               type="email"
               placeholder="name@example.com"
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
             />
           </div>
@@ -58,6 +92,7 @@ export default function Register() {
             <input
               type="password"
               placeholder="••••••••"
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
             />
           </div>
@@ -69,6 +104,7 @@ export default function Register() {
             <input
               type="confirm-password"
               placeholder="••••••••"
+              onChange={(e) => setConfirmPass(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
             />
           </div>
@@ -79,6 +115,10 @@ export default function Register() {
           >
             Sign Up
           </button>
+
+          <div className="relative my-6 z-10 flex items-center justify-center">
+            {error && <p className="align-center text-red-500 text-xs mt-2">{error}</p>}
+          </div>
         </form>
 
         <div className="relative my-6 z-10 flex items-center justify-center">
