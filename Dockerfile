@@ -1,23 +1,23 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR src
+WORKDIR /src
 
-COPY [serverserverserver.csproj, serverserver]
-RUN dotnet restore serverserverserver.csproj
+COPY ["server/server/server.csproj", "server/server/"]
+RUN dotnet restore "server/server/server.csproj"
 
-COPY server .
+COPY server/ .
 
-WORKDIR srcserver
+WORKDIR "/src/server"
 
-RUN dotnet build server.csproj -c Release -o appbuild
+RUN dotnet build "server.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish server.csproj -c Release -o apppublish pUseAppHost=false
+RUN dotnet publish "server.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-WORKDIR app
-COPY --from=publish apppublish .
+WORKDIR /app
+COPY --from=publish /app/publish .
 
-ENV ASPNETCORE_URLS=http+7860
+ENV ASPNETCORE_URLS=http://+:7860
 EXPOSE 7860
 
-ENTRYPOINT [dotnet, server.dll]
+ENTRYPOINT ["dotnet", "server.dll"]
