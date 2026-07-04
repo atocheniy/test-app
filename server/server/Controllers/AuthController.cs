@@ -29,7 +29,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterInfo model)
     {
-        var user = new ApplicationUser { UserName = model.Email, Email = model.Email, FullName = model.FullName };
+        var user = new ApplicationUser { UserName = model.UserName, Email = model.Email, FullName = model.FullName };
         var result = await _userManager.CreateAsync(user, model.Password);
 
         if (result.Succeeded) return Ok(new { message = "Регистрация успешна" });
@@ -41,6 +41,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login(LoginInfo model)
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null) user = await _userManager.FindByNameAsync(model.Email);
 
         if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
         {
@@ -52,6 +53,82 @@ public class AuthController : ControllerBase
         return Unauthorized("Неверный логин или пароль");
     }
     
+    [HttpPatch("updateBio")]
+    [Authorize]
+    public async Task<IActionResult> UpdateBio([FromBody] UpdateBioDto model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _context.Users.FindAsync(userId);
+    
+        if (user == null) return NotFound();
+
+        user.Bio_FirstLine = model.FirstLine;
+        user.Bio_SecondLine = model.SecondLine;
+
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+    
+    [HttpPatch("updateName")]
+    [Authorize]
+    public async Task<IActionResult> UpdateName([FromBody] UpdateNameDto model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _context.Users.FindAsync(userId);
+    
+        if (user == null) return NotFound();
+
+        user.FullName = model.FullName;
+
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+    
+    [HttpPatch("updateUserName")]
+    [Authorize]
+    public async Task<IActionResult> UpdateUserName([FromBody] UpdateUserNameDto model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _context.Users.FindAsync(userId);
+    
+        if (user == null) return NotFound();
+
+        user.UserName = model.UserName;
+
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+    
+    [HttpPatch("updateAvatar")]
+    [Authorize]
+    public async Task<IActionResult> UpdateAvatar([FromBody] UpdateAvatarDto model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _context.Users.FindAsync(userId);
+    
+        if (user == null) return NotFound();
+
+        user.Avatar = model.Avatar;
+
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+    
+    [HttpPatch("updateBanner")]
+    [Authorize]
+    public async Task<IActionResult> UpdateBanner([FromBody] UpdateBannerDto model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _context.Users.FindAsync(userId);
+    
+        if (user == null) return NotFound();
+
+        user.Banner = model.Banner;
+
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+    
     [HttpGet("me")]
     [Authorize]
     public async Task<IActionResult> GetCurrentUser()
@@ -61,7 +138,12 @@ public class AuthController : ControllerBase
 
         return Ok(new { 
             email = user.Email, 
-            fullName = user.FullName
+            fullName = user.FullName,
+            userName = user.UserName,
+            bio_FirstLine = user.Bio_FirstLine,
+            bio_SecondLine = user.Bio_SecondLine,
+            avatar = user.Avatar,
+            banner = user.Banner
         });
     }
     

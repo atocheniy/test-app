@@ -8,6 +8,7 @@ export default function Register() {
 
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
+    const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPass, setConfirmPass] = useState('');
     const [error, setError] = useState('');
@@ -15,7 +16,7 @@ export default function Register() {
     const handleRegister = async () => {
         setError('');
 
-        if (!email || !password || !fullName) {
+        if (!email || !password || !fullName || !userName) {
             setError('Заполните все поля');
             return;
         }
@@ -26,7 +27,7 @@ export default function Register() {
 
         try 
         {
-            await AuthService.register({ email, password, fullName });
+            await AuthService.register({ email, userName, password, fullName });
             router.push('/feed');  
         } 
         catch (err: any) 
@@ -66,11 +67,21 @@ export default function Register() {
             handleRegister();
         }}>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Username</label>
+            <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Name</label>
             <input
               type="text"
               placeholder="Name"
               onChange={(e) => setFullName(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Username</label>
+            <input
+              type="text"
+              placeholder="@username"
+              onChange={(e) => setUserName(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
             />
           </div>

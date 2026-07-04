@@ -1,11 +1,19 @@
 import {Image, Video, Code, Newspaper} from 'lucide-react';
 
-export default function PublicBlock() 
+interface PublicBlockProps{
+    Avatar?: string;
+}
+
+export default function PublicBlock({ Avatar }: PublicBlockProps) 
 {
     return (
         <div className="m-4 mx-11 border border-white/5 rounded-xl bg-[#0a0a0a]">
                         <div className="flex flex-row items-center gap-4 p-4 pb-2 px-4">
-                            <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0"></div>
+                            <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
+                                {Avatar && (
+                                    <img src={Avatar} className="w-full h-full object-cover" alt="Avatar" />
+                                )}
+                            </div>
                             <h1 className="text-lg font-bold text-zinc-100">What's New</h1>
                             <p className="text-zinc-400">Public posts from people you follow</p>
                         </div>

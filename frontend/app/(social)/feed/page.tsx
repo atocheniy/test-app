@@ -1,9 +1,14 @@
+'use client'
+
 import Post from "@/components/post";
 import PublicBlock from "@/components/public_block";
 import Titlebar from "@/components/titlebar";
+import { useApplication } from "@/context/ApplicationContext";
 
 export default function Feed() {
 
+    const { userData } = useApplication();
+    
     const post = { Name: "", UserName: "", Content: "", Time: "" };
     const posts = Array.from({ length: 10 }, () => post);
 
@@ -11,7 +16,7 @@ export default function Feed() {
         <div className="flex flex-col min-h-full">
            
             <Titlebar title="Feed"></Titlebar>
-            <PublicBlock></PublicBlock>
+            <PublicBlock Avatar={userData.avatar}></PublicBlock>
             
             <div className="flex flex-col gap-4 p-6">
                 {posts.map((p, index) => {

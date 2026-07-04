@@ -16,7 +16,7 @@ const links = [
 ];
 
 export default function Sidebar() {
-    const { userData } = useApplication();
+    const { userData, UserNameNormalized } = useApplication();
     const { refreshUserData } = useApplication();
     
     const pathname = usePathname();
@@ -91,12 +91,16 @@ export default function Sidebar() {
                 }} 
                 className="mt-4 p-3 bg-white/5 border rounded-2xl text-sm text-zinc-400 flex flex-row gap-3 items-center justify-start hover:bg-stone-950 hover:border border-white/5 cursor-pointer transition-all duration-150"
             >
-                <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0"></div>
+                <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
+                    {userData.avatar && (
+                        <img src={userData.avatar} className="w-full h-full object-cover" alt="Avatar" />
+                    )}
+                </div>
                 <div className="flex flex-col gap-1">
                     <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer">
                         {userData.fullName}
                     </span>
-                    <span className="text-zinc-500 text-sm">@{userData.email.substring(0, userData.email.indexOf('@'))}</span>
+                    <span className="text-zinc-500 text-sm">{UserNameNormalized}</span>
                 </div>
             </div>
         </aside>
