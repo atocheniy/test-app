@@ -1,10 +1,16 @@
+'use client';
+
 import ExperienceCard from "@/components/exp_card";
 import Post from "@/components/post";
 import ProjectCard from "@/components/project_card";
 import PublicBlock from "@/components/public_block";
 import Titlebar from "@/components/titlebar";
+import { useApplication } from "@/context/ApplicationContext";
 
 export default function Profile() {
+    const { userData } = useApplication();
+    const { refreshUserData } = useApplication();
+
     const post = { Name: "", UserName: "", Content: "", Time: "" };
     const posts = Array.from({ length: 10 }, () => post);
 
@@ -22,9 +28,9 @@ export default function Profile() {
                         <div className="w-40 h-40 bg-zinc-700 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg">
                         </div>
                         <div className="mb-2">
-                            <h2 className="text-2xl font-bold text-zinc-100">User Name</h2>
+                            <h2 className="text-2xl font-bold text-zinc-100">{userData.fullName}</h2>
                             <div className="flex flex-row items-center gap-2">
-                                <p className="text-sm text-zinc-400">@username</p>
+                                <p className="text-sm text-zinc-400">@{userData.email.substring(0, userData.email.indexOf('@'))}</p>
                                 <span className="text-sm text-zinc-400">•</span>
                                 <p className="text-sm text-zinc-400">Followers</p>
                             </div>
@@ -122,7 +128,7 @@ export default function Profile() {
                     <div className="flex flex-col gap-4 p-6">
                         {posts.map((p, index) => {
                             return (
-                                <Post key={index} Name={p.Name} UserName={p.UserName} Content={p.Content} Time={p.Time} />
+                                <Post key={index} Name={userData.fullName} UserName={userData.email.substring(0, userData.email.indexOf('@'))} Content={p.Content} Time={p.Time} />
                             );
                         })}
                     </div>

@@ -118,3 +118,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+*.exe
+*.ilk
+*.obj
+*.pdb
+httpProto.cpp

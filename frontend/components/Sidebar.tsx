@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import {Menu, Settings, UserPen, Search, Newspaper, MessageSquareWarning, MessageCircle} from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { useApplication } from "@/context/ApplicationContext";
 
 const links = [
   { name: 'Home', href: '/home', icon: Menu },
@@ -15,6 +16,9 @@ const links = [
 ];
 
 export default function Sidebar() {
+    const { userData } = useApplication();
+    const { refreshUserData } = useApplication();
+    
     const pathname = usePathname();
     const router = useRouter();
 
@@ -90,9 +94,9 @@ export default function Sidebar() {
                 <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0"></div>
                 <div className="flex flex-col gap-1">
                     <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer">
-                        User Name
+                        {userData.fullName}
                     </span>
-                    <span className="text-zinc-500 text-sm">@username</span>
+                    <span className="text-zinc-500 text-sm">@{userData.email.substring(0, userData.email.indexOf('@'))}</span>
                 </div>
             </div>
         </aside>

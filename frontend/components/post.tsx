@@ -14,9 +14,9 @@ export default function Post ({ Name, UserName, Content, Time }: PostProps) {
             <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0"></div>
             <div className="flex items-baseline space-x-2">
             <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer">
-                User Name
+                {Name}
             </span>
-            <span className="text-zinc-500 text-sm">@username</span>
+            <span className="text-zinc-500 text-sm">@{UserName}</span>
             <span className="text-zinc-500 text-sm">·</span>
             <span className="text-zinc-500 text-sm">12:00 PM</span>
             </div>
