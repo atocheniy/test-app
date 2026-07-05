@@ -7,6 +7,11 @@ export const UserService = {
         return response.data; 
     },
 
+    async getOtherUser(username: string){
+        const response = await $api.get<User>(`/auth/profile/${username}`);
+        return response.data; 
+    },
+
     async changeName(data: UpdateName){
         return $api.patch('/auth/updateName', data);
     },

@@ -32,6 +32,31 @@ export interface User{
     technologies?: string[];
 }
 
+export interface Post{
+    id: string;
+
+    created: Date;
+    content: string;
+    attachments: string[];
+
+    likes: number;
+    comments: number;
+
+    authorName: string;
+    authorUsername: string;
+    authorAvatar: string;
+}   
+
+export interface CreatePost{
+    content: string;
+    attachments: string[];
+}
+
+export interface UpdatePost{
+    content: string;
+    attachments: string[];
+}
+
 export interface UpdateName{
     fullName: string;
 }

@@ -1,4 +1,5 @@
 import { Heart, MessageCircle, Repeat2, Bookmark } from "lucide-react";
+import Link from "next/link";
 
 interface PostProps {
     Name: string;
@@ -6,24 +7,31 @@ interface PostProps {
     Content: string;
     Time: string;
     Avatar?: string;
+    Likes: number;
+    Comments: number;
+    Attachments?: string[];
 }
 
-export default function Post ({ Name, UserName, Content, Time, Avatar }: PostProps) {
+export default function Post ({ Name, UserName, Content, Time, Avatar, Likes, Comments, Attachments }: PostProps) {
     return (
       <div className="py-4 border border-white/5 rounded-xl bg-[#0a0a0a] text-zinc-100 px-4 mx-5">
         <div className="flex items-center space-x-3 mb-2">
             <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
-                {Avatar && (
-                    <img src={Avatar} className="w-full h-full object-cover" alt="Avatar" />
-                )}
+                <Link href={`/profile/${UserName.replace('@', '')}`} className="w-10 h-10 rounded-full overflow-hidden cursor-pointer">
+                    {Avatar && (
+                        <img src={Avatar} className="w-full h-full object-cover" alt="Avatar" />
+                    )}
+                </Link>
             </div>
             <div className="flex items-baseline space-x-2">
             <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer">
-                {Name}
+                <Link href={`/profile/${UserName.replace('@', '')}`} className="font-semibold text-zinc-100 hover:underline cursor-pointer">
+                    {Name}
+                </Link>
             </span>
             <span className="text-zinc-500 text-sm">{UserName}</span>
             <span className="text-zinc-500 text-sm">·</span>
-            <span className="text-zinc-500 text-sm">12:00 PM</span>
+            <span className="text-zinc-500 text-sm">{Time}</span>
             </div>
         </div>
       
@@ -31,19 +39,29 @@ export default function Post ({ Name, UserName, Content, Time, Avatar }: PostPro
             <p className="text-[15px] text-zinc-300 leading-relaxed">
                 {Content}
             </p>
+
+            {Attachments && Attachments.length > 0 && (
+               <div className="bg-zinc-950 border border-white/5 rounded-xl mt-4 h-[400px] w-full flex items-center justify-center overflow-hidden">
+                    <img 
+                        src={Attachments[0]} 
+                        className="w-full h-full object-contain" 
+                        alt="Post attachment" 
+                    />
+                </div>
+            )}
             
             <div className="flex items-center gap-10 max-w-[280px] mt-4 text-zinc-500">
             <button className="flex items-center gap-2 hover:text-sky-500 transition-colors group">
                 <MessageCircle className="w-4 h-4 stroke-[1.8]" />
-                <span className="text-xs">12</span>
+                <span className="text-xs">{Comments}</span>
             </button>
             <button className="flex items-center gap-2 hover:text-green-500 transition-colors group">
                 <Repeat2 className="w-4 h-4 stroke-[1.8]" />
-                <span className="text-xs">4</span>
+                <span className="text-xs">0</span>
             </button>
             <button className="flex items-center gap-2 hover:text-pink-500 transition-colors group">
                 <Heart className="w-4 h-4 stroke-[1.8]" />
-                <span className="text-xs">148</span>
+                <span className="text-xs">{Likes}</span>
             </button>
             </div>
         </div>

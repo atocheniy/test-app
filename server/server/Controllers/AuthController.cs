@@ -147,6 +147,24 @@ public class AuthController : ControllerBase
         });
     }
     
+    [HttpGet("profile/{username}")]
+    public async Task<IActionResult> GetUserProfile(string username)
+    {
+        var user = await _userManager.FindByNameAsync(username);
+        if (user == null) return NotFound();
+            
+        return Ok(new { 
+            fullName = user.FullName,
+            userName = user.UserName,
+            bio_FirstLine = user.Bio_FirstLine,
+            bio_SecondLine = user.Bio_SecondLine,
+            avatar = user.Avatar,
+            banner = user.Banner,
+            followers = user.Followers,
+            followings = user.Followings
+        });
+    }
+    
     private string GenerateJwtToken(ApplicationUser user)
     {
         var claims = new List<Claim>

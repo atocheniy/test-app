@@ -4,13 +4,16 @@ import Post from "@/components/post";
 import PublicBlock from "@/components/public_block";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
+import { useEffect } from "react";
 
 export default function Feed() {
 
-    const { userData } = useApplication();
+    const { userData, postsData } = useApplication();
+    const { refreshUserData, refreshPostsData } = useApplication();
     
-    const post = { Name: "", UserName: "", Content: "", Time: "" };
-    const posts = Array.from({ length: 10 }, () => post);
+    useEffect(() => {
+        refreshPostsData();
+    }, []);
 
     return (
         <div className="flex flex-col min-h-full">
@@ -19,9 +22,10 @@ export default function Feed() {
             <PublicBlock Avatar={userData.avatar}></PublicBlock>
             
             <div className="flex flex-col gap-4 p-6">
-                {posts.map((p, index) => {
+                {postsData.map((p, index) => {
+                    console.log(p);
                     return (
-                         <Post key={index}  Name={p.Name}  UserName={p.UserName}  Content={p.Content}  Time={p.Time} />
+                         <Post key={index} Avatar={p.authorAvatar} Name={p.authorName} UserName={"@" + p.authorUsername} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}  Likes={p.likes} Comments={p.comments} Attachments={p.attachments}/>
                     );
                 })}
             </div>

@@ -12,10 +12,11 @@ import { UserService } from "@/services/userService";
 import { UpdateBio } from "@/types/auth";
 import { upload } from "@vercel/blob/client";
 import { useState } from "react";
+import { useEffect } from "react"; 
 
 
 export default function Profile() {
-    const { userData, UserNameNormalized } = useApplication();
+    const { userData, UserNameNormalized, userPostsData , refreshUserPostsData} = useApplication();
     const { refreshUserData } = useApplication();
 
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -28,6 +29,10 @@ export default function Profile() {
 
     const post = { Name: "", UserName: "", Content: "", Time: "" };
     const posts = Array.from({ length: 10 }, () => post);
+
+    useEffect(() => {
+        refreshUserPostsData();
+    }, []);
 
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -229,9 +234,9 @@ export default function Profile() {
                     <PublicBlock Avatar={userData.avatar}></PublicBlock>
                                 
                     <div className="flex flex-col gap-4 p-6">
-                        {posts.map((p, index) => {
+                        {userPostsData.map((p, index) => {
                             return (
-                                <Post key={index} Name={userData.fullName} UserName={UserNameNormalized} Content={p.Content} Time={p.Time} Avatar={userData.avatar} />
+                                <Post key={index} Name={userData.fullName} UserName={UserNameNormalized} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={userData.avatar} Likes={p.likes} Comments={p.comments} Attachments={p.attachments} />
                             );
                         })}
                     </div>
