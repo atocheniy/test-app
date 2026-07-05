@@ -165,7 +165,7 @@ export default function Profile() {
                     <div className="flex flex-col gap-4 p-6">
                         {otherUserPostsData.map((p, index) => {
                             return (
-                                <Post key={index} Name={otherUserData.fullName} UserName={"@" + otherUserData.userName} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={otherUserData.avatar} Likes={p.likes} Comments={p.comments} Attachments={p.attachments} />
+                                <Post key={index} Id={p.id} Name={otherUserData.fullName} UserName={"@" + otherUserData.userName} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={otherUserData.avatar} Likes={p.likesCount} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} />
                             );
                         })}
                     </div>

@@ -18,4 +18,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
 
 public DbSet<server.Models.Post> Post { get; set; } = default!;
+
+public DbSet<server.Models.Comment> Comment { get; set; } = default!;
 }

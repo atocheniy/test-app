@@ -5,6 +5,7 @@ import { UserService } from '@/services/userService';
 import { AuthService } from '@/services/authService';
 import Cookies from 'js-cookie';
 import { PostService } from '@/services/postService';
+import { CommentsService } from '@/services/commentService';
 
 interface ApplicationContextType {
     userData: User;
@@ -13,6 +14,12 @@ interface ApplicationContextType {
 
     postsData: Post[];
     refreshPostsData: () => Promise<void>;
+
+    currentPost: Post;
+    refreshCurrentPost: (id: string) => Promise<void>;
+
+    commentsData: Comment[];
+    refreshCommentsData: (id: string) => Promise<void>;
 
     userPostsData: Post[];
     refreshUserPostsData: () => Promise<void>;
@@ -38,6 +45,33 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
 
     const [postsData, setPostsData] = useState<Post[]>([]);
     const [userPostsData, setUserPostsData] = useState<Post[]>([]);
+
+    const [commentsData, setCommentsData] = useState<Comment[]>([]);
+
+    const [currentPost, setCurrentPost] = useState<Post>({} as Post);
+
+    const refreshCurrentPost = async (id: string) => {
+        try {
+            const data = await PostService.getPost(id);
+            setCurrentPost(data);
+        }
+        catch (error) {
+            console.error("Ошибка обновления данных", error);
+            setCurrentPost({} as Post)
+        }
+    }
+
+    const refreshCommentsData = async (id: string) => {
+        try {
+            const data = await CommentsService.getCommentsForPost(id);
+            console.log("Данные комментариев от сервера:", data);
+            setCommentsData(data);
+            
+        } catch (error) {
+            console.error("Ошибка обновления данных комментариев", error);
+            setCommentsData([]);
+        }
+    }
 
     const refreshUserData = async () => {
         try {
@@ -135,14 +169,18 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         refreshUserData, 
         postsData,
         refreshPostsData,
+        currentPost,
+        refreshCurrentPost,
         userPostsData,
         refreshUserPostsData,
         otherUserPostsData,
         otherUserData,
         refreshOtherUserPostsData,
         refreshOtherUserData,
+        commentsData,
+        refreshCommentsData,
         logout 
-    }), [userData, postsData, userPostsData, otherUserPostsData, otherUserData]);
+    }), [userData, postsData, userPostsData, otherUserPostsData, otherUserData, currentPost]);
 
     return (
         <ApplicationContext.Provider value={ contextValue }>

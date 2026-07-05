@@ -39,8 +39,28 @@ export interface Post{
     content: string;
     attachments: string[];
 
-    likes: number;
-    comments: number;
+    likesCount: number;
+    commentsCount: number;
+
+    authorName: string;
+    authorUsername: string;
+    authorAvatar: string;
+
+    commentsList?: {
+        id: string;
+        content: string;
+        created: Date;
+        authorName: string;
+        authorUsername: string;
+        authorAvatar: string;
+    }[];
+}   
+
+export interface Comment{
+    id: string;
+
+    created: Date;
+    content: string;
 
     authorName: string;
     authorUsername: string;
@@ -50,6 +70,11 @@ export interface Post{
 export interface CreatePost{
     content: string;
     attachments: string[];
+}
+
+export interface CreateComment{
+    content: string;
+    postId: string;
 }
 
 export interface UpdatePost{

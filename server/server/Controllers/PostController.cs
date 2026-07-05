@@ -40,14 +40,41 @@ namespace server.Controllers
         [HttpGet("getPost/{id}")]
         public async Task<ActionResult<Post>> GetPost(Guid id)
         {
-            var post = await _context.Post.FindAsync(id);
+            var post = await _context.Post
+                .Include(p => p.User)
+                .Where(p => p.Id == id)
+                .Select(p => new {
+                    id = p.Id,
+                    content = p.Content,
+                    created = p.Created,
+                    attachments = p.Attachments,
+                    likes = p.LikesCount,
+                    comments = p.CommentsCount,
+                    
+                    authorName = p.User.FullName,
+                    authorUsername = p.User.UserName,
+                    authorAvatar = p.User.Avatar,
+                    
+                    commentsList = p.Comments
+                        .OrderBy(c => c.Created)
+                        .Select(c => new {
+                            id = c.Id,
+                            content = c.Content,
+                            created = c.Created,
+                            
+                            authorName = c.User.FullName,
+                            authorUsername = c.User.UserName,
+                            authorAvatar = c.User.Avatar
+                        })
+                })
+                .FirstOrDefaultAsync();
 
             if (post == null)
             {
                 return NotFound();
             }
 
-            return post;
+            return Ok(post);
         }
 
         // PUT: api/Post/5
@@ -140,12 +167,24 @@ namespace server.Controllers
                     content = p.Content,
                     created = p.Created,
                     attachments = p.Attachments,
-                    likes = p.Likes,
-                    comments = p.Comments,
+                    likesCount = p.LikesCount,
+                    commentsCount = p.CommentsCount,
                     
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,
-                    authorAvatar = p.User.Avatar
+                    authorAvatar = p.User.Avatar,
+                    
+                    commentsList = p.Comments
+                        .OrderByDescending(c => c.Created)
+                        .Take(3)
+                        .Select(c => new {
+                            id = c.Id,
+                            content = c.Content,
+                            created = c.Created,
+                            authorName = c.User.FullName,
+                            authorUsername = c.User.UserName,
+                            authorAvatar = c.User.Avatar
+                        })
                 })
                 .ToListAsync();
 
@@ -166,11 +205,23 @@ namespace server.Controllers
                     content = p.Content,
                     created = p.Created,
                     attachments = p.Attachments,
-                    likes = p.Likes,
-                    comments = p.Comments,
+                    likesCount = p.LikesCount,
+                    commentsCount = p.CommentsCount,
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,
-                    authorAvatar = p.User.Avatar
+                    authorAvatar = p.User.Avatar,
+                    
+                    commentsList = p.Comments
+                        .OrderBy(c => c.Created)
+                        .Select(c => new {
+                            id = c.Id,
+                            content = c.Content,
+                            created = c.Created,
+                            
+                            authorName = c.User.FullName,
+                            authorUsername = c.User.UserName,
+                            authorAvatar = c.User.Avatar
+                        })
                 })
                 .ToListAsync();
 
@@ -192,11 +243,23 @@ namespace server.Controllers
                     content = p.Content,
                     created = p.Created,
                     attachments = p.Attachments,
-                    likes = p.Likes,
-                    comments = p.Comments,
+                    likesCount = p.LikesCount,
+                    commentsCount = p.CommentsCount,
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,
-                    authorAvatar = p.User.Avatar
+                    authorAvatar = p.User.Avatar,
+                    
+                    commentsList = p.Comments
+                        .OrderBy(c => c.Created)
+                        .Select(c => new {
+                            id = c.Id,
+                            content = c.Content,
+                            created = c.Created,
+                            
+                            authorName = c.User.FullName,
+                            authorUsername = c.User.UserName,
+                            authorAvatar = c.User.Avatar
+                        })
                 })
                 .ToListAsync();
 

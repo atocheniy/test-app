@@ -10,8 +10,9 @@ public class Post
     
     public string[] Attachments { get; set; }
     
-    public int Likes { get; set; } = 0;
-    public int Comments { get; set; } = 0;
+    public int LikesCount { get; set; } = 0;
+    public int CommentsCount { get; set; } = 0;
+    public ICollection<Comment> Comments { get; set; } = new List<Comment>();
     
     public string UserId { get; set; } = string.Empty;
     public ApplicationUser User { get; set; }
