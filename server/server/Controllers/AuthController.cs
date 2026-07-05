@@ -90,12 +90,20 @@ public class AuthController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var user = await _context.Users.FindAsync(userId);
-    
         if (user == null) return NotFound();
+        
+        var existingUser = await _userManager.FindByNameAsync(model.UserName);
+        if (existingUser != null && existingUser.Id != userId)
+        {
+            return BadRequest(new { message = "Этот никнейм уже занят" });
+        }
 
-        user.UserName = model.UserName;
-
-        await _context.SaveChangesAsync();
+        var result = await _userManager.SetUserNameAsync(user, model.UserName);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
+        }
+        
         return Ok();
     }
     
