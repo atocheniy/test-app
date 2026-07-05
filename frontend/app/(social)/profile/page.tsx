@@ -96,15 +96,26 @@ export default function Profile() {
 
                 <div className="px-10 pb-10 relative">
                     {userData.banner && (
-                    <div 
-                        className="absolute -top-30 left-1/2 -translate-x-1/2 w-full h-[350px] blur-[150px] opacity-20 pointer-events-none z-0 select-none"
-                        style={{
-                            backgroundImage: `url(${userData.banner})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                        }}
-                    />
-                )}
+                        <div 
+                            className="absolute -top-110 left-1/2 -translate-x-1/2 w-full h-[350px] blur-[50px] opacity-20 pointer-events-none z-11110 select-none"
+                            style={{
+                                backgroundImage: `url(${userData.banner})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                            }}
+                        />
+                    )}
+
+                    {userData.banner && (
+                        <div 
+                            className="absolute -top-30 left-1/2 -translate-x-1/2 w-full h-[350px] blur-[50px] opacity-20 pointer-events-none z-0 select-none"
+                            style={{
+                                backgroundImage: `url(${userData.banner})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                            }}
+                        />
+                    )}
 
                     <div className="flex flex-row items-end gap-6 relative z-10">
                         <div className="w-40 h-40 bg-zinc-700 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg overflow-hidden">
