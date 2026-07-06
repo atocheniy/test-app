@@ -1,5 +1,27 @@
+'use client';
+
 import { Heart, MessageCircle, Repeat2, Bookmark } from "lucide-react";
 import Link from "next/link";
+
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
+import rehypeHighlight from 'rehype-highlight';
+import remarkGemoji from 'remark-gemoji';
+import remarkBreaks from 'remark-breaks';
+import { remarkAlert } from 'remark-github-blockquote-alert';
+import dynamic from 'next/dynamic';
+
+import "@uiw/react-md-editor/markdown-editor.css";
+import "@uiw/react-markdown-preview/markdown.css";
+
+const MarkdownPreview = dynamic(
+  () => import('@uiw/react-markdown-preview'),
+  { ssr: false }
+);
 
 interface PostProps {
     Id: string;
@@ -45,16 +67,44 @@ export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes
             </div>
         </div>
       
-        <div className="pl-13">
-            <p className="text-[15px] text-zinc-300 leading-relaxed">
-                {Content}
-            </p>
+        <div className="pt-4 w-full">
+            <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                <MarkdownPreview
+                source={Content} 
+                     style={{ 
+                        backgroundColor: 'transparent',
+                        color: 'inherit'       
+                    }}
+                    wrapperElement={{
+                        "data-color-mode": "dark"  
+                    }}
+                    remarkPlugins={[
+                        remarkGfm,    
+                        remarkMath,    
+                        remarkGemoji, 
+                        remarkBreaks,  
+                        remarkAlert,   
+                    ]}
+                    rehypePlugins={[
+                        rehypeKatex,    
+                        rehypeHighlight,
+                        rehypeSlug,    
+                        rehypeAutolinkHeadings, 
+                        rehypeRaw     
+                    ]}
+                                />
+            </div>
 
             {Attachments && Attachments.length > 0 && (
-               <div className="bg-black border border-white/5 rounded-xl mt-4 h-[400px] w-full flex items-center justify-center overflow-hidden">
+               <div className="relative bg-black border border-white/5 rounded-xl mt-4 h-[400px] w-full flex items-center justify-center overflow-hidden">
                     <img 
                         src={Attachments[0]} 
-                        className="w-full h-full object-contain" 
+                        className="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 scale-110 pointer-events-none select-none" 
+                        alt="" 
+                    />
+                    <img 
+                        src={Attachments[0]} 
+                        className="relative w-full h-full object-contain z-10" 
                         alt="Post attachment" 
                     />
                 </div>
