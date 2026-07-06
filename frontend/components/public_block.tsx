@@ -68,8 +68,8 @@ export default function PublicBlock({ Avatar }: PublicBlockProps)
                                     <img src={Avatar} className="w-full h-full object-cover" alt="Avatar" />
                                 )}
                             </div>
-                            <h1 className="text-lg font-bold text-zinc-100">What's New</h1>
-                            <p className="text-zinc-400">Public posts from people you follow</p>
+                            <h1 className="text-lg max-sm:text-sm font-bold text-zinc-100">What's New</h1>
+                            <p className="text-zinc-400 max-sm:text-sm">Public posts from people you follow</p>
                         </div>
                         <form onSubmit={handleCreatePost}>
                             <div className="flex flex-row justify-between items-end gap-2 p-2 px-4">
