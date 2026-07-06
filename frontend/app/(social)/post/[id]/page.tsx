@@ -4,6 +4,7 @@ import Post from "@/components/post";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
 import { CommentsService } from "@/services/commentService";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -54,49 +55,56 @@ export default function PagePost() {
     }
 
     return(
-        <div className="flex flex-col h-[calc(100vh-1.65rem)] justify-between">
+        <div className="flex flex-col h-full justify-between">
             <div className="flex-1 flex flex-col">
-                <Titlebar title={`Post from ${currentPost.authorName}`}></Titlebar>
-            
-                <div className="flex flex-col p-6">
-                    <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={new Date(currentPost.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Likes={currentPost.likesCount} Comments={currentPost.commentsCount}></Post>
+                <div>
+                    <Titlebar title={`Post from ${currentPost.authorName}`}></Titlebar>
+                
+                    <div className="flex flex-col p-6">
+                        <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={new Date(currentPost.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Likes={currentPost.likesCount} Comments={currentPost.commentsCount}></Post>
+                    </div>
+
+                    <div className="w-full border-t border-white/5"></div>
                 </div>
+                <div>
+                    <Titlebar title={`Comments`}></Titlebar>
 
-                <div className="w-full border-t border-white/5"></div>
-
-                <Titlebar title={`Comments`}></Titlebar>
-
-                <div className="flex flex-col gap-4 p-6 overflow-y-auto max-h-[380px] custom-scrollbar">
-                    {currentPost.commentsList && currentPost.commentsList.length > 0 ? (
-                        currentPost.commentsList.map((comment) => (
-                            <div key={comment.id} className="flex gap-3 text-sm p-3 rounded-2xl bg-zinc-950/20 border border-white/[0.02]">
-                                <div className="w-8 h-8 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
-                                    {comment.authorAvatar && (
-                                        <img src={comment.authorAvatar} className="w-full h-full object-cover" alt="Commenter Avatar" />
-                                    )}
-                                </div>
-                                <div className="flex-1 space-y-1">
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="font-semibold text-zinc-100 text-xs">{comment.authorName}</span>
-                                        <span className="text-zinc-500 text-[10px]">@{comment.authorUsername}</span>
-                                        <span className="text-zinc-500 text-[10px]">·</span>
-                                        <span className="text-zinc-500 text-[10px]">
-                                            {new Date(comment.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
+                    <div className="flex flex-col gap-4 p-6 px-11 overflow-y-auto  custom-scrollbar">
+                        {currentPost.commentsList && currentPost.commentsList.length > 0 ? (
+                            currentPost.commentsList.map((comment) => (
+                                <div key={comment.id} className="flex gap-3 text-sm p-4 rounded-2xl bg-zinc-950/50 border border-white/5">
+                                    <div className="w-8 h-8 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
+                                        <Link href={`/profile/${comment.authorUsername.replace('@', '')}`} className="w-10 h-10 rounded-full overflow-hidden cursor-pointer">
+                                            {comment.authorAvatar && (
+                                                <img src={comment.authorAvatar} className="w-full h-full object-cover" alt="Commenter Avatar" />
+                                            )}
+                                        </Link>
                                     </div>
-                                    <p className="text-xs text-zinc-300 leading-relaxed">{comment.content}</p>
+                                    <div className="flex-1">
+                                        <div className="flex items-baseline gap-2">
+                                            <Link href={`/profile/${comment.authorUsername.replace('@', '')}`} className="font-semibold text-zinc-100 hover:underline cursor-pointer">
+                                                <span className="font-semibold text-zinc-100 text-xs">{comment.authorName}</span>
+                                            </Link>
+                                            <span className="text-zinc-500 text-[10px]">@{comment.authorUsername}</span>
+                                            <span className="text-zinc-500 text-[10px]">·</span>
+                                            <span className="text-zinc-500 text-[10px]">
+                                                {new Date(comment.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-zinc-300 leading-relaxed">{comment.content}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-xs text-zinc-500 text-center py-6 select-none">
-                            No comments yet
-                        </p>
-                    )}
+                            ))
+                        ) : (
+                            <p className="text-xs text-zinc-500 text-center py-6 select-none">
+                                No comments yet
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
 
-           <div className="mt-auto border-t border-white/5 p-4 flex flex-row items-center gap-4 px-6 relative z-10">
+           <div className="mt-auto bg-black/60 backdrop-blur-sm sticky bottom-0 border-t border-white/5 p-3 flex flex-row items-center gap-4 px-6 relative z-10">
                 <div className="w-8 h-8 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
                     {userData.avatar && (
                         <img src={userData.avatar} className="w-full h-full object-cover" alt="My Avatar" />

@@ -48,8 +48,8 @@ namespace server.Controllers
                     content = p.Content,
                     created = p.Created,
                     attachments = p.Attachments,
-                    likes = p.LikesCount,
-                    comments = p.CommentsCount,
+                    likesCount = p.LikesCount,
+                    commentsCount = p.CommentsCount,
                     
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,
@@ -212,7 +212,8 @@ namespace server.Controllers
                     authorAvatar = p.User.Avatar,
                     
                     commentsList = p.Comments
-                        .OrderBy(c => c.Created)
+                        .OrderByDescending(c => c.Created)
+                        .Take(3)
                         .Select(c => new {
                             id = c.Id,
                             content = c.Content,
@@ -250,7 +251,8 @@ namespace server.Controllers
                     authorAvatar = p.User.Avatar,
                     
                     commentsList = p.Comments
-                        .OrderBy(c => c.Created)
+                        .OrderByDescending(c => c.Created)
+                        .Take(3)
                         .Select(c => new {
                             id = c.Id,
                             content = c.Content,

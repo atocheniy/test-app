@@ -35,7 +35,7 @@ export default function Profile() {
             <div>
                 <Titlebar title="Profile"></Titlebar>
 
-                <div className="w-full bg-zinc-900 h-48 border-b border-white/5 rounded-b-xl relative overflow-hidden">
+                <div className="w-full bg-zinc-900 h-48 border-y border-white/5 rounded-b-xl relative overflow-hidden">
                     {otherUserData.banner && (
                         <img src={otherUserData.banner} className="w-full h-full object-cover" alt="Banner" />
                     )}

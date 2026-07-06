@@ -24,7 +24,7 @@ interface PostProps {
 
 export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes, Comments, Attachments, commentsList }: PostProps) {
     return (
-      <div className="py-4 border border-white/5 rounded-xl bg-[#0a0a0a] text-zinc-100 px-4 mx-5">
+      <div className="py-4 border border-white/5 rounded-xl bg-zinc-950/50 text-zinc-100 px-4 mx-5">
         <div className="flex items-center space-x-3 mb-2">
             <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
                 <Link href={`/profile/${UserName.replace('@', '')}`} className="w-10 h-10 rounded-full overflow-hidden cursor-pointer">
@@ -51,7 +51,7 @@ export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes
             </p>
 
             {Attachments && Attachments.length > 0 && (
-               <div className="bg-zinc-950 border border-white/5 rounded-xl mt-4 h-[400px] w-full flex items-center justify-center overflow-hidden">
+               <div className="bg-black border border-white/5 rounded-xl mt-4 h-[400px] w-full flex items-center justify-center overflow-hidden">
                     <img 
                         src={Attachments[0]} 
                         className="w-full h-full object-contain" 
