@@ -79,18 +79,18 @@ export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes
                         "data-color-mode": "dark"  
                     }}
                     remarkPlugins={[
-                        remarkGfm,    
-                        remarkMath,    
-                        remarkGemoji, 
-                        remarkBreaks,  
-                        remarkAlert,   
+                        remarkGfm as any,    
+                        remarkMath as any,    
+                        remarkGemoji as any, 
+                        remarkBreaks as any,  
+                        remarkAlert as any,   
                     ]}
                     rehypePlugins={[
-                        rehypeKatex,    
-                        rehypeHighlight,
-                        rehypeSlug,    
-                        rehypeAutolinkHeadings, 
-                        rehypeRaw     
+                        rehypeKatex as any,    
+                        rehypeHighlight as any,
+                        rehypeSlug as any,    
+                        rehypeAutolinkHeadings as any, 
+                        rehypeRaw as any     
                     ]}
                                 />
             </div>
