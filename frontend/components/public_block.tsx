@@ -61,7 +61,7 @@ export default function PublicBlock({ Avatar }: PublicBlockProps)
     };
 
     return (
-        <div className="m-4 mx-11 border border-white/5 rounded-xl bg-zinc-950/50">
+        <div className="m-4 lg:mx-11 md:mx-11 border border-white/5 rounded-xl bg-zinc-950/50">
                         <div className="flex flex-row items-center gap-4 p-4 pb-2 px-4">
                             <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
                                 {Avatar && (

@@ -21,7 +21,7 @@ export default function Feed() {
             <Titlebar title="Feed"></Titlebar>
             <PublicBlock Avatar={userData.avatar}></PublicBlock>
             
-            <div className="flex flex-col gap-4 p-6">
+            <div className="flex flex-col gap-4 lg:p-6 md:p-6" >
                 {postsData.map((p, index) => {
                     console.log(p);
                     return (

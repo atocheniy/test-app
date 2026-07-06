@@ -99,7 +99,7 @@ export default function Profile() {
                     )}
                 </div>
 
-                <div className="px-10 pb-10 relative">
+                <div className="px-10 pb-10 max-sm:px-5 relative">
                     {userData.banner && (
                         <div 
                             className="absolute -top-110 left-1/2 -translate-x-1/2 w-full h-[350px] blur-[50px] opacity-20 pointer-events-none z-11110 select-none"
@@ -123,12 +123,12 @@ export default function Profile() {
                     )}
 
                     <div className="flex flex-row items-end gap-6 relative z-10">
-                        <div className="w-40 h-40 bg-zinc-700 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg overflow-hidden">
+                        <div className="w-40 h-40 max-sm:w-30 max-sm:h-30  bg-zinc-700 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg overflow-hidden">
                             {userData.avatar && (
                                 <img src={userData.avatar} className="w-full h-full object-cover" alt="Avatar" />
                             )}
                         </div>
-                        <div className="mb-2">
+                        <div className="mb-2 max-sm:mt-5">
                             <h2 className="text-2xl font-bold text-zinc-100">{userData.fullName}</h2>
                             <div className="flex flex-row items-center gap-2">
                                 <p className="text-sm text-zinc-400">{UserNameNormalized}</p>
@@ -145,7 +145,7 @@ export default function Profile() {
                                     setEditBioSecondLine(userData.bio_SecondLine || '');
                                     setIsEditOpen(true);
                                 }}>
-                                Edit Profile
+                                Edit
                             </button>
                         </div>
                     </div>
@@ -233,7 +233,7 @@ export default function Profile() {
                 <div>
                     <PublicBlock Avatar={userData.avatar}></PublicBlock>
                                 
-                    <div className="flex flex-col gap-4 p-6">
+                    <div className="flex flex-col gap-4 p-6 max-sm:p-0 max-sm:py-6">
                         {userPostsData.map((p, index) => {
                             return (
                                 <Post key={index} Id={p.id} Name={userData.fullName} UserName={UserNameNormalized} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={userData.avatar} Likes={p.likesCount} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} />

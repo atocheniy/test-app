@@ -60,7 +60,7 @@ export default function PagePost() {
                 <div>
                     <Titlebar title={`Post from ${currentPost.authorName}`}></Titlebar>
                 
-                    <div className="flex flex-col p-6">
+                    <div className="flex flex-col lg:p-6 md:p-6 py-6">
                         <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={new Date(currentPost.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Likes={currentPost.likesCount} Comments={currentPost.commentsCount}></Post>
                     </div>
 
@@ -69,7 +69,7 @@ export default function PagePost() {
                 <div>
                     <Titlebar title={`Comments`}></Titlebar>
 
-                    <div className="flex flex-col gap-4 p-6 px-11 overflow-y-auto  custom-scrollbar">
+                    <div className="flex flex-col gap-4 p-6 lg:px-11 md:px-11 overflow-y-auto  custom-scrollbar">
                         {currentPost.commentsList && currentPost.commentsList.length > 0 ? (
                             currentPost.commentsList.map((comment) => (
                                 <div key={comment.id} className="flex gap-3 text-sm p-4 rounded-2xl bg-zinc-950/50 border border-white/5">

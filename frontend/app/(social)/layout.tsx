@@ -10,7 +10,7 @@ export default function HomeLayout({
         
         <Sidebar />
         
-        <main className="w-full my-3 h-[calc(100vh-1.5rem)] border border-white/5 rounded-3xl overflow-y-auto custom-scrollbar relative">
+        <main className="w-full my-0 h-screen lg:my-3 lg:h-[calc(100vh-1.5rem)] border border-white/5 lg:rounded-3xl md:rounded-3xl overflow-y-auto custom-scrollbar relative">
           <div className="text-zinc-100 h-full">
             {children}
           </div>
