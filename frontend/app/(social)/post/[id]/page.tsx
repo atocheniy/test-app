@@ -21,7 +21,7 @@ export default function PagePost() {
     useEffect(() => {
         if (idFromUrl) refreshCurrentPost(idFromUrl);
         console.log(currentPost)
-    }, [idFromUrl, refreshCurrentPost]);
+    }, [idFromUrl]);
 
 
     const handleSendComment = async (e: React.FormEvent) => {
@@ -55,7 +55,7 @@ export default function PagePost() {
     }
 
     return(
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex flex-col min-h-full justify-between">
             <div className="flex-1 flex flex-col">
                 <div>
                     <Titlebar title={`Post from ${currentPost.authorName}`}></Titlebar>
@@ -69,7 +69,7 @@ export default function PagePost() {
                 <div>
                     <Titlebar title={`Comments`}></Titlebar>
 
-                    <div className="flex flex-col gap-4 p-6 lg:px-11 md:px-11 overflow-y-auto  custom-scrollbar">
+                    <div className="flex flex-col max-sm:mb-[60px] min-h-full gap-4 p-6 lg:px-11 md:px-11 overflow-y-auto  custom-scrollbar">
                         {currentPost.commentsList && currentPost.commentsList.length > 0 ? (
                             currentPost.commentsList.map((comment) => (
                                 <div key={comment.id} className="flex gap-3 text-sm p-4 rounded-2xl bg-zinc-950/50 border border-white/5">
@@ -104,7 +104,7 @@ export default function PagePost() {
                 </div>
             </div>
 
-           <div className="mt-auto bg-black/60 backdrop-blur-sm sticky bottom-0 border-t border-white/5 p-3 flex flex-row items-center gap-4 px-6 relative z-10">
+           <div className="mt-1 bg-black/60 backdrop-blur-sm sticky bottom-0 border-t border-white/5 p-3 flex flex-row items-center gap-4 px-6 relative z-10">
                 <div className="w-8 h-8 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
                     {userData.avatar && (
                         <img src={userData.avatar} className="w-full h-full object-cover" alt="My Avatar" />

@@ -12,7 +12,7 @@ export default function HomeLayout({
         <Sidebar />
         
         <main className="w-full my-0 h-full lg:my-3 lg:h-[calc(100vh-1.5rem)] border border-white/5 lg:rounded-3xl md:rounded-3xl overflow-y-auto custom-scrollbar relative max-sm:pb-14">
-          <div className="text-zinc-100 min-h-full">
+          <div className="text-zinc-100 h-full">
             {children}
           </div>
         </main>

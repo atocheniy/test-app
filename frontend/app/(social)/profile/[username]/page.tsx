@@ -162,7 +162,7 @@ export default function Profile() {
                 <Titlebar title="Activity"></Titlebar>
                 <div>
                                 
-                    <div className="flex flex-col gap-4 p-6 max-sm:p-0 max-sm:py-6">
+                    <div className="flex flex-col gap-4 p-6 max-sm:p-0 max-sm:py-6 max-sm:pb-[90px]">
                         {otherUserPostsData.map((p, index) => {
                             return (
                                 <Post key={index} Id={p.id} Name={otherUserData.fullName} UserName={"@" + otherUserData.userName} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={otherUserData.avatar} Likes={p.likesCount} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} />

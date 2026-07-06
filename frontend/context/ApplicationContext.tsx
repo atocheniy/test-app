@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useState, useContext, useEffect, useMemo } from 'react';
+import React, { createContext, useState, useContext, useEffect, useMemo, useCallback } from 'react';
 import { Post, User } from "@/types/auth";
 import { UserService } from '@/services/userService';
 import { AuthService } from '@/services/authService';
@@ -50,7 +50,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
 
     const [currentPost, setCurrentPost] = useState<Post>({} as Post);
 
-    const refreshCurrentPost = async (id: string) => {
+    const refreshCurrentPost = useCallback(async (id: string) => {
         try {
             const data = await PostService.getPost(id);
             setCurrentPost(data);
@@ -59,7 +59,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             console.error("Ошибка обновления данных", error);
             setCurrentPost({} as Post)
         }
-    }
+    }, []);
 
     const refreshCommentsData = async (id: string) => {
         try {
