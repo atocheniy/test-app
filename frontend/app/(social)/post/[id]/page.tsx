@@ -104,7 +104,7 @@ export default function PagePost() {
                 </div>
             </div>
 
-           <div className="mt-1 bg-black/60 backdrop-blur-sm sticky bottom-0 border-t border-white/5 p-3 flex flex-row items-center gap-4 px-6 relative z-10">
+           <div className="mt-0 bg-black/60 backdrop-blur-sm sticky bottom-0 border-t border-white/5 p-3 flex flex-row items-center gap-4 px-6 relative z-1110">
                 <div className="w-8 h-8 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
                     {userData.avatar && (
                         <img src={userData.avatar} className="w-full h-full object-cover" alt="My Avatar" />

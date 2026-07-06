@@ -17,6 +17,7 @@ import dynamic from 'next/dynamic';
 
 import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
+import { useEffect, useRef, useState } from "react";
 
 const MarkdownPreview = dynamic(
   () => import('@uiw/react-markdown-preview'),
@@ -45,6 +46,36 @@ interface PostProps {
 }
 
 export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes, Comments, Attachments, commentsList }: PostProps) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isLongPost, setIsLongPost] = useState(false);
+    const contentRef = useRef<HTMLDivElement>(null);
+    
+    useEffect(() => {
+        if (!contentRef.current) return;
+
+        const checkHeight = () => {
+            if (contentRef.current) {
+                const realHeight = contentRef.current.scrollHeight;
+                if (realHeight > 250) {
+                    setIsLongPost(true);
+                } else {
+                    setIsLongPost(false);
+                }
+            }
+        };
+
+        const resizeObserver = new ResizeObserver(() => {
+            checkHeight();
+        });
+        resizeObserver.observe(contentRef.current);
+
+        checkHeight();
+        
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, [Content]);
+
     return (
       <div className="py-4 border border-white/5 rounded-xl bg-zinc-950/50 text-zinc-100 px-4 mx-5">
         <div className="flex items-center space-x-3 mb-2">
@@ -68,12 +99,17 @@ export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes
         </div>
       
         <div className="pt-4 w-full">
-            <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+            <div 
+                ref={contentRef}
+                className={`relative overflow-hidden transition-all duration-300 rounded-xl ${
+                    isLongPost && !isExpanded ? "max-h-[200px]" : "max-h-none"
+                }`}
+            >
                 <MarkdownPreview
                 source={Content} 
                      style={{ 
                         backgroundColor: 'transparent',
-                        color: 'inherit'       
+                        color: 'inherit'      
                     }}
                     wrapperElement={{
                         "data-color-mode": "dark"  
@@ -94,6 +130,15 @@ export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes
                     ]}
                                 />
             </div>
+
+            {isLongPost && (
+                <button 
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="mt-2 text-xs font-semibold text-white-500 hover:text-sky-400 transition-colors focus:outline-none"
+                >
+                    {isExpanded ? "Show less" : "Show more"}
+                </button>
+            )}
 
             {Attachments && Attachments.length > 0 && (
                <div className="relative bg-black border border-white/5 rounded-xl mt-4 h-[400px] w-full flex items-center justify-center overflow-hidden">
