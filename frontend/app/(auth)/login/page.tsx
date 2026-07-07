@@ -24,6 +24,7 @@ export default function Login() {
             setError("Неверный логин или пароль");
         }
     };
+    
 
   return (
    <div className="min-h-screen flex items-center justify-center p-4 relative">
@@ -32,8 +33,13 @@ export default function Login() {
 
         <div className="flex flex-col items-center mb-8 relative z-10">
           <div className="w-11 h-11 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center mb-4 shadow-inner">
-            <svg className="w-5 h-5 text-zinc-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3z" />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+              <rect width="100" height="100" rx="40" fill="#000000" />
+              <g fill="#FFFFFF">
+                <path d="M 50,28 L 80,48 H 65 L 50,39 L 35,48 H 20 Z" />
+                <path d="M 50,43 L 80,63 H 65 L 50,54 L 35,63 H 20 Z" />
+                <path d="M 50,58 L 80,78 H 65 L 50,69 L 35,78 H 20 Z" />
+              </g>
             </svg>
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-zinc-100">Welcome back</h1>

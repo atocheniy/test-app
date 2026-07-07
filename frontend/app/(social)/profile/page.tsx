@@ -32,6 +32,7 @@ export default function Profile() {
 
     useEffect(() => {
         refreshUserPostsData();
+        document.title = 'Profile';
     }, []);
 
     const handleSaveProfile = async (e: React.FormEvent) => {
@@ -175,6 +176,7 @@ export default function Profile() {
                         </div>
                     </div>
 
+                            
                     <div className="mt-10 border-t border-white/5 pt-8 space-y-8">
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

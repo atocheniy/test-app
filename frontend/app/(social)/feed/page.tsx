@@ -13,6 +13,7 @@ export default function Feed() {
     
     useEffect(() => {
         refreshPostsData();
+        document.title = 'Feed';
     }, []);
 
     return (

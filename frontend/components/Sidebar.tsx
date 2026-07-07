@@ -25,7 +25,17 @@ export default function Sidebar() {
     return (
          <aside className="w-78 hidden md:flex text-white p-3 flex flex-col h-screen sticky top-0">
             <div>
-                <div className="p-6 mb-4 border border-white/5 bg-white/5 rounded-2xl text-sm text-zinc-400"></div>
+                <div className="p-2 mb-4 border border-white/15  rounded-2xl text-sm font-bold text-white flex flex-row items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40px" height="40px" className="border border-white/15 rounded-xl">
+                        <rect width="100" height="100" rx="40" fill="#000000" />
+                        <g fill="#FFFFFF">
+                            <path d="M 50,28 L 80,48 H 65 L 50,39 L 35,48 H 20 Z" />
+                            <path d="M 50,43 L 80,63 H 65 L 50,54 L 35,63 H 20 Z" />
+                            <path d="M 50,58 L 80,78 H 65 L 50,69 L 35,78 H 20 Z" />
+                        </g>
+                    </svg>
+                    Site
+                </div>
                 <nav>
                     <ul className="space-y-1">
                         {links.map((link) => {
