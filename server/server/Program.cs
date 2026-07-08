@@ -96,7 +96,7 @@ namespace server
 				app.MapOpenApi();
 			}
 
-			app.UseHttpsRedirection();
+			// app.UseHttpsRedirection();
 			app.UseRouting();
 
 			app.UseCors("AllowReactApp");
