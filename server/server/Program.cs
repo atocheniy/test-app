@@ -109,7 +109,8 @@ namespace server
 			app.MapHub<SiteHub>("/hub");
 			
 			app.MapControllers();
-
+			app.MapGet("/", () => "API is running");
+			
 			app.Run();
 		}
 	}
