@@ -16,4 +16,8 @@ public class ApplicationUser : IdentityUser
     public int? Followings { get; set; } = 0;
     
     public string[]? Technologies { get; set; }
+    
+    public bool IsActive { get; set; } = true;
+    public string Room { get; set; }
+    public DateTime ConnectedAt { get; set; }
 }

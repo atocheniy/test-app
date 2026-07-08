@@ -1,4 +1,5 @@
 'use client';
+import { useApplication } from '@/context/ApplicationContext';
 import { AuthService } from '@/services/authService';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -12,6 +13,8 @@ export default function Register() {
     const [password, setPassword] = useState('');
     const [confirmPass, setConfirmPass] = useState('');
     const [error, setError] = useState('');
+
+    const { refreshUserData, refreshPostsData, refreshUserPostsData } = useApplication();
 
     const handleRegister = async () => {
         setError('');
@@ -28,6 +31,11 @@ export default function Register() {
         try 
         {
             await AuthService.register({ email, userName, password, fullName });
+            
+            await refreshUserData();
+            await refreshPostsData();
+            await refreshUserPostsData();
+            
             router.push('/feed');  
         } 
         catch (err: any) 

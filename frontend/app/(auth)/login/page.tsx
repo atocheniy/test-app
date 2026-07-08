@@ -3,6 +3,7 @@ import { AuthService } from '@/services/authService';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Cookies from 'js-cookie';
+import { useApplication } from "@/context/ApplicationContext";
 
 export default function Login() {
     const router = useRouter();
@@ -11,11 +12,18 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
+    const { refreshUserData, refreshPostsData, refreshUserPostsData } = useApplication();
+
     const handleLogin = async () => {
         try 
         {
             setError("");
             await AuthService.login({ email, password });
+            
+            await refreshUserData();
+            await refreshPostsData();
+            await refreshUserPostsData();
+
             router.push('/feed');  
         } 
         catch (err: any) 

@@ -23,6 +23,13 @@ export default function Profile() {
     const params = useParams();
     const usernameFromUrl = params.username as string;
 
+    const { onlineUsers } = useApplication();
+    const cleanUsername = otherUserData.userName;
+
+    const isAuthorOnline = onlineUsers.some(
+        (u) => u.toLowerCase() === cleanUsername.toLowerCase()
+    );
+
     const isOwnProfile = usernameFromUrl.toLowerCase() === userData.userName.toLowerCase();
     
     useEffect(() => {
@@ -65,9 +72,17 @@ export default function Profile() {
                     )}
 
                     <div className="flex flex-row items-end gap-6 relative z-10">
-                        <div className="w-40 h-40 max-sm:w-30 max-sm:h-30  bg-zinc-700 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg overflow-hidden">
-                            {otherUserData.avatar && (
+                        <div className="w-40 h-40 max-sm:w-30 max-sm:h-30  bg-zinc-700 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg">
+                            <div className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
+                                {otherUserData.avatar && (
                                 <img src={otherUserData.avatar} className="w-full h-full object-cover" alt="Avatar" />
+                            )}
+                            </div>
+                            {isAuthorOnline && (
+                                <span 
+                                    className="absolute bottom-2 right-2 w-5 h-5 bg-white border-2 border-[#0a0a0a] rounded-full" 
+                                    title="Online"
+                                />
                             )}
                         </div>
                         <div className="mb-2 max-sm:mt-5">

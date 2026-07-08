@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using server.Data;
 using server.DTOs;
 using server.Models;
+using Microsoft.AspNetCore.SignalR;
+using server.Hubs;
 
 namespace server.Controllers
 {
@@ -22,11 +24,14 @@ namespace server.Controllers
         private readonly IConfiguration _config;
         private readonly ApplicationDbContext _context;
 
-        public PostController(UserManager<ApplicationUser> userManager, IConfiguration config, ApplicationDbContext context)
+        private readonly IHubContext<SiteHub> _hubContext;
+        
+        public PostController(UserManager<ApplicationUser> userManager, IConfiguration config, ApplicationDbContext context, IHubContext<SiteHub> hubContext)
         {
             _userManager = userManager;
             _config = config;
             _context = context;
+            _hubContext = hubContext;
         }
 
         // GET: api/Post
@@ -109,6 +114,9 @@ namespace server.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+            
             if (string.IsNullOrEmpty(model.Content) && (model.Attachments == null || model.Attachments.Length == 0))
             {
                 return BadRequest();
@@ -124,6 +132,31 @@ namespace server.Controllers
             _context.Post.Add(post);
             await _context.SaveChangesAsync();
 
+            await _hubContext.Clients.All.SendAsync("postCreated", new {
+                id = post.Id,
+                content = post.Content,
+                created = post.Created,
+                attachments = post.Attachments,
+                likesCount = post.LikesCount,
+                commentsCount = post.CommentsCount,
+                
+                authorName = user.FullName,
+                authorUsername = user.UserName,
+                authorAvatar = user.Avatar,
+                
+                commentsList = post.Comments
+                    .OrderByDescending(c => c.Created)
+                    .Take(3)
+                    .Select(c => new {
+                        id = c.Id,
+                        content = c.Content,
+                        created = c.Created,
+                        authorName = c.User.FullName,
+                        authorUsername = c.User.UserName,
+                        authorAvatar = c.User.Avatar
+                    })
+            });
+            
             return CreatedAtAction("GetPost", new { id = post.Id }, post);
         }
 

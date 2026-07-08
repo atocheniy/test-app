@@ -23,10 +23,10 @@ export default function Feed() {
             <PublicBlock Avatar={userData.avatar}></PublicBlock>
             
             <div className="flex flex-col  max-sm:mb-[60px] gap-4 p-6 py-6 max-sm:p-0 max-sm:py-6" >
-                {postsData.map((p, index) => {
+                {postsData.map((p) => {
                     console.log(p);
                     return (
-                         <Post key={index} Id={p.id} Avatar={p.authorAvatar} Name={p.authorName} UserName={"@" + p.authorUsername} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}  Likes={p.likesCount} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} />
+                         <Post key={p.id} Id={p.id} Avatar={p.authorAvatar} Name={p.authorName} UserName={"@" + p.authorUsername} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}  Likes={p.likesCount} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} />
                     );
                 })}
             </div>

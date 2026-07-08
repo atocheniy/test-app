@@ -6,6 +6,7 @@ import { AuthService } from '@/services/authService';
 import Cookies from 'js-cookie';
 import { PostService } from '@/services/postService';
 import { CommentsService } from '@/services/commentService';
+import * as signalR from "@microsoft/signalr";
 
 interface ApplicationContextType {
     userData: User;
@@ -30,6 +31,8 @@ interface ApplicationContextType {
     refreshOtherUserPostsData: (username: string) => Promise<void>;
     refreshOtherUserData: (username: string) => Promise<void>;
 
+    onlineUsers: string[];
+
     logout: () => void;
 }
 
@@ -49,6 +52,8 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
     const [commentsData, setCommentsData] = useState<Comment[]>([]);
 
     const [currentPost, setCurrentPost] = useState<Post>({} as Post);
+
+    const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
     const refreshCurrentPost = useCallback(async (id: string) => {
         try {
@@ -151,6 +156,94 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         }
     }, []);
 
+    useEffect(() => {
+        const token = Cookies.get('token');
+        if (!token || !userData.userName || userData.userName === '...') return;
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("https://atocheniy-test-app-api.hf.space/hub", {
+            //.withUrl("http://localhost:5223/hub", {
+                accessTokenFactory: () => token
+            })
+            .withAutomaticReconnect()
+            .build();
+
+        connection.start()
+            .then(async () => {
+                console.log("Успешное подключение к SignalR");
+                await connection.invoke("JoinSite", "global", userData.userName);
+            })
+            .catch(err => console.error("Ошибка подключения к SignalR:", err));
+
+        connection.on("postCreated", (newPost: Post) => {
+            console.log("Опубликован новый пост:", newPost);
+            
+            setPostsData((prev) => {
+                if (prev.some((p) => p.id === newPost.id)) return prev;
+                return [newPost, ...prev];
+            });
+        });
+
+        connection.on("commentCreated", (newComment: any) => {
+            console.log("Опубликован новый комментарий:", newComment);
+            
+            setCurrentPost((prev) => {
+                if (prev && prev.id === newComment.postId) {
+                    const commentsList = prev.commentsList || [];
+                    
+                    if (commentsList.some((c) => c.id === newComment.id)) return prev;
+
+                    return {
+                        ...prev,
+                        commentsCount: prev.commentsCount + 1,
+                        commentsList: [...commentsList, newComment]
+                    };
+                }
+                return prev;
+            });
+
+            const updatePostsArray = (postsList: Post[]) => {
+                return postsList.map((post) => {
+                    if (post.id === newComment.postId) {
+                        const commentsList = post.commentsList || [];
+                        
+                        if (commentsList.some((c) => c.id === newComment.id)) return post;
+                        const updatedCommentsPreview = [newComment, ...commentsList].slice(0, 3);
+
+                        return {
+                            ...post,
+                            commentsCount: post.commentsCount + 1,
+                            commentsList: updatedCommentsPreview
+                        };
+                    }
+                    return post;
+                });
+            };
+
+            setPostsData((prev) => updatePostsArray(prev));
+            setUserPostsData((prev) => updatePostsArray(prev));
+            setOtherUserPostsData((prev) => updatePostsArray(prev));
+        });
+
+        connection.on("userJoined", (data) => {
+            console.log(`Пользователь ${data.userName} вошел в сеть`);
+            setOnlineUsers(data.activeUsers);
+        });
+
+        connection.on("userLeft", (data) => {
+            console.log(`Пользователь ${data.userName} вышел из сети`);
+            setOnlineUsers(data.activeUsers);
+        });
+
+        return () => {
+            if (connection.state === signalR.HubConnectionState.Connected) {
+                connection.invoke("LeaveRoom", "global")
+                    .then(() => connection.stop())
+                    .catch(err => console.error(err));
+            }
+        };
+    }, [userData.userName]);
+
     const logout = () => {
         setUserData({ 
             fullName: 'Загрузка...', 
@@ -158,6 +251,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: []
         });
         setUserNameNormalized("...");
+        setOnlineUsers([]);
 
         AuthService.logout();
         if (typeof window !== 'undefined') window.location.href = '/login';
@@ -179,8 +273,9 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         refreshOtherUserData,
         commentsData,
         refreshCommentsData,
+        onlineUsers,
         logout 
-    }), [userData, postsData, userPostsData, otherUserPostsData, otherUserData, currentPost]);
+    }), [userData, postsData, userPostsData, otherUserPostsData, otherUserData, currentPost, commentsData, onlineUsers]);
 
     return (
         <ApplicationContext.Provider value={ contextValue }>

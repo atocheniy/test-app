@@ -15,6 +15,8 @@ export default function PagePost() {
     const params = useParams();
     const idFromUrl = params.id as string;
 
+    const { onlineUsers } = useApplication();
+    
     const [commentText, setCommentText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -71,14 +73,27 @@ export default function PagePost() {
 
                     <div className="flex flex-col max-sm:mb-[60px] min-h-full gap-4 p-6 lg:px-11 md:px-11 overflow-y-auto  custom-scrollbar">
                         {currentPost.commentsList && currentPost.commentsList.length > 0 ? (
-                            currentPost.commentsList.map((comment) => (
+                            currentPost.commentsList.map((comment) => {
+                                const isCommenterOnline = onlineUsers.some(
+                                    (u) => u.toLowerCase() === comment.authorUsername.toLowerCase()
+                                );
+
+                                return(
                                 <div key={comment.id} className="flex gap-3 text-sm p-4 rounded-2xl bg-zinc-950/50 border border-white/5">
-                                    <div className="w-8 h-8 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
-                                        <Link href={`/profile/${comment.authorUsername.replace('@', '')}`} className="w-10 h-10 rounded-full overflow-hidden cursor-pointer">
+                                    <div className="relative w-8 h-8 shrink-0">
+                                        <Link href={`/profile/${comment.authorUsername.replace('@', '')}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
                                             {comment.authorAvatar && (
-                                                <img src={comment.authorAvatar} className="w-full h-full object-cover" alt="Commenter Avatar" />
+                                                <img src={comment.authorAvatar} className="w-full h-full object-cover" alt="Avatar" />
                                             )}
+
+                                            
                                         </Link>
+                                        {isCommenterOnline && (
+                                                <span 
+                                                    className="absolute bottom-0 right-0 w-3 h-3 bg-white border-2 border-[#0a0a0a] rounded-full" 
+                                                    title="Online"
+                                                />
+                                            )}
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex items-baseline gap-2">
@@ -94,7 +109,8 @@ export default function PagePost() {
                                         <p className="text-xs text-zinc-300 leading-relaxed">{comment.content}</p>
                                     </div>
                                 </div>
-                            ))
+                                );
+                            })
                         ) : (
                             <p className="text-xs text-zinc-500 text-center py-6 select-none">
                                 No comments yet

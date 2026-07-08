@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using server.Data;
 using server.Models;
+using server.Hubs;
 
 namespace server
 {
@@ -20,6 +21,8 @@ namespace server
 
 			var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 			builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+			
+			builder.Services.AddSignalR();
 			
 			builder.Services.AddCors(options =>
 			{
@@ -101,6 +104,10 @@ namespace server
 			app.UseAuthentication();
 			app.UseAuthorization();
 
+			app.UseDefaultFiles();
+			app.UseStaticFiles();
+			app.MapHub<SiteHub>("/hub");
+			
 			app.MapControllers();
 
 			app.Run();

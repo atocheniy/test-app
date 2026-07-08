@@ -15,6 +15,8 @@ import remarkBreaks from 'remark-breaks';
 import { remarkAlert } from 'remark-github-blockquote-alert';
 import dynamic from 'next/dynamic';
 
+import { useApplication } from "@/context/ApplicationContext";
+
 import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
 import { useEffect, useRef, useState } from "react";
@@ -49,6 +51,13 @@ export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes
     const [isExpanded, setIsExpanded] = useState(false);
     const [isLongPost, setIsLongPost] = useState(false);
     const contentRef = useRef<HTMLDivElement>(null);
+
+    const { onlineUsers } = useApplication();
+    const cleanUsername = UserName.replace('@', '');
+
+    const isAuthorOnline = onlineUsers.some(
+        (u) => u.toLowerCase() === cleanUsername.toLowerCase()
+    );
     
     useEffect(() => {
         if (!contentRef.current) return;
@@ -79,12 +88,20 @@ export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes
     return (
       <div className="py-4 border border-white/5 rounded-xl bg-zinc-950/50 text-zinc-100 px-4 mx-5">
         <div className="flex items-center space-x-3 mb-2">
-            <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
-                <Link href={`/profile/${UserName.replace('@', '')}`} className="w-10 h-10 rounded-full overflow-hidden cursor-pointer">
+            <div className="relative w-10 h-10 shrink-0">
+                <Link href={`/profile/${UserName.replace('@', '')}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
                     {Avatar && (
                         <img src={Avatar} className="w-full h-full object-cover" alt="Avatar" />
                     )}
+
+                    
                 </Link>
+                {isAuthorOnline && (
+                        <span 
+                            className="absolute bottom-0 right-0 w-3 h-3 bg-white border-2 border-[#0a0a0a] rounded-full" 
+                            title="Online"
+                        />
+                     )}
             </div>
             <div className="flex items-baseline space-x-2">
             <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer">
@@ -177,13 +194,30 @@ export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes
       
             {commentsList && commentsList.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-white/[0.03] space-y-2.5">
-                    {commentsList.map((comment) => (
+                    {commentsList.map((comment) => {
+
+                        const isCommenterOnline = onlineUsers.some(
+                            (u) => u.toLowerCase() === comment.authorUsername.toLowerCase()
+                        );
+
+                        return(
                         <div key={comment.id} className="flex gap-2.5 text-xs p-2 rounded-xl bg-zinc-950 border border-white/[0.01]">
-                            <Link href={`/profile/${comment.authorUsername}`} className="w-6 h-6 bg-zinc-700 rounded-full shrink-0 overflow-hidden cursor-pointer">
-                                {comment.authorAvatar && (
-                                    <img src={comment.authorAvatar} className="w-full h-full object-cover" alt="Commenter" />
+                            <div className="relative w-6 h-6 shrink-0">
+                                <Link href={`/profile/${UserName.replace('@', '')}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
+                                    {comment.authorAvatar && (
+                                        <img src={comment.authorAvatar} className="w-full h-full object-cover" alt="Commenter" />
+                                    )}
+
+                                    
+                                </Link>
+                                {isCommenterOnline && (
+                                        <span 
+                                            className="absolute bottom-0 right-0 w-2 h-2 bg-white border-2 border-[#0a0a0a] rounded-full" 
+                                            title="Online"
+                                        />
                                 )}
-                            </Link>
+                            </div>
+
                             <div className="flex-1 space-y-0.5 text-left">
                                 <div className="flex items-baseline gap-1.5">
                                     <Link href={`/profile/${comment.authorUsername}`} className="font-semibold text-zinc-200 hover:underline cursor-pointer">
@@ -198,7 +232,8 @@ export default function Post ({ Id, Name, UserName, Content, Time, Avatar, Likes
                                 <p className="text-zinc-400 text-[11px] leading-relaxed">{comment.content}</p>
                             </div>
                         </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
       </div>

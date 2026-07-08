@@ -30,6 +30,13 @@ export default function Profile() {
     const post = { Name: "", UserName: "", Content: "", Time: "" };
     const posts = Array.from({ length: 10 }, () => post);
 
+    const { onlineUsers } = useApplication();
+    const cleanUsername = userData.userName;
+
+    const isAuthorOnline = onlineUsers.some(
+        (u) => u.toLowerCase() === cleanUsername.toLowerCase()
+    );
+
     useEffect(() => {
         refreshUserPostsData();
         document.title = 'Profile';
@@ -124,9 +131,17 @@ export default function Profile() {
                     )}
 
                     <div className="flex flex-row items-end gap-6 relative z-10">
-                        <div className="w-40 h-40 max-sm:w-30 max-sm:h-30  bg-zinc-700 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg overflow-hidden">
-                            {userData.avatar && (
-                                <img src={userData.avatar} className="w-full h-full object-cover" alt="Avatar" />
+                        <div className="relative w-40 h-40 max-sm:w-30 max-sm:h-30 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg">
+                            <div className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
+                                {userData.avatar && (
+                                    <img src={userData.avatar} className="w-full h-full object-cover" alt="Avatar" />
+                                )}
+                            </div>
+                            {isAuthorOnline && (
+                                <span 
+                                    className="absolute bottom-2 right-2 w-5 h-5 bg-white border-2 border-[#0a0a0a] rounded-full" 
+                                    title="Online"
+                                />
                             )}
                         </div>
                         <div className="mb-2 max-sm:mt-5">

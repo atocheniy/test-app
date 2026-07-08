@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using server.Data;
 using server.DTOs;
+using server.Hubs;
 using server.Models;
 
 namespace server.Controllers
@@ -22,11 +24,14 @@ namespace server.Controllers
         private readonly IConfiguration _config;
         private readonly ApplicationDbContext _context;
 
-        public CommentController(UserManager<ApplicationUser> userManager, IConfiguration config, ApplicationDbContext context)
+        private readonly IHubContext<SiteHub> _hubContext;
+
+        public CommentController(UserManager<ApplicationUser> userManager, IConfiguration config, ApplicationDbContext context,  IHubContext<SiteHub> hubContext)
         {
             _userManager = userManager;
             _config = config;
             _context = context;
+            _hubContext = hubContext;
         }
 
         // GET: api/Comment
@@ -108,6 +113,9 @@ namespace server.Controllers
                 return BadRequest();
             }
             
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+            
             var comment = new Comment
             {
                 Content = model.Content,
@@ -124,6 +132,17 @@ namespace server.Controllers
             }
             
             await _context.SaveChangesAsync();
+            
+            await _hubContext.Clients.All.SendAsync("commentCreated", new {
+                id = comment.Id,
+                postId = comment.PostId,
+                content = comment.Content,
+                created = comment.Created,
+                    
+                authorName = user.FullName,
+                authorUsername = user.UserName,
+                authorAvatar = user.Avatar
+            });
 
             return CreatedAtAction("GetComment", new { id = comment.Id }, new { id = comment.Id, message = "Комментарий успешно добавлен" });
         }
