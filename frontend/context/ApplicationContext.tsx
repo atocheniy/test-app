@@ -163,7 +163,9 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("https://atocheniy-test-app-api.hf.space/hub", {
             //.withUrl("http://localhost:5223/hub", {
-                accessTokenFactory: () => token
+                accessTokenFactory: () => token,
+                skipNegotiation: true, 
+                transport: signalR.HttpTransportType.WebSockets 
             })
             .withAutomaticReconnect()
             .build();
