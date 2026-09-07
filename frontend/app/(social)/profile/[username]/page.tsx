@@ -1,22 +1,20 @@
 'use client';
 
-import {$api } from "@/api/axios";
 
 import ExperienceCard from "@/components/exp_card";
 import Post from "@/components/post";
 import ProjectCard from "@/components/project_card";
-import PublicBlock from "@/components/public_block";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
-import { UserService } from "@/services/userService";
-import { UpdateBio } from "@/types/auth";
-import { upload } from "@vercel/blob/client";
 import { useParams } from "next/navigation";
-import { useState } from "react";
-import { useEffect } from "react"; 
+import { useEffect, useState } from "react";
+
+import { ChatService } from "@/services/chatService";
+import { useRouter } from 'next/navigation';
 
 
 export default function Profile() {
+    const router = useRouter();
     const { userData, UserNameNormalized, userPostsData , refreshUserPostsData} = useApplication();
     const { refreshOtherUserPostsData, refreshOtherUserData, otherUserPostsData, otherUserData } = useApplication();
 
@@ -29,6 +27,23 @@ export default function Profile() {
     const isAuthorOnline = onlineUsers.some(
         (u) => u.toLowerCase() === cleanUsername.toLowerCase()
     );
+
+    const [loadingChat, setLoadingChat] = useState(false);
+
+    const handleWriteMessage = async () => {
+        if (!otherUserData?.id || loadingChat) return;
+
+        try {
+            setLoadingChat(true);
+            const data = await ChatService.startChat(otherUserData.id);
+            
+            router.push(`/messages?chatId=${data.chatId}`);
+        } catch (error) {
+            console.error("Не удалось начать чат:", error);
+        } finally {
+            setLoadingChat(false);
+        }
+    };
 
     const isOwnProfile = usernameFromUrl.toLowerCase() === userData.userName.toLowerCase();
     
@@ -92,6 +107,13 @@ export default function Profile() {
                                 <span className="text-sm text-zinc-400">•</span>
                                 <p className="text-sm text-zinc-400">Followers</p>
                             </div>
+                        </div>
+
+                        <div className="ml-auto mb-5">
+                            <button className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition"
+                            onClick={handleWriteMessage}>
+                                Write a message
+                            </button>
                         </div>
                     </div>
                     <div className="mt-6">
@@ -180,7 +202,7 @@ export default function Profile() {
                     <div className="flex flex-col gap-4 p-6 max-sm:p-0 max-sm:py-6 max-sm:pb-[90px]">
                         {otherUserPostsData.map((p, index) => {
                             return (
-                                <Post key={index} Id={p.id} Name={otherUserData.fullName} UserName={"@" + otherUserData.userName} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={otherUserData.avatar} Likes={p.likesCount} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} />
+                                <Post key={index} Id={p.id} Name={otherUserData.fullName} UserName={"@" + otherUserData.userName} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={otherUserData.avatar} Likes={p.likesCount} isLikedByMe={p.isLikedByMe} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} />
                             );
                         })}
                     </div>

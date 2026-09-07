@@ -25,7 +25,7 @@ export default function Sidebar() {
     return (
          <aside className="w-78 hidden md:flex text-white p-3 flex flex-col h-screen sticky top-0">
             <div>
-                <div className="p-3 mb-4 border border-white/15  rounded-2xl text-sm font-bold text-white flex flex-row items-center gap-2">
+                <div className="p-3 mb-4 border border-white/5  rounded-2xl text-sm font-bold text-white flex flex-row items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40px" height="34px" className="border border-white/15 rounded-xl">
                         <rect width="100" height="100" rx="40" fill="#000000" />
                         <g fill="#FFFFFF">

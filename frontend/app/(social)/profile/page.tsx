@@ -1,6 +1,5 @@
 'use client';
 
-import {$api } from "@/api/axios";
 
 import ExperienceCard from "@/components/exp_card";
 import Post from "@/components/post";
@@ -9,10 +8,8 @@ import PublicBlock from "@/components/public_block";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
 import { UserService } from "@/services/userService";
-import { UpdateBio } from "@/types/auth";
 import { upload } from "@vercel/blob/client";
-import { useState } from "react";
-import { useEffect } from "react"; 
+import { useEffect, useState } from "react";
 
 
 export default function Profile() {
@@ -253,7 +250,7 @@ export default function Profile() {
                     <div className="flex flex-col gap-4 p-6 max-sm:p-0 max-sm:py-6 max-sm:pb-[90px]">
                         {userPostsData.map((p, index) => {
                             return (
-                                <Post key={index} Id={p.id} Name={userData.fullName} UserName={UserNameNormalized} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={userData.avatar} Likes={p.likesCount} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} />
+                                <Post key={index} Id={p.id} Name={userData.fullName} UserName={UserNameNormalized} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={userData.avatar} Likes={p.likesCount} isLikedByMe={p.isLikedByMe} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} />
                             );
                         })}
                     </div>

@@ -1,4 +1,4 @@
-import { CreatePost, Post, UpdatePost } from "@/types/auth";
+import { CreatePost, Post, UpdatePost, type LikeResponse } from "@/types/auth";
 import { $api } from "../api/axios";
 
 export const PostService = {
@@ -9,6 +9,11 @@ export const PostService = {
 
     async getUserPosts(){
         const response = await $api.get<Post[]>(`/Post/getUserPosts`);
+        return response.data; 
+    },
+
+    async likePost(id: string){
+        const response = await $api.post<LikeResponse>(`/Post/likePost/${id}`);
         return response.data; 
     },
 

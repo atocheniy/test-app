@@ -24,9 +24,9 @@ namespace server.Controllers
         private readonly IConfiguration _config;
         private readonly ApplicationDbContext _context;
 
-        private readonly IHubContext<SiteHub> _hubContext;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public CommentController(UserManager<ApplicationUser> userManager, IConfiguration config, ApplicationDbContext context,  IHubContext<SiteHub> hubContext)
+        public CommentController(UserManager<ApplicationUser> userManager, IConfiguration config, ApplicationDbContext context,  IHubContext<ChatHub> hubContext)
         {
             _userManager = userManager;
             _config = config;

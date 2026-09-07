@@ -29,7 +29,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterInfo model)
     {
-        var user = new ApplicationUser { UserName = model.UserName, Email = model.Email, FullName = model.FullName };
+        var user = new ApplicationUser { UserName = model.UserName, Email = model.Email, FullName = model.FullName,   Room = string.IsNullOrEmpty(model.Room) ? "general" : model.Room,  ConnectedAt = DateTime.UtcNow};
         var result = await _userManager.CreateAsync(user, model.Password);
 
         if (result.Succeeded) return Ok(new { message = "Регистрация успешна" });
@@ -47,7 +47,7 @@ public class AuthController : ControllerBase
         {
             return Ok(new { 
                 token = GenerateJwtToken(user),
-            }); 
+            });
         }
 
         return Unauthorized("Неверный логин или пароль");
@@ -145,6 +145,7 @@ public class AuthController : ControllerBase
         if (user == null) return NotFound();
 
         return Ok(new { 
+            id = user.Id,
             email = user.Email, 
             fullName = user.FullName,
             userName = user.UserName,
@@ -162,6 +163,7 @@ public class AuthController : ControllerBase
         if (user == null) return NotFound();
             
         return Ok(new { 
+            id =  user.Id,
             fullName = user.FullName,
             userName = user.UserName,
             bio_FirstLine = user.Bio_FirstLine,

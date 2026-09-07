@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 export const $api = axios.create({
-    baseURL: 'https://atocheniy-test-app-api.hf.space/api',
-    // baseURL: 'http://localhost:5223/api',
+    // baseURL: 'https://atocheniy-test-app-api.hf.space/api',
+    baseURL: 'http://localhost:5223/api',
     headers: {
         'Content-Type': 'application/json'
     }
@@ -15,7 +15,9 @@ $api.interceptors.response.use(
         const isAuthRequest = error.config.url.includes('/auth/login') || 
                               error.config.url.includes('/auth/register');
 
-          if (error.response && error.response.status === 401 && !isAuthRequest) {
+        const status = error.response?.status;
+
+        if ((status === 401 || (status === 404 && error.config.url.includes('/auth/me'))) && !isAuthRequest) {
               console.warn("Сессия истекла");
               
               document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";

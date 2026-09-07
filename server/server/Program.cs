@@ -1,4 +1,3 @@
-
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -74,7 +73,7 @@ namespace server
 						var accessToken = context.Request.Query["access_token"];
 						
 						var path = context.HttpContext.Request.Path;
-						if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hub"))
+						if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chathub"))
 						{
 							context.Token = accessToken;
 						}
@@ -121,7 +120,7 @@ namespace server
 
 			app.UseDefaultFiles();
 			app.UseStaticFiles();
-			app.MapHub<SiteHub>("/hub");
+			app.MapHub<ChatHub>("/chathub");
 			
 			app.MapControllers();
 			app.MapGet("/", () => "API is running");

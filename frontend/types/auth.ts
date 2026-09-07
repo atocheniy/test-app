@@ -16,6 +16,7 @@ export interface AuthResponse {
 }
 
 export interface User{
+    id: string;
     email: string;
     fullName: string;
     userName: string;
@@ -40,6 +41,7 @@ export interface Post{
     attachments: string[];
 
     likesCount: number;
+    isLikedByMe: boolean;
     commentsCount: number;
 
     authorName: string;
@@ -105,4 +107,17 @@ export interface UpdateAvatar{
 
 export interface UpdateBanner{
     banner: string;
+}
+
+
+export interface LikeResponse {
+    isLiked: boolean;
+    likesCount: number;
+}
+
+export interface ReplyInfo {
+    id: string;
+    content: string;
+    authorName: string;
+    attachments?: string[];
 }

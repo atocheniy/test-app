@@ -18,6 +18,9 @@ public class ApplicationUser : IdentityUser
     public string[]? Technologies { get; set; }
     
     public bool IsActive { get; set; } = true;
-    public string Room { get; set; }
+    public string? Room { get; set; }
+    
+    public virtual ICollection<ChatParticipant> Chats { get; set; } = new List<ChatParticipant>();
+    
     public DateTime ConnectedAt { get; set; }
 }

@@ -24,9 +24,9 @@ namespace server.Controllers
         private readonly IConfiguration _config;
         private readonly ApplicationDbContext _context;
 
-        private readonly IHubContext<SiteHub> _hubContext;
+        private readonly IHubContext<ChatHub> _hubContext;
         
-        public PostController(UserManager<ApplicationUser> userManager, IConfiguration config, ApplicationDbContext context, IHubContext<SiteHub> hubContext)
+        public PostController(UserManager<ApplicationUser> userManager, IConfiguration config, ApplicationDbContext context, IHubContext<ChatHub> hubContext)
         {
             _userManager = userManager;
             _config = config;
@@ -45,6 +45,8 @@ namespace server.Controllers
         [HttpGet("getPost/{id}")]
         public async Task<ActionResult<Post>> GetPost(Guid id)
         {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
             var post = await _context.Post
                 .Include(p => p.User)
                 .Where(p => p.Id == id)
@@ -54,6 +56,7 @@ namespace server.Controllers
                     created = p.Created,
                     attachments = p.Attachments,
                     likesCount = p.LikesCount,
+                    isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                     commentsCount = p.CommentsCount,
                     
                     authorName = p.User.FullName,
@@ -138,6 +141,7 @@ namespace server.Controllers
                 created = post.Created,
                 attachments = post.Attachments,
                 likesCount = post.LikesCount,
+                isLikedByMe = false,
                 commentsCount = post.CommentsCount,
                 
                 authorName = user.FullName,
@@ -192,6 +196,8 @@ namespace server.Controllers
         [HttpGet("getAllPosts")]
         public async Task<IActionResult> GetFeed()
         {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
             var posts = await _context.Post
                 .Include(p => p.User)
                 .OrderByDescending(p => p.Created)
@@ -201,6 +207,7 @@ namespace server.Controllers
                     created = p.Created,
                     attachments = p.Attachments,
                     likesCount = p.LikesCount,
+                    isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                     commentsCount = p.CommentsCount,
                     
                     authorName = p.User.FullName,
@@ -223,6 +230,54 @@ namespace server.Controllers
 
             return Ok(posts);
         }
+
+        [HttpPost("likePost/{id}")]
+        [Authorize]
+        public async Task<IActionResult> LikePost(Guid id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var post = await _context.Post.FindAsync(id);
+            if (post == null) return NotFound();
+            
+            var existingLike = await _context.PostLikes
+                .FirstOrDefaultAsync(l => l.PostId == id && l.UserId == userId);
+            
+            bool isLiked;
+            
+            if (existingLike != null)
+            {
+                _context.PostLikes.Remove(existingLike);
+                post.LikesCount = Math.Max(0, post.LikesCount - 1);
+                isLiked = false;
+            }
+            else
+            {
+                _context.PostLikes.Add(new PostLike
+                {
+                    PostId = id,
+                    UserId = userId
+                });
+                post.LikesCount++;
+                isLiked = true;
+            }
+
+            await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("postLiked", new 
+            {
+                postId = post.Id,
+                likesCount = post.LikesCount,
+                userId = userId,
+                isLiked = isLiked
+            });
+            
+            return Ok(new 
+            { 
+                isLiked = isLiked, 
+                likesCount = post.LikesCount 
+            });
+        }
         
         [HttpGet("getUserPosts")]
         [Authorize]
@@ -239,6 +294,7 @@ namespace server.Controllers
                     created = p.Created,
                     attachments = p.Attachments,
                     likesCount = p.LikesCount,
+                    isLikedByMe = _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == userId),
                     commentsCount = p.CommentsCount,
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,
@@ -265,6 +321,7 @@ namespace server.Controllers
         [HttpGet("getOtherUserPosts/{username}")]
         public async Task<IActionResult> GetPostsByUsername(string username)
         {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var user = await _userManager.FindByNameAsync(username);
             if (user == null) return NotFound();
 
@@ -278,6 +335,7 @@ namespace server.Controllers
                     created = p.Created,
                     attachments = p.Attachments,
                     likesCount = p.LikesCount,
+                    isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                     commentsCount = p.CommentsCount,
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,

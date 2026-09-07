@@ -20,10 +20,7 @@
 }
 
 @layer utilities {
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
+
 
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
@@ -53,4 +50,12 @@ body {
 ::selection {
   background-color: var(--foreground);
   color: var(--background);
+}
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -1,12 +1,12 @@
 'use client';
-import React, { createContext, useState, useContext, useEffect, useMemo, useCallback } from 'react';
-import { Post, User } from "@/types/auth";
-import { UserService } from '@/services/userService';
 import { AuthService } from '@/services/authService';
-import Cookies from 'js-cookie';
-import { PostService } from '@/services/postService';
 import { CommentsService } from '@/services/commentService';
+import { PostService } from '@/services/postService';
+import { UserService } from '@/services/userService';
+import { Post, User } from "@/types/auth";
 import * as signalR from "@microsoft/signalr";
+import Cookies from 'js-cookie';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 interface ApplicationContextType {
     userData: User;
@@ -32,6 +32,7 @@ interface ApplicationContextType {
     refreshOtherUserData: (username: string) => Promise<void>;
 
     onlineUsers: string[];
+    connection: signalR.HubConnection | null;
 
     logout: () => void;
 }
@@ -40,10 +41,10 @@ const ApplicationContext = createContext<ApplicationContextType | null>(null);
 
 export const ApplicationProvider = ({ children }: { children: React.ReactNode }) => {
    
-    const [userData, setUserData] = useState<User>({ fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
+    const [userData, setUserData] = useState<User>({ id: '', fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
     const [UserNameNormalized, setUserNameNormalized] = useState<string>('');
 
-    const [otherUserData, setOtherUserData] = useState<User>({ fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
+    const [otherUserData, setOtherUserData] = useState<User>({ id: '', fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
     const [otherUserPostsData, setOtherUserPostsData] = useState<Post[]>([]);
 
     const [postsData, setPostsData] = useState<Post[]>([]);
@@ -54,6 +55,8 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
     const [currentPost, setCurrentPost] = useState<Post>({} as Post);
 
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+
+    const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
 
     const refreshCurrentPost = useCallback(async (id: string) => {
         try {
@@ -88,7 +91,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             
         } catch (error) {
             console.error("Ошибка обновления данных пользователя", error);
-            setUserData({ fullName: 'Гость', email: 'Ошибка загрузки', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
+            setUserData({id: '', fullName: 'Гость', email: 'Ошибка загрузки', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
             setUserNameNormalized("...");
         }
     };
@@ -137,7 +140,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             
         } catch (error) {
             console.error("Ошибка обновления данных пользователя", error);
-            setOtherUserData({ fullName: 'Гость', email: 'Ошибка загрузки', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
+            setOtherUserData({ id: '', fullName: 'Гость', email: 'Ошибка загрузки', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
         }
     };
 
@@ -151,7 +154,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         }
         else 
         {
-            setUserData({ fullName: 'Гость', email: '', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
+            setUserData({ id: '', fullName: 'Гость', email: '', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
             setUserNameNormalized("...");
         }
     }, []);
@@ -160,24 +163,24 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         const token = Cookies.get('token');
         if (!token || !userData.userName || userData.userName === '...') return;
 
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("https://atocheniy-test-app-api.hf.space/hub", {
-            //.withUrl("http://localhost:5223/hub", {
+        const newConnection = new signalR.HubConnectionBuilder()
+            //.withUrl("https://atocheniy-test-app-api.hf.space/chathub", {
+            .withUrl("http://localhost:5223/chathub", {
                 accessTokenFactory: () => token,
-                skipNegotiation: true, 
+                // skipNegotiation: true, 
                 transport: signalR.HttpTransportType.WebSockets 
             })
             .withAutomaticReconnect()
             .build();
 
-        connection.start()
+        newConnection.start()
             .then(async () => {
-                console.log("Успешное подключение к SignalR");
-                await connection.invoke("JoinSite", "global", userData.userName);
+                await newConnection.invoke("JoinSite", "global", userData.userName);
+                setConnection(newConnection);
             })
-            .catch(err => console.error("Ошибка подключения к SignalR:", err));
+            .catch(err => console.error("Ошибка подключения:", err));
 
-        connection.on("postCreated", (newPost: Post) => {
+        newConnection.on("postCreated", (newPost: Post) => {
             console.log("Опубликован новый пост:", newPost);
             
             setPostsData((prev) => {
@@ -186,7 +189,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             });
         });
 
-        connection.on("commentCreated", (newComment: any) => {
+        newConnection.on("commentCreated", (newComment: any) => {
             console.log("Опубликован новый комментарий:", newComment);
             
             setCurrentPost((prev) => {
@@ -227,20 +230,52 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             setOtherUserPostsData((prev) => updatePostsArray(prev));
         });
 
-        connection.on("userJoined", (data) => {
-            console.log(`Пользователь ${data.userName} вошел в сеть`);
+        newConnection.on("postLiked", (data: { postId: string; likesCount: number; userId: string; isLiked: boolean }) => {
+            console.log("Лайк обновлен:", data);
+
+            const updatePostsLikes = (postsList: Post[]) => {
+                return postsList.map((post) => {
+                    if (post.id === data.postId) {
+                        const isMe = userData.id === data.userId;
+                        return {
+                            ...post,
+                            likesCount: data.likesCount,
+                            isLikedByMe: isMe ? data.isLiked : post.isLikedByMe
+                        };
+                    }
+                    return post;
+                });
+            };
+
+            setPostsData((prev) => updatePostsLikes(prev));
+            setUserPostsData((prev) => updatePostsLikes(prev));
+            setOtherUserPostsData((prev) => updatePostsLikes(prev));
+
+            setCurrentPost((prev) => {
+                if (prev && prev.id === data.postId) {
+                    const isMe = userData.id === data.userId;
+                    return {
+                        ...prev,
+                        likesCount: data.likesCount,
+                        isLikedByMe: isMe ? data.isLiked : prev.isLikedByMe
+                    };
+                }
+                return prev;
+            });
+        });
+
+        newConnection.on("userJoined", (data) => {
             setOnlineUsers(data.activeUsers);
         });
 
-        connection.on("userLeft", (data) => {
-            console.log(`Пользователь ${data.userName} вышел из сети`);
+        newConnection.on("userLeft", (data) => {
             setOnlineUsers(data.activeUsers);
         });
 
         return () => {
-            if (connection.state === signalR.HubConnectionState.Connected) {
-                connection.invoke("LeaveRoom", "global")
-                    .then(() => connection.stop())
+            if (newConnection.state === signalR.HubConnectionState.Connected) {
+                newConnection.invoke("LeaveRoom", "global")
+                    .then(() => newConnection.stop())
                     .catch(err => console.error(err));
             }
         };
@@ -248,6 +283,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
 
     const logout = () => {
         setUserData({ 
+            id: '',
             fullName: 'Загрузка...', 
             email: '', 
             userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: []
@@ -276,8 +312,9 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         commentsData,
         refreshCommentsData,
         onlineUsers,
+        connection,
         logout 
-    }), [userData, postsData, userPostsData, otherUserPostsData, otherUserData, currentPost, commentsData, onlineUsers]);
+    }), [userData, postsData, userPostsData, otherUserPostsData, otherUserData, currentPost, commentsData, onlineUsers, connection]);
 
     return (
         <ApplicationContext.Provider value={ contextValue }>
