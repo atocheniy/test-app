@@ -9,12 +9,12 @@ import TitlebarMessage from "@/components/titlebarMessage";
 import { useApplication } from "@/context/ApplicationContext";
 import { ChatItem, ChatService, MessageItem } from "@/services/chatService";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import * as signalR from "@microsoft/signalr";
 import { Edit, Reply, X } from "lucide-react";
 
-export default function Messages() {
+function MessagesContent() {
      const searchParams = useSearchParams();
     const queryChatId = searchParams.get('chatId');
 
@@ -453,4 +453,12 @@ export default function Messages() {
           )}
      </div>
     )
+}
+
+export default function Messages() {
+    return (
+        <Suspense fallback={<div className="flex h-full items-center justify-center text-zinc-500">Loading messages...</div>}>
+            <MessagesContent />
+        </Suspense>
+    );
 }
