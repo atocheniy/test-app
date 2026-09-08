@@ -32,10 +32,17 @@ export const PostService = {
     },
 
     async changePost(data: UpdatePost, id: string) { 
-        return await $api.patch(`/Post/updatePost/${id}`, data); 
+        return await $api.put(`/Post/updatePost/${id}`, data); 
     }, 
 
     async deletePost(id: string) {
         return await $api.delete(`/Post/${id}`);
-    }
+    },
+
+    async searchPosts(query: string) {
+        const clean = query.trim();
+        if (!clean) return [];
+        const response = await $api.get<Post[]>(`/Post/search?query=${encodeURIComponent(clean)}`);
+        return response.data;
+    },
 };

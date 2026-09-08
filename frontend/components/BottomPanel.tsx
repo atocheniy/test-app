@@ -1,12 +1,13 @@
 'use client'
 import clsx from "clsx";
-import { LinkIcon, Menu, UserPen, MessageCircle, Newspaper, Search } from "lucide-react";
+import { MessageCircle, Newspaper, Search, UserPen } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 const links = [
   { name: 'Feed', href: '/feed', icon: Newspaper },
   { name: 'Search', href: '/search', icon: Search },
+  { name: 'Messages', href: '/messages', icon: MessageCircle },
   { name: 'Profile', href: '/profile', icon: UserPen },
 ];
 

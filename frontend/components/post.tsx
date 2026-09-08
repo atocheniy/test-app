@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, MessageCircle, Repeat2 } from "lucide-react";
+import { Check, Copy, Heart, MessageCircle, MoreHorizontal, Pencil, Repeat2, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 import dynamic from "next/dynamic";
@@ -20,6 +20,7 @@ import { useApplication } from "@/context/ApplicationContext";
 import { PostService } from "@/services/postService";
 import "@uiw/react-markdown-preview/markdown.css";
 import "@uiw/react-md-editor/markdown-editor.css";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), { ssr: false });
@@ -79,9 +80,19 @@ export default function Post({
   const [isLiked, setIsLiked] = useState(isLikedByMe);
   const [likesCount, setLikesCount] = useState(Likes);
   const [isLoadingLike, setIsLoadingLike] = useState(false);
+  const router = useRouter();
 
-  const { onlineUsers, setRepostTarget } = useApplication();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(Content);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const { onlineUsers, setRepostTarget, userData, refreshPostsData, refreshUserPostsData } = useApplication();
   const cleanUsername = UserName.replace("@", "");
+
+  const isMyPost = userData?.userName && userData.userName.toLowerCase() === cleanUsername.toLowerCase();
 
   const handleRepostClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -105,6 +116,20 @@ export default function Post({
   };
 
   const isAuthorOnline = onlineUsers.some((u) => u.toLowerCase() === cleanUsername.toLowerCase());
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   useEffect(() => {
     setLikesCount(Likes);
@@ -136,6 +161,56 @@ export default function Post({
       resizeObserver.disconnect();
     };
   }, [Content]);
+
+  const handleCopyText = async () => {
+    try {
+      await navigator.clipboard.writeText(Content);
+      setIsCopied(true);
+      setTimeout(() => {
+        setIsCopied(false);
+        setIsMenuOpen(false);
+      }, 1200);
+    } catch (err) {
+      console.error("Ошибка копирования:", err);
+    }
+  };
+
+
+  const handleDeletePost = async () => {
+    setIsMenuOpen(false);
+    if (!confirm("Вы уверены, что хотите удалить этот пост?")) return;
+
+    try {
+      await PostService.deletePost(Id);
+      await refreshPostsData();
+      if (refreshUserPostsData) await refreshUserPostsData();
+    } catch (err) {
+      console.error("Ошибка удаления поста:", err);
+      alert("Не удалось удалить пост");
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editContent.trim()) {
+      alert("Пост не может быть пустым");
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      await PostService.changePost({
+        content: editContent,
+        attachments: Attachments || [],
+      }, Id);
+      setIsEditing(false);
+      await refreshPostsData();
+    } catch (err) {
+      console.error("Ошибка обновления поста:", err);
+      alert("Не удалось обновить пост");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -169,6 +244,7 @@ export default function Post({
 
   return (
     <div className="py-4 border border-white/5 rounded-xl bg-zinc-950/50 text-zinc-100 px-4 mx-5">
+      <div className="flex items-center justify-between mb-2">
       <div className="flex items-center space-x-3 mb-2">
         <div className="relative w-10 h-10 shrink-0">
           <Link
@@ -198,8 +274,89 @@ export default function Post({
           <span className="text-zinc-500 text-sm">{Time}</span>
         </div>
       </div>
+      <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            className="p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-full transition duration-150"
+            title="Опции"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+
+          {isMenuOpen && (
+            <div className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-zinc-900 border border-white/10 shadow-2xl p-1 z-50 backdrop-blur-xl">
+              <button
+                onClick={handleCopyText}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
+              >
+                {isCopied ? (
+                  <Check className="w-3.5 h-3.5 text-green-400" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+                <span>{isCopied ? "Скопировано" : "Копировать текст"}</span>
+              </button>
+
+              {isMyPost && (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsEditing(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    <span>Редактировать</span>
+                  </button>
+
+                  <div className="h-[1px] bg-white/5 my-1" />
+
+                  <button
+                    onClick={handleDeletePost}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Удалить пост</span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="pt-4 w-full">
+        {isEditing ? (
+          <div className="space-y-3 mb-4">
+            <textarea
+              rows={10}
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full p-3 text-sm text-zinc-100 bg-[#0a0a0a] border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-white/30 resize-none"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditContent(Content);
+                }}
+                className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                disabled={isSavingEdit}
+                className="px-4 py-1.5 text-xs font-medium bg-white text-black rounded-lg hover:bg-zinc-200 transition disabled:opacity-50"
+              >
+                {isSavingEdit ? "Сохранение..." : "Сохранить"}
+              </button>
+            </div>
+          </div>
+        ) : (
         <div
           ref={contentRef}
           className={`relative overflow-hidden transition-all duration-300 rounded-xl ${
@@ -231,6 +388,7 @@ export default function Post({
             ]}
           />
         </div>
+        )}
 
         {isLongPost && (
           <button
@@ -240,6 +398,8 @@ export default function Post({
             {isExpanded ? "Show less" : "Show more"}
           </button>
         )}
+        
+          
 
         {Attachments && Attachments.length > 0 && (
           <div className="relative bg-black border border-white/5 rounded-xl mt-4 h-[400px] w-full flex items-center justify-center overflow-hidden">
@@ -257,38 +417,63 @@ export default function Post({
         )}
 
         {repostOfPost && (
-          <div className="mt-3 p-3.5 rounded-xl border border-white/10 bg-black/40 hover:border-white/20 transition group/repost">
-            <div className="flex items-center space-x-2 mb-2">
-              <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-zinc-800">
-                {repostOfPost.authorAvatar && (
-                  <img src={repostOfPost.authorAvatar} className="w-full h-full object-cover" alt="" />
-                )}
+          <div className="mt-3 rounded-xl border border-white/10 bg-zinc-900/10 hover:border-white/20 transition duration-200 overflow-hidden group/repost">
+            <div 
+              onClick={() => router.push(`/post/${repostOfPost.id}`)} 
+              className="block p-3.5 pb-2 cursor-pointer"
+            >
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-zinc-800">
+                  {repostOfPost.authorAvatar ? (
+                    <img src={repostOfPost.authorAvatar} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    <div className="w-full h-full bg-zinc-700" />
+                  )}
+                </div>
+                <span className="font-semibold text-xs text-zinc-200 hover:underline">
+                  {repostOfPost.authorName}
+                </span>
+                <span className="text-zinc-500 text-xs">@{repostOfPost.authorUsername.replace("@", "")}</span>
+                <span className="text-zinc-500 text-xs">·</span>
+                <span className="text-zinc-500 text-xs">
+                  {repostOfPost.created
+                    ? new Date(repostOfPost.created).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                    : ""}
+                </span>
               </div>
-              <Link
-                href={`/profile/${repostOfPost.authorUsername}`}
-                className="font-semibold text-xs text-zinc-200 hover:underline cursor-pointer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {repostOfPost.authorName}
-              </Link>
-              <span className="text-zinc-500 text-xs">@{repostOfPost.authorUsername}</span>
-            </div>
 
-            <Link href={`/post/${repostOfPost.id}`} className="block">
-              <p className="text-xs text-zinc-300 line-clamp-3 leading-relaxed">
-                {repostOfPost.content}
-              </p>
-
-              {repostOfPost.attachments && repostOfPost.attachments.length > 0 && (
-                <div className="mt-2 h-44 rounded-lg overflow-hidden border border-white/5 bg-zinc-900">
-                  <img
-                    src={repostOfPost.attachments[0]}
-                    className="w-full h-full object-cover group-hover/repost:scale-[1.02] transition duration-300"
-                    alt=""
+              {repostOfPost.content && (
+                <div className="text-xs text-zinc-300 max-h-[100px] overflow-hidden relative pointer-events-none opacity-90">
+                  <MarkdownPreview
+                    source={repostOfPost.content}
+                    style={{ backgroundColor: "transparent", color: "inherit", fontSize: "12px" }}
+                    wrapperElement={{ "data-color-mode": "dark" }}
                   />
+                  <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-zinc-950/80 to-transparent pointer-events-none" />
                 </div>
               )}
-            </Link>
+            </div>
+
+            {repostOfPost.attachments && repostOfPost.attachments.length > 0 && (
+    
+              <div 
+                onClick={() => router.push(`/post/${repostOfPost.id}`)} 
+                className="block px-3.5 pb-3.5 cursor-pointer"
+              >
+                <div className="relative bg-black border border-white/5 rounded-xl mt-4 h-[400px] w-full flex items-center justify-center overflow-hidden">
+                  <img
+                    src={repostOfPost.attachments[0]}
+                    className="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 scale-110 pointer-events-none select-none"
+                    alt="Quote attachment"
+                  />
+                  <img
+                    src={repostOfPost.attachments[0]}
+                    className="relative w-full h-full object-contain z-10"
+                    alt="Post attachment"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 

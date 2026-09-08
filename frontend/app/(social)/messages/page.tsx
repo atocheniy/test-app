@@ -69,7 +69,8 @@ function MessagesContent() {
                 }
             }
 
-            if (data.length > 0 && !activeChat) {
+            const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 640;
+            if (data.length > 0 && !activeChat && isDesktop) {
                 handleSelectChat(data[0]);
             }
         } catch (error) {
@@ -315,7 +316,7 @@ function MessagesContent() {
 
     return (
           <div className="flex flex-row h-full" >
-               <div className="flex flex-col w-[500px] max-sm:w-full border-r border-white/5 overflow-y-auto no-scrollbar max-sm:border-r-0 min-h-full">
+               <div className={`flex flex-col w-[500px] max-sm:w-full border-r border-white/5 overflow-y-auto no-scrollbar max-sm:border-r-0 min-h-full ${activeChat ? 'max-sm:hidden' : 'flex'}`}>
                     <Titlebar title="Messages"></Titlebar>
 
                     <div className="flex flex-col">
@@ -349,7 +350,7 @@ function MessagesContent() {
                     </div>
                 </div>
                {activeChat ? (
-                <div className="flex flex-col w-full h-full max-sm:hidden overflow-y-auto no-scrollbar">
+  <div className="flex flex-col w-full overflow-y-auto no-scrollbar  max-sm:fixed max-sm:top-0 max-sm:inset-x-0 max-sm:bottom-16 max-sm:z-50 max-sm:bg-black/75 max-sm:backdrop-blur-xl">
                    <TitlebarMessage 
                         Id={activeChat.id} 
                         Name={activeChat.name} 

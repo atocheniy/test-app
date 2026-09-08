@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using server.Data;
 using server.DTOs;
@@ -51,6 +52,33 @@ public class AuthController : ControllerBase
         }
 
         return Unauthorized("Неверный логин или пароль");
+    }
+    
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchUsers([FromQuery] string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return Ok(new List<object>());
+        }
+        
+        var cleanQuery = query.Trim().Replace("@", "").ToLower();
+
+        var users = await _userManager.Users
+            .Where(u => (u.UserName != null && u.UserName.ToLower().Contains(cleanQuery)) ||
+                        (u.FullName != null && u.FullName.ToLower().Contains(cleanQuery)))
+            .Take(15) 
+            .Select(u => new {
+                id = u.Id,
+                userName = u.UserName,
+                fullName = u.FullName,
+                avatar = u.Avatar,
+                bio_FirstLine = u.Bio_FirstLine,
+                followers = u.Followers
+            })
+            .ToListAsync();
+
+        return Ok(users);
     }
     
     [HttpPatch("updateBio")]

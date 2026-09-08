@@ -450,5 +450,64 @@ namespace server.Controllers
 
             return Ok(posts);
         }
+        
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchPosts([FromQuery] string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return Ok(new List<object>());
+            }
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var cleanQuery = query.Trim().ToLower();
+
+            var posts = await _context.Post
+                .Include(p => p.User)
+                .Include(p => p.RepostOfPost)
+                    .ThenInclude(rp => rp.User)
+                .Where(p => p.Content != null && p.Content.ToLower().Contains(cleanQuery))
+                .OrderByDescending(p => p.Created)
+                .Take(20) 
+                .Select(p => new {
+                    id = p.Id,
+                    content = p.Content,
+                    created = p.Created,
+                    attachments = p.Attachments,
+                    likesCount = p.LikesCount,
+                    isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
+                    commentsCount = p.CommentsCount,
+                    repostsCount = p.RepostsCount,
+                    
+                    repostOfPost = p.RepostOfPost == null ? null : new {
+                        id = p.RepostOfPost.Id,
+                        content = p.RepostOfPost.Content,
+                        created = p.RepostOfPost.Created,
+                        attachments = p.RepostOfPost.Attachments,
+                        authorName = p.RepostOfPost.User.FullName,
+                        authorUsername = p.RepostOfPost.User.UserName,
+                        authorAvatar = p.RepostOfPost.User.Avatar
+                    },
+
+                    authorName = p.User.FullName,
+                    authorUsername = p.User.UserName,
+                    authorAvatar = p.User.Avatar,
+                    
+                    commentsList = p.Comments
+                        .OrderByDescending(c => c.Created)
+                        .Take(3)
+                        .Select(c => new {
+                            id = c.Id,
+                            content = c.Content,
+                            created = c.Created,
+                            authorName = c.User.FullName,
+                            authorUsername = c.User.UserName,
+                            authorAvatar = c.User.Avatar
+                        })
+                })
+                .ToListAsync();
+
+            return Ok(posts);
+        }
     }
 }

@@ -34,5 +34,12 @@ export const UserService = {
 
     async deleteAccount() {
         return await $api.delete(`/auth/me`);
-    }
+    },
+
+    async searchUsers(query: string) {
+        const clean = query.replace('@', '').trim();
+        if (!clean) return [];
+        const response = await $api.get<User[]>(`/auth/search?query=${encodeURIComponent(clean)}`);
+        return response.data;
+    },
 };

@@ -177,8 +177,8 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         if (!token || !userData.userName || userData.userName === '...') return;
 
         const newConnection = new signalR.HubConnectionBuilder()
-            .withUrl("https://atocheniy-test-app-api.hf.space/chathub", {
-            //.withUrl("http://localhost:5223/chathub", {
+            //.withUrl("https://atocheniy-test-app-api.hf.space/chathub", {
+            .withUrl("http://localhost:5223/chathub", {
                 accessTokenFactory: () => token,
                 // skipNegotiation: true, 
                 transport: signalR.HttpTransportType.WebSockets 
