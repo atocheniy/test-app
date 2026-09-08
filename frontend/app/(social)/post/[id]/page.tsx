@@ -63,7 +63,7 @@ export default function PagePost() {
                     <Titlebar title={`Post from ${currentPost.authorName}`}></Titlebar>
                 
                     <div className="flex flex-col lg:p-6 md:p-6 py-6">
-                        <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={new Date(currentPost.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount}></Post>
+                        <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={new Date(currentPost.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount} repostsCount={currentPost.repostsCount} repostOfPost={currentPost.repostOfPost}></Post>
                     </div>
 
                     <div className="w-full border-t border-white/5"></div>

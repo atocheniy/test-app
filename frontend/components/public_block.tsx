@@ -1,7 +1,7 @@
 import { useApplication } from '@/context/ApplicationContext';
 import { PostService } from '@/services/postService';
 import { upload } from '@vercel/blob/client';
-import { Image as ImageIcon, Video, Code, Newspaper, X } from 'lucide-react';
+import { Code, Image as ImageIcon, Newspaper, Repeat2, Video, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 interface PublicBlockProps{
@@ -15,22 +15,27 @@ export default function PublicBlock({ Avatar }: PublicBlockProps)
     const [attachments, setAttachments] = useState<string[]>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { refreshUserData, refreshPostsData } = useApplication();
+    const { refreshUserData, refreshPostsData , repostTarget, setRepostTarget} = useApplication();
 
     const handleCreatePost = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!newContent.trim() && attachments.length === 0) {
+        if (!newContent.trim() && attachments.length === 0 && !repostTarget) {
             alert("Пост не может быть пустым");
             return;
         }
 
         setIsUploading(true);
         try {
-            await PostService.createPost({ content: newContent, attachments: attachments });
+            await PostService.createPost({ 
+                content: newContent, 
+                attachments: attachments,
+                repostOfPostId: repostTarget?.id
+            });
 
             setContent('');
             setAttachments([]); 
+            setRepostTarget(null);
 
             await refreshPostsData();
             await refreshUserData();
@@ -81,6 +86,32 @@ export default function PublicBlock({ Avatar }: PublicBlockProps)
                                     className="w-full p-2 text-sm text-zinc-100 bg-[#0a0a0a] border border-white/5 rounded-xl focus:outline-none transition focus:ring-2 focus:ring-white-500 focus:border-white-500 resize-none [field-sizing:content] min-h-[38px] max-h-[250px]"
                                 />
                             </div>
+
+                            {repostTarget && (
+                                <div className="mx-4 mb-3 p-3 rounded-xl border border-white/10 bg-black/40 relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setRepostTarget(null)}
+                                        className="absolute top-2.5 right-2.5 p-1 rounded-full bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition"
+                                        title="Отменить репост"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <Repeat2 className="w-3.5 h-3.5 text-green-500" />
+                                        <div className="w-5 h-5 rounded-full overflow-hidden bg-zinc-800 shrink-0">
+                                            {repostTarget.authorAvatar && (
+                                                <img src={repostTarget.authorAvatar} className="w-full h-full object-cover" alt="" />
+                                            )}
+                                        </div>
+                                        <span className="text-xs font-medium text-zinc-200">{repostTarget.authorName}</span>
+                                        <span className="text-xs text-zinc-500">@{repostTarget.authorUsername}</span>
+                                    </div>
+                                    <p className="text-xs text-zinc-400 line-clamp-2 pl-5 font-normal">
+                                        {repostTarget.content || "(вложение)"}
+                                    </p>
+                                </div>
+                            )}
 
                             {attachments.length > 0 && (
                                 <div className="flex flex-wrap gap-2 px-6 pb-4">

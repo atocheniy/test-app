@@ -34,7 +34,18 @@ interface PostProps {
   Likes: number;
   isLikedByMe?: boolean;
   Comments: number;
+  repostsCount?: number;
   Attachments?: string[];
+
+  repostOfPost?: {
+    id: string;
+    content: string;
+    created: string | Date;
+    authorName: string;
+    authorUsername: string;
+    authorAvatar?: string;
+    attachments?: string[];
+  } | null;
 
   commentsList?: {
     id: string;
@@ -56,6 +67,8 @@ export default function Post({
   Likes,
   isLikedByMe = false,
   Comments,
+  repostOfPost,
+  repostsCount = 0,
   Attachments,
   commentsList,
 }: PostProps) {
@@ -67,8 +80,29 @@ export default function Post({
   const [likesCount, setLikesCount] = useState(Likes);
   const [isLoadingLike, setIsLoadingLike] = useState(false);
 
-  const { onlineUsers } = useApplication();
+  const { onlineUsers, setRepostTarget } = useApplication();
   const cleanUsername = UserName.replace("@", "");
+
+  const handleRepostClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setRepostTarget({
+      id: Id,
+      content: Content,
+      authorName: Name,
+      authorUsername: cleanUsername,
+      authorAvatar: Avatar,
+      attachments: Attachments,
+    });
+
+    const createBlock = document.getElementById("create-post-block");
+    if (createBlock) {
+      createBlock.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   const isAuthorOnline = onlineUsers.some((u) => u.toLowerCase() === cleanUsername.toLowerCase());
 
@@ -222,6 +256,42 @@ export default function Post({
           </div>
         )}
 
+        {repostOfPost && (
+          <div className="mt-3 p-3.5 rounded-xl border border-white/10 bg-black/40 hover:border-white/20 transition group/repost">
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-zinc-800">
+                {repostOfPost.authorAvatar && (
+                  <img src={repostOfPost.authorAvatar} className="w-full h-full object-cover" alt="" />
+                )}
+              </div>
+              <Link
+                href={`/profile/${repostOfPost.authorUsername}`}
+                className="font-semibold text-xs text-zinc-200 hover:underline cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {repostOfPost.authorName}
+              </Link>
+              <span className="text-zinc-500 text-xs">@{repostOfPost.authorUsername}</span>
+            </div>
+
+            <Link href={`/post/${repostOfPost.id}`} className="block">
+              <p className="text-xs text-zinc-300 line-clamp-3 leading-relaxed">
+                {repostOfPost.content}
+              </p>
+
+              {repostOfPost.attachments && repostOfPost.attachments.length > 0 && (
+                <div className="mt-2 h-44 rounded-lg overflow-hidden border border-white/5 bg-zinc-900">
+                  <img
+                    src={repostOfPost.attachments[0]}
+                    className="w-full h-full object-cover group-hover/repost:scale-[1.02] transition duration-300"
+                    alt=""
+                  />
+                </div>
+              )}
+            </Link>
+          </div>
+        )}
+
         <div className="flex items-center gap-10 max-w-[280px] mt-4 text-zinc-500">
           <Link href={`/post/${Id}`}>
             <button className="flex items-center gap-2 hover:text-sky-500 transition-colors group">
@@ -229,9 +299,13 @@ export default function Post({
               <span className="text-xs">{Comments}</span>
             </button>
           </Link>
-          <button className="flex items-center gap-2 hover:text-green-500 transition-colors group">
+          <button 
+            onClick={handleRepostClick}
+            className="flex items-center gap-2 hover:text-green-500 transition-colors group"
+            title="Репостнуть"
+          >
             <Repeat2 className="w-4 h-4 stroke-[1.8]" />
-            <span className="text-xs">0</span>
+            <span className="text-xs">{repostsCount}</span>
           </button>
           <button
             onClick={handleLike}
@@ -250,7 +324,7 @@ export default function Post({
       </div>
 
       {commentsList && commentsList.length > 0 && (
-        <div className="mt-4 pt-4 border-t borderhite/[0.03] space-y-2.5">
+        <div className="mt-4 pt-4 border-t border-white/[0.03] space-y-2.5">
           {commentsList.map((comment) => {
             const isCommenterOnline = onlineUsers.some(
               (u) => u.toLowerCase() === comment.authorUsername.toLowerCase(),

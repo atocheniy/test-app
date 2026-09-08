@@ -8,6 +8,15 @@ import * as signalR from "@microsoft/signalr";
 import Cookies from 'js-cookie';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+interface RepostTarget {
+  id: string;
+  content: string;
+  authorName: string;
+  authorUsername: string;
+  authorAvatar?: string;
+  attachments?: string[];
+}
+
 interface ApplicationContextType {
     userData: User;
     UserNameNormalized: string;
@@ -34,6 +43,9 @@ interface ApplicationContextType {
     onlineUsers: string[];
     connection: signalR.HubConnection | null;
 
+    repostTarget: RepostTarget | null;
+    setRepostTarget: (target: RepostTarget | null) => void;
+
     logout: () => void;
 }
 
@@ -57,6 +69,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
     const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
+    const [repostTarget, setRepostTarget] = useState<RepostTarget | null>(null);
 
     const refreshCurrentPost = useCallback(async (id: string) => {
         try {
@@ -164,8 +177,8 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         if (!token || !userData.userName || userData.userName === '...') return;
 
         const newConnection = new signalR.HubConnectionBuilder()
-            //.withUrl("https://atocheniy-test-app-api.hf.space/chathub", {
-            .withUrl("http://localhost:5223/chathub", {
+            .withUrl("https://atocheniy-test-app-api.hf.space/chathub", {
+            //.withUrl("http://localhost:5223/chathub", {
                 accessTokenFactory: () => token,
                 // skipNegotiation: true, 
                 transport: signalR.HttpTransportType.WebSockets 
@@ -264,6 +277,36 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             });
         });
 
+        newConnection.on("postReposted", (data: { postId: string; repostsCount: number }) => {
+            console.log("Репост обновлен:", data);
+
+            const updatePostsReposts = (postsList: Post[]) => {
+                return postsList.map((post) => {
+                    if (post.id === data.postId) {
+                        return {
+                            ...post,
+                            repostsCount: data.repostsCount
+                        };
+                    }
+                    return post;
+                });
+            };
+
+            setPostsData((prev) => updatePostsReposts(prev));
+            setUserPostsData((prev) => updatePostsReposts(prev));
+            setOtherUserPostsData((prev) => updatePostsReposts(prev));
+
+            setCurrentPost((prev) => {
+                if (prev && prev.id === data.postId) {
+                    return {
+                        ...prev,
+                        repostsCount: data.repostsCount
+                    };
+                }
+                return prev;
+            });
+        });
+
         newConnection.on("userJoined", (data) => {
             setOnlineUsers(data.activeUsers);
         });
@@ -313,8 +356,10 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         refreshCommentsData,
         onlineUsers,
         connection,
+        repostTarget,
+        setRepostTarget,
         logout 
-    }), [userData, postsData, userPostsData, otherUserPostsData, otherUserData, currentPost, commentsData, onlineUsers, connection]);
+    }), [userData, postsData, userPostsData, otherUserPostsData, otherUserData, currentPost, commentsData, onlineUsers, connection, repostTarget]);
 
     return (
         <ApplicationContext.Provider value={ contextValue }>

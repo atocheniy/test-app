@@ -26,7 +26,7 @@ export default function Feed() {
                 {postsData.map((p) => {
                     console.log(p);
                     return (
-                         <Post key={p.id} Id={p.id} Avatar={p.authorAvatar} Name={p.authorName} UserName={"@" + p.authorUsername} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}  Likes={p.likesCount} isLikedByMe={p.isLikedByMe} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} />
+                         <Post key={p.id} Id={p.id} Avatar={p.authorAvatar} Name={p.authorName} UserName={"@" + p.authorUsername} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}  Likes={p.likesCount} isLikedByMe={p.isLikedByMe} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} repostsCount={p.repostsCount} repostOfPost={p.repostOfPost}/>
                     );
                 })}
             </div>

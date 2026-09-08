@@ -43,6 +43,7 @@ export interface Post{
     likesCount: number;
     isLikedByMe: boolean;
     commentsCount: number;
+    repostsCount?: number;
 
     authorName: string;
     authorUsername: string;
@@ -56,6 +57,8 @@ export interface Post{
         authorUsername: string;
         authorAvatar: string;
     }[];
+
+    repostOfPost?: RepostPreview | null;
 }   
 
 export interface Comment{
@@ -72,6 +75,7 @@ export interface Comment{
 export interface CreatePost{
     content: string;
     attachments: string[];
+    repostOfPostId?: string;
 }
 
 export interface CreateComment{
@@ -120,4 +124,14 @@ export interface ReplyInfo {
     content: string;
     authorName: string;
     attachments?: string[];
+}
+
+export interface RepostPreview {
+  id: string;
+  content: string;
+  created: string | Date;
+  attachments?: string[];
+  authorName: string;
+  authorUsername: string;
+  authorAvatar?: string;
 }

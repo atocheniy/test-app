@@ -4,4 +4,5 @@ public class CreatePostDto
 {
     public string? Content { get; set; }
     public string[]? Attachments { get; set; }
+    public Guid? RepostOfPostId { get; set; } 
 }

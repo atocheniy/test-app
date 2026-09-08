@@ -59,6 +59,17 @@ namespace server.Controllers
                     isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                     commentsCount = p.CommentsCount,
                     
+                    repostsCount = p.RepostsCount,
+                    repostOfPost = p.RepostOfPost == null ? null : new {
+                        id = p.RepostOfPost.Id,
+                        content = p.RepostOfPost.Content,
+                        created = p.RepostOfPost.Created,
+                        attachments = p.RepostOfPost.Attachments,
+                        authorName = p.RepostOfPost.User.FullName,
+                        authorUsername = p.RepostOfPost.User.UserName,
+                        authorAvatar = p.RepostOfPost.User.Avatar
+                    },
+                    
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,
                     authorAvatar = p.User.Avatar,
@@ -120,20 +131,59 @@ namespace server.Controllers
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return NotFound();
             
-            if (string.IsNullOrEmpty(model.Content) && (model.Attachments == null || model.Attachments.Length == 0))
+            if (string.IsNullOrEmpty(model.Content) && 
+                (model.Attachments == null || model.Attachments.Length == 0) && 
+                !model.RepostOfPostId.HasValue)
             {
-                return BadRequest();
+                return BadRequest("Пост не может быть пустым.");
+            }
+
+            object? repostInfo = null;
+            
+            if (model.RepostOfPostId.HasValue)
+            {
+                var originalPost = await _context.Post
+                    .Include(p => p.User)
+                    .FirstOrDefaultAsync(p => p.Id == model.RepostOfPostId.Value);
+
+                if (originalPost != null)
+                {
+                    originalPost.RepostsCount++;
+                    repostInfo = new {
+                        id = originalPost.Id,
+                        content = originalPost.Content,
+                        created = originalPost.Created,
+                        attachments = originalPost.Attachments,
+                        authorName = originalPost.User?.FullName,
+                        authorUsername = originalPost.User?.UserName,
+                        authorAvatar = originalPost.User?.Avatar
+                    };
+                }
             }
             
             var post = new Post
             {
                 Content = model.Content,
                 Attachments = model.Attachments,
-                UserId = userId
+                UserId = userId,
+                RepostOfPostId = model.RepostOfPostId
             };
             
             _context.Post.Add(post);
             await _context.SaveChangesAsync();
+            
+            if (model.RepostOfPostId.HasValue)
+            {
+                var originalPost = await _context.Post.FindAsync(model.RepostOfPostId.Value);
+                if (originalPost != null)
+                {
+                    await _hubContext.Clients.All.SendAsync("postReposted", new
+                    {
+                        postId = originalPost.Id,
+                        repostsCount = originalPost.RepostsCount
+                    });
+                }
+            }
 
             await _hubContext.Clients.All.SendAsync("postCreated", new {
                 id = post.Id,
@@ -147,6 +197,7 @@ namespace server.Controllers
                 authorName = user.FullName,
                 authorUsername = user.UserName,
                 authorAvatar = user.Avatar,
+                repostOfPost = repostInfo,
                 
                 commentsList = post.Comments
                     .OrderByDescending(c => c.Created)
@@ -171,15 +222,23 @@ namespace server.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var post = await _context.Post.FindAsync(id);
+    
+            if (post == null) return NotFound();
+            if (post.UserId != userId) return Forbid();
             
-            if (post == null)
+            if (post.RepostOfPostId.HasValue)
             {
-                return NotFound();
-            }
+                var originalPost = await _context.Post.FindAsync(post.RepostOfPostId.Value);
+                if (originalPost != null)
+                {
+                    originalPost.RepostsCount = Math.Max(0, originalPost.RepostsCount - 1);
             
-            if (post.UserId != userId)
-            {
-                return Forbid();
+                    await _hubContext.Clients.All.SendAsync("postReposted", new
+                    {
+                        postId = originalPost.Id,
+                        repostsCount = originalPost.RepostsCount
+                    });
+                }
             }
 
             _context.Post.Remove(post);
@@ -209,6 +268,17 @@ namespace server.Controllers
                     likesCount = p.LikesCount,
                     isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                     commentsCount = p.CommentsCount,
+                    
+                    repostsCount = p.RepostsCount,
+                    repostOfPost = p.RepostOfPost == null ? null : new {
+                        id = p.RepostOfPost.Id,
+                        content = p.RepostOfPost.Content,
+                        created = p.RepostOfPost.Created,
+                        attachments = p.RepostOfPost.Attachments,
+                        authorName = p.RepostOfPost.User.FullName,
+                        authorUsername = p.RepostOfPost.User.UserName,
+                        authorAvatar = p.RepostOfPost.User.Avatar
+                    },
                     
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,
@@ -300,6 +370,17 @@ namespace server.Controllers
                     authorUsername = p.User.UserName,
                     authorAvatar = p.User.Avatar,
                     
+                    repostsCount = p.RepostsCount,
+                    repostOfPost = p.RepostOfPost == null ? null : new {
+                        id = p.RepostOfPost.Id,
+                        content = p.RepostOfPost.Content,
+                        created = p.RepostOfPost.Created,
+                        attachments = p.RepostOfPost.Attachments,
+                        authorName = p.RepostOfPost.User.FullName,
+                        authorUsername = p.RepostOfPost.User.UserName,
+                        authorAvatar = p.RepostOfPost.User.Avatar
+                    },
+                    
                     commentsList = p.Comments
                         .OrderByDescending(c => c.Created)
                         .Take(3)
@@ -340,6 +421,17 @@ namespace server.Controllers
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,
                     authorAvatar = p.User.Avatar,
+                    
+                    repostsCount = p.RepostsCount,
+                    repostOfPost = p.RepostOfPost == null ? null : new {
+                        id = p.RepostOfPost.Id,
+                        content = p.RepostOfPost.Content,
+                        created = p.RepostOfPost.Created,
+                        attachments = p.RepostOfPost.Attachments,
+                        authorName = p.RepostOfPost.User.FullName,
+                        authorUsername = p.RepostOfPost.User.UserName,
+                        authorAvatar = p.RepostOfPost.User.Avatar
+                    },
                     
                     commentsList = p.Comments
                         .OrderByDescending(c => c.Created)

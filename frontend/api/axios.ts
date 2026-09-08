@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 export const $api = axios.create({
-    // baseURL: 'https://atocheniy-test-app-api.hf.space/api',
-    baseURL: 'http://localhost:5223/api',
+    baseURL: 'https://atocheniy-test-app-api.hf.space/api',
+    // baseURL: 'http://localhost:5223/api',
     headers: {
         'Content-Type': 'application/json'
     }

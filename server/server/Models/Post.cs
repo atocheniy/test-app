@@ -12,7 +12,12 @@ public class Post
     
     public int LikesCount { get; set; } = 0;
     public int CommentsCount { get; set; } = 0;
+    public int RepostsCount { get; set; } = 0;
+    
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+    
+    public Guid? RepostOfPostId { get; set; }
+    public Post? RepostOfPost { get; set; } 
     
     public string UserId { get; set; } = string.Empty;
     public ApplicationUser User { get; set; }
