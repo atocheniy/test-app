@@ -24,6 +24,15 @@ export interface User{
     bio_FirstLine: string;
     bio_SecondLine: string;
 
+    location?: string;
+    workStatus?: string;
+    githubUrl?: string;
+    telegramUrl?: string;
+    vkUrl?: string;
+    xUrl?: string;
+    discordUrl?: string;
+    websiteUrl?: string;
+
     avatar: string;
     banner: string;
 

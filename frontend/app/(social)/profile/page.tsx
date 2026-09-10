@@ -9,6 +9,7 @@ import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
 import { UserService } from "@/services/userService";
 import { upload } from "@vercel/blob/client";
+import { ArrowUpRight, Briefcase, ChevronDown, Code2, Globe, Mail, MapPin, Send, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
 
@@ -23,6 +24,18 @@ export default function Profile() {
     const [editUserName, setEditUserName] = useState(userData.userName  || '');
     const [editBioFirstLine, setEditBioFirstLine] = useState(userData.bio_FirstLine || '');
     const [editBioSecondLine, setEditBioSecondLine] = useState(userData.bio_SecondLine || '');
+
+    const [editLocation, setEditLocation] = useState(userData.location || '');
+    const [editWorkStatus, setEditWorkStatus] = useState(userData.workStatus || '');
+    const [editGithub, setEditGithub] = useState(userData.githubUrl || '');
+    const [editTelegram, setEditTelegram] = useState(userData.telegramUrl || '');
+    const [editVk, setEditVk] = useState(userData.vkUrl || '');
+    const [editX, setEditX] = useState(userData.xUrl || '');
+    const [editDiscord, setEditDiscord] = useState(userData.discordUrl || '');
+    const [editWebsite, setEditWebsite] = useState(userData.websiteUrl || '');
+
+    const [isLinksExpanded, setIsLinksExpanded] = useState(false);
+    const [isEditLinksOpen, setIsEditLinksOpen] = useState(false);
 
     const post = { Name: "", UserName: "", Content: "", Time: "" };
     const posts = Array.from({ length: 10 }, () => post);
@@ -46,6 +59,16 @@ export default function Profile() {
             await UserService.changeBio({firstLine: editBioFirstLine, secondLine: editBioSecondLine});
             await UserService.changeName({fullName: editFullName});
             await UserService.changeUserName({userName: editUserName});
+            await UserService.changeDetails({
+                location: editLocation,
+                workStatus: editWorkStatus,
+                githubUrl: editGithub,
+                telegramUrl: editTelegram,
+                vkUrl: editVk,
+                xUrl: editX,
+                discordUrl: editDiscord,
+                websiteUrl: editWebsite,
+            });
 
             await refreshUserData();
             setIsEditOpen(false);
@@ -156,6 +179,14 @@ export default function Profile() {
                                     setEditUserName(userData.userName || '');
                                     setEditBioFirstLine(userData.bio_FirstLine || '');
                                     setEditBioSecondLine(userData.bio_SecondLine || '');
+                                    setEditLocation(userData.location || '');
+                                    setEditWorkStatus(userData.workStatus || '');
+                                    setEditGithub(userData.githubUrl || '');
+                                    setEditTelegram(userData.telegramUrl || '');
+                                    setEditVk(userData.vkUrl || '');
+                                    setEditX(userData.xUrl || '');
+                                    setEditDiscord(userData.discordUrl || '');
+                                    setEditWebsite(userData.websiteUrl || '');
                                     setIsEditOpen(true);
                                 }}>
                                 Edit
@@ -191,24 +222,167 @@ export default function Profile() {
                             
                     <div className="mt-10 border-t border-white/5 pt-8 space-y-8">
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+
+                        <div className="flex flex-col justify-start p-5 border border-white/5 bg-zinc-950/20 hover:border-white/10 transition-colors duration-200 rounded-2xl">
+                            <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-4">
+                                Details
+                            </h4>
                             
-                            <div className="space-y-4 p-5 border border-white/5 bg-zinc-950/10 rounded-2xl">
-                                <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Details</h4>
-                                <div className="space-y-3 text-xs text-zinc-400">
-                                    
-                                    
+                            <div className="space-y-3.5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
+                                        <MapPin size={14} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Location</span>
+                                        <span className="text-xs text-zinc-200 font-medium">
+                                            {userData.location || "Not specified"}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                                        <Briefcase size={14} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Status</span>
+                                        <span className="text-xs text-zinc-200 font-medium flex items-center gap-1.5">
+                                            <span className="relative flex h-1.5 w-1.5">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                                            </span>
+                                            {userData.workStatus || "Open to opportunities"}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
+                                        <Sparkles size={14} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Focus</span>
+                                        <span className="text-xs text-zinc-200 font-medium">
+                                            Fullstack & Realtime Architecture
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div className="space-y-4 p-5 border border-white/5 bg-zinc-950/10 rounded-2xl">
-                                <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Links</h4>
-                                <div className="space-y-2">
-                                   
-                                </div>
-                            </div>
-
                         </div>
+
+                        <div className="flex flex-col justify-start p-5 border border-white/5 bg-zinc-950/20 hover:border-white/10 transition-colors duration-200 rounded-2xl">
+                            {(() => {
+                                const userLinks = [
+                                    userData.githubUrl && { 
+                                        label: 'GitHub', 
+                                        display: userData.githubUrl.replace(/^https?:\/\/(www\.)?github\.com\/?/, ''), 
+                                        url: userData.githubUrl.startsWith('http') ? userData.githubUrl : `https://github.com/${userData.githubUrl}`, 
+                                        icon: Code2 
+                                    },
+                                    userData.telegramUrl && { 
+                                        label: 'Telegram', 
+                                        display: `@${userData.telegramUrl.replace(/^https?:\/\/t\.me\/?/, '').replace(/^@/, '')}`, 
+                                        url: userData.telegramUrl.startsWith('http') ? userData.telegramUrl : `https://t.me/${userData.telegramUrl.replace(/^@/, '')}`, 
+                                        icon: Send 
+                                    },
+                                    userData.vkUrl && { 
+                                        label: 'VK', 
+                                        display: 'VK Profile', 
+                                        url: userData.vkUrl.startsWith('http') ? userData.vkUrl : `https://${userData.vkUrl}`, 
+                                        icon: Globe 
+                                    },
+                                    userData.xUrl && { 
+                                        label: 'X (Twitter)', 
+                                        display: 'X Profile', 
+                                        url: userData.xUrl.startsWith('http') ? userData.xUrl : `https://${userData.xUrl}`, 
+                                        icon: Globe 
+                                    },
+                                    userData.discordUrl && { 
+                                        label: 'Discord', 
+                                        display: userData.discordUrl, 
+                                        url: userData.discordUrl.startsWith('http') ? userData.discordUrl : `https://${userData.discordUrl}`, 
+                                        icon: Globe 
+                                    },
+                                    userData.websiteUrl && { 
+                                        label: 'Portfolio', 
+                                        display: userData.websiteUrl.replace(/^https?:\/\//, ''), 
+                                        url: userData.websiteUrl.startsWith('http') ? userData.websiteUrl : `https://${userData.websiteUrl}`, 
+                                        icon: Globe 
+                                    },
+                                    userData.email && { 
+                                        label: 'Email', 
+                                        display: userData.email, 
+                                        url: `mailto:${userData.email}`, 
+                                        icon: Mail 
+                                    },
+                                ].filter(Boolean) as { label: string; display: string; url: string; icon: any }[];
+
+                                const visibleLinks = isLinksExpanded ? userLinks : userLinks.slice(0, 3);
+
+                                return (
+                                    <>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
+                                                Links & Contacts
+                                            </h4>
+                                            <span className="text-[10px] text-zinc-500 font-mono">
+                                                {userLinks.length}
+                                            </span>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {userLinks.length === 0 ? (
+                                                <p className="text-xs text-zinc-500 py-3 text-center">
+                                                    No links added yet
+                                                </p>
+                                            ) : (
+                                                visibleLinks.map((link, idx) => (
+                                                    <a
+                                                        key={idx}
+                                                        href={link.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="flex items-center justify-between p-2 px-3 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-150 group"
+                                                    >
+                                                        <div className="flex items-center gap-2.5">
+                                                            <link.icon size={13} className="text-zinc-500 group-hover:text-zinc-200 transition-colors" />
+                                                            <span className="text-xs font-medium text-zinc-200">{link.label}</span>
+                                                            {link.display && (
+                                                                <span className="text-[11px] text-zinc-500 font-mono hidden sm:inline truncate max-w-[150px]">
+                                                                    {link.display}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <ArrowUpRight 
+                                                            size={13} 
+                                                            className="text-zinc-600 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-150 shrink-0" 
+                                                        />
+                                                    </a>
+                                                ))
+                                            )}
+
+                                            {userLinks.length > 3 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsLinksExpanded(!isLinksExpanded)}
+                                                    className="w-full mt-1.5 py-1.5 flex items-center justify-center gap-1.5 text-[11px] font-medium text-zinc-500 hover:text-zinc-300 hover:bg-white/5 rounded-xl transition"
+                                                >
+                                                    <span>{isLinksExpanded ? "Show less" : `Show all (+${userLinks.length - 3})`}</span>
+                                                    <ChevronDown 
+                                                        size={12} 
+                                                        className={`transition-transform duration-200 ${isLinksExpanded ? "rotate-180" : ""}`} 
+                                                    />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+
+                    </div>
 
                         <div className="border-t border-white/5 pt-6" />
 
@@ -259,7 +433,7 @@ export default function Profile() {
 
             {isEditOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all animate-fadeIn">
-                    <div className="w-full max-w-[480px] bg-[#0a0a0a] border border-white/5 rounded-[32px] p-8 shadow-2xl relative">
+                    <div className="w-full max-w-[480px] max-h-[85vh] overflow-y-auto no-scrollbar bg-[#0a0a0a] border border-white/5 rounded-[32px] p-8 shadow-2xl relative">
                         
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-zinc-100">Edit Profile</h3>
@@ -342,6 +516,98 @@ export default function Profile() {
                                     rows={3}
                                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10 resize-none"
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Location</label>
+                                    <input
+                                        type="text"
+                                        value={editLocation}
+                                        onChange={(e) => setEditLocation(e.target.value)}
+                                        placeholder="e.g. Moscow / Remote"
+                                        className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/10"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Job Status</label>
+                                    <input
+                                        type="text"
+                                        value={editWorkStatus}
+                                        onChange={(e) => setEditWorkStatus(e.target.value)}
+                                        placeholder="e.g. Fullstack Developer"
+                                        className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/10"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="border border-white/5 rounded-2xl p-3.5 bg-zinc-950/40">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditLinksOpen(!isEditLinksOpen)}
+                                    className="w-full flex items-center justify-between text-left transition"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
+                                            Social Links & Contacts
+                                        </span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-zinc-500 font-mono">
+                                            {[editGithub, editTelegram, editVk, editX, editDiscord, editWebsite].filter(Boolean).length}/6
+                                        </span>
+                                    </div>
+                                    <ChevronDown 
+                                        size={14} 
+                                        className={`text-zinc-500 transition-transform duration-200 ${isEditLinksOpen ? "rotate-180" : ""}`} 
+                                    />
+                                </button>
+
+                                {isEditLinksOpen && (
+                                    <div className="space-y-2.5 mt-3 pt-3 border-t border-white/5 animate-in fade-in duration-150">
+                                        <input
+                                            type="text"
+                                            value={editGithub}
+                                            onChange={(e) => setEditGithub(e.target.value)}
+                                            placeholder="GitHub URL (https://github.com/...)"
+                                            className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/10"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={editTelegram}
+                                            onChange={(e) => setEditTelegram(e.target.value)}
+                                            placeholder="Telegram URL (https://t.me/...)"
+                                            className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/10"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={editVk}
+                                            onChange={(e) => setEditVk(e.target.value)}
+                                            placeholder="VK URL (https://vk.com/...)"
+                                            className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/10"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={editX}
+                                            onChange={(e) => setEditX(e.target.value)}
+                                            placeholder="X / Twitter URL (https://x.com/...)"
+                                            className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/10"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={editDiscord}
+                                            onChange={(e) => setEditDiscord(e.target.value)}
+                                            placeholder="Discord URL (https://discord.com/...)"
+                                            className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/10"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={editWebsite}
+                                            onChange={(e) => setEditWebsite(e.target.value)}
+                                            placeholder="Portfolio / Website URL"
+                                            className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/10"
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             <button

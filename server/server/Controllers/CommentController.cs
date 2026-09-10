@@ -69,33 +69,18 @@ namespace server.Controllers
 
         // PUT: api/Comment/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
+        [HttpPut("updateComment/{id}")]
         [Authorize]
-        public async Task<IActionResult> PutComment(Guid id, Comment comment)
+        public async Task<IActionResult> PutComment(Guid id, [FromBody] UpdateCommentDto model)
         {
-            if (id != comment.Id)
-            {
-                return BadRequest();
-            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var comment = await _context.Comment.FindAsync(id);
 
-            _context.Entry(comment).State = EntityState.Modified;
+            if (comment == null) return NotFound();
+            if (comment.UserId != userId) return Forbid();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CommentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
+            comment.Content = model.Content;
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
@@ -152,15 +137,20 @@ namespace server.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteComment(Guid id)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var comment = await _context.Comment.FindAsync(id);
-            if (comment == null)
+
+            if (comment == null) return NotFound();
+            if (comment.UserId != userId) return Forbid();
+            
+            var post = await _context.Post.FindAsync(comment.PostId);
+            if (post != null)
             {
-                return NotFound();
+                post.CommentsCount = Math.Max(0, post.CommentsCount - 1);
             }
 
             _context.Comment.Remove(comment);
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 

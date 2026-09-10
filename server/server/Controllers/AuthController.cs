@@ -97,6 +97,27 @@ public class AuthController : ControllerBase
         return Ok();
     }
     
+    [HttpPatch("updateDetails")]
+    [Authorize]
+    public async Task<IActionResult> UpdateDetails([FromBody] UpdateDetailsDto model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        user.Location = model.Location;
+        user.WorkStatus = model.WorkStatus;
+        user.GithubUrl = model.GithubUrl;
+        user.TelegramUrl = model.TelegramUrl;
+        user.VKUrl = model.VKUrl;
+        user.XUrl = model.XUrl;
+        user.DiscordUrl = model.DiscordUrl;
+        user.WebsiteUrl = model.WebsiteUrl;
+
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+    
     [HttpPatch("updateName")]
     [Authorize]
     public async Task<IActionResult> UpdateName([FromBody] UpdateNameDto model)
@@ -179,6 +200,14 @@ public class AuthController : ControllerBase
             userName = user.UserName,
             bio_FirstLine = user.Bio_FirstLine,
             bio_SecondLine = user.Bio_SecondLine,
+            location = user.Location,
+            workStatus = user.WorkStatus,
+            githubUrl = user.GithubUrl,
+            telegramUrl = user.TelegramUrl,
+            vkUrl = user.VKUrl,
+            xUrl = user.XUrl,
+            discordUrl = user.DiscordUrl,
+            websiteUrl = user.WebsiteUrl,
             avatar = user.Avatar,
             banner = user.Banner
         });
@@ -196,6 +225,14 @@ public class AuthController : ControllerBase
             userName = user.UserName,
             bio_FirstLine = user.Bio_FirstLine,
             bio_SecondLine = user.Bio_SecondLine,
+            location = user.Location,
+            workStatus = user.WorkStatus,
+            githubUrl = user.GithubUrl,
+            telegramUrl = user.TelegramUrl,
+            vkUrl = user.VKUrl,
+            xUrl = user.XUrl,
+            discordUrl = user.DiscordUrl,
+            websiteUrl = user.WebsiteUrl,
             avatar = user.Avatar,
             banner = user.Banner,
             followers = user.Followers,

@@ -36,6 +36,10 @@ export const UserService = {
         return await $api.delete(`/auth/me`);
     },
 
+    async changeDetails(data: { location?: string; workStatus?: string; githubUrl?: string; telegramUrl?: string; vkUrl?: string; xUrl?: string; discordUrl?: string; websiteUrl?: string }) {
+        return await $api.patch('/auth/updateDetails', data);
+    },
+
     async searchUsers(query: string) {
         const clean = query.replace('@', '').trim();
         if (!clean) return [];

@@ -2,16 +2,19 @@
 
 import Post from "@/components/post";
 import Titlebar from "@/components/titlebar";
+import TitlebarBack from "@/components/titlebarBack";
 import { useApplication } from "@/context/ApplicationContext";
 import { CommentsService } from "@/services/commentService";
+import { Check, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function PagePost() {
 
     const { currentPost, refreshCurrentPost, userData } = useApplication();
     
+    const router = useRouter();
     const params = useParams();
     const idFromUrl = params.id as string;
 
@@ -19,6 +22,45 @@ export default function PagePost() {
     
     const [commentText, setCommentText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [activeMenuCommentId, setActiveMenuCommentId] = useState<string | null>(null);
+    const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+    const [editCommentText, setEditCommentText] = useState("");
+    const [copiedCommentId, setCopiedCommentId] = useState<string | null>(null);
+
+    
+    const handleCopyComment = async (content: string, id: string) => {
+        await navigator.clipboard.writeText(content);
+        setCopiedCommentId(id);
+        setTimeout(() => {
+            setCopiedCommentId(null);
+            setActiveMenuCommentId(null);
+        }, 1200);
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        setActiveMenuCommentId(null);
+        if (!confirm("Удалить этот комментарий?")) return;
+        try {
+            await CommentsService.deleteComment(commentId);
+            await refreshCurrentPost(idFromUrl);
+        } catch (err) {
+            console.error(err);
+            alert("Не удалось удалить комментарий");
+        }
+    };
+
+    const handleSaveEditComment = async (commentId: string) => {
+        if (!editCommentText.trim()) return;
+        try {
+            await CommentsService.updateComment(commentId, editCommentText);
+            setEditingCommentId(null);
+            await refreshCurrentPost(idFromUrl);
+        } catch (err) {
+            console.error(err);
+            alert("Не удалось обновить комментарий");
+        }
+    };
 
     useEffect(() => {
         if (idFromUrl) refreshCurrentPost(idFromUrl);
@@ -60,8 +102,8 @@ export default function PagePost() {
         <div className="flex flex-col min-h-full justify-between">
             <div className="flex-1 flex flex-col">
                 <div>
-                    <Titlebar title={`Post from ${currentPost.authorName}`}></Titlebar>
-                
+                    <TitlebarBack title={`Post from ${currentPost.authorName}`} />
+                        
                     <div className="flex flex-col lg:p-6 md:p-6 py-6">
                         <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={new Date(currentPost.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount} repostsCount={currentPost.repostsCount} repostOfPost={currentPost.repostOfPost}></Post>
                     </div>
@@ -74,43 +116,119 @@ export default function PagePost() {
                     <div className="flex flex-col max-sm:mb-[60px] min-h-full gap-4 p-6 lg:px-11 md:px-11 overflow-y-auto  custom-scrollbar">
                         {currentPost.commentsList && currentPost.commentsList.length > 0 ? (
                             currentPost.commentsList.map((comment) => {
-                                const isCommenterOnline = onlineUsers.some(
-                                    (u) => u.toLowerCase() === comment.authorUsername.toLowerCase()
-                                );
+                            const isCommenterOnline = onlineUsers.some(
+                                (u) => u.toLowerCase() === comment.authorUsername.toLowerCase()
+                            );
+                            const cleanUser = comment.authorUsername.replace('@', '').toLowerCase();
+                            const isMyComment = userData?.userName?.toLowerCase() === cleanUser;
 
-                                return(
-                                <div key={comment.id} className="flex gap-3 text-sm p-4 rounded-2xl bg-zinc-950/50 border border-white/5">
+                            return (
+                                <div key={comment.id} className="relative flex gap-3 text-sm p-4 rounded-2xl bg-zinc-950/50 border border-white/5 group">
                                     <div className="relative w-8 h-8 shrink-0">
-                                        <Link href={`/profile/${comment.authorUsername.replace('@', '')}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
-                                            {comment.authorAvatar && (
+                                        <Link href={`/profile/${cleanUser}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
+                                            {comment.authorAvatar ? (
                                                 <img src={comment.authorAvatar} className="w-full h-full object-cover" alt="Avatar" />
+                                            ) : (
+                                                <div className="w-full h-full bg-zinc-800" />
                                             )}
-
-                                            
                                         </Link>
                                         {isCommenterOnline && (
-                                                <span 
-                                                    className="absolute bottom-0 right-0 w-3 h-3 bg-white border-2 border-[#0a0a0a] rounded-full" 
-                                                    title="Online"
-                                                />
-                                            )}
+                                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-white border-2 border-[#0a0a0a] rounded-full" title="Online" />
+                                        )}
                                     </div>
+
                                     <div className="flex-1">
-                                        <div className="flex items-baseline gap-2">
-                                            <Link href={`/profile/${comment.authorUsername.replace('@', '')}`} className="font-semibold text-zinc-100 hover:underline cursor-pointer">
-                                                <span className="font-semibold text-zinc-100 text-xs">{comment.authorName}</span>
-                                            </Link>
-                                            <span className="text-zinc-500 text-[10px]">@{comment.authorUsername}</span>
-                                            <span className="text-zinc-500 text-[10px]">·</span>
-                                            <span className="text-zinc-500 text-[10px]">
-                                                {new Date(comment.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </span>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-baseline gap-2">
+                                                <Link href={`/profile/${cleanUser}`} className="font-semibold text-zinc-100 text-xs hover:underline cursor-pointer">
+                                                    {comment.authorName}
+                                                </Link>
+                                                <span className="text-zinc-500 text-[10px]">@{cleanUser}</span>
+                                                <span className="text-zinc-500 text-[10px]">·</span>
+                                                <span className="text-zinc-500 text-[10px]">
+                                                    {new Date(comment.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+
+                                            <div className="relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveMenuCommentId(activeMenuCommentId === comment.id ? null : comment.id)}
+                                                    className="p-1 text-zinc-500 hover:text-zinc-200 hover:bg-white/5 rounded-full transition"
+                                                >
+                                                    <MoreHorizontal size={14} />
+                                                </button>
+
+                                                {activeMenuCommentId === comment.id && (
+                                                    <div className="absolute right-0 top-full mt-1 w-40 rounded-xl bg-zinc-900 border border-white/10 shadow-xl p-1 z-50">
+                                                        <button
+                                                            onClick={() => handleCopyComment(comment.content, comment.id)}
+                                                            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
+                                                        >
+                                                            {copiedCommentId === comment.id ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                                                            <span>{copiedCommentId === comment.id ? "Скопировано" : "Копировать"}</span>
+                                                        </button>
+
+                                                        {isMyComment && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingCommentId(comment.id);
+                                                                        setEditCommentText(comment.content);
+                                                                        setActiveMenuCommentId(null);
+                                                                    }}
+                                                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
+                                                                >
+                                                                    <Pencil size={12} />
+                                                                    <span>Редактировать</span>
+                                                                </button>
+                                                                <div className="h-[1px] bg-white/5 my-1" />
+                                                                <button
+                                                                    onClick={() => handleDeleteComment(comment.id)}
+                                                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                    <span>Удалить</span>
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <p className="text-xs text-zinc-300 leading-relaxed">{comment.content}</p>
+
+                                        {editingCommentId === comment.id ? (
+                                            <div className="mt-2 space-y-2">
+                                                <textarea
+                                                    value={editCommentText}
+                                                    onChange={(e) => setEditCommentText(e.target.value)}
+                                                    rows={2}
+                                                    className="w-full p-2.5 text-xs text-zinc-100 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-white/20 resize-none"
+                                                />
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditingCommentId(null)}
+                                                        className="px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200 transition"
+                                                    >
+                                                        Отмена
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSaveEditComment(comment.id)}
+                                                        className="px-3 py-1 text-xs font-medium bg-white text-black rounded-lg hover:bg-zinc-200 transition"
+                                                    >
+                                                        Сохранить
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-zinc-300 leading-relaxed mt-1">{comment.content}</p>
+                                        )}
                                     </div>
                                 </div>
-                                );
-                            })
+                            );
+                        })
                         ) : (
                             <p className="text-xs text-zinc-500 text-center py-6 select-none">
                                 No comments yet

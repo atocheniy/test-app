@@ -15,4 +15,14 @@ export const CommentsService = {
     async createComment(data: CreateComment){
         return await $api.post<Comment>("/Comment/createComment", data);
     },
+
+    async updateComment(id: string, content: string) {
+        const response = await $api.put(`/Comment/updateComment/${id}`, { content });
+        return response.data;
+    },
+
+    async deleteComment(id: string) {
+        const response = await $api.delete(`/Comment/${id}`);
+        return response.data;
+    }
 };

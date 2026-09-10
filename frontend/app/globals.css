@@ -59,3 +59,86 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+
+
+.post-markdown.wmde-markdown {
+  background-color: transparent !important;
+  color: #e4e4e7 !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+}
+
+.post-markdown.wmde-markdown h1 {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.5rem !important;
+  color: #f4f4f5 !important;
+}
+
+.post-markdown.wmde-markdown h2 {
+  font-size: 1rem !important; 
+  font-weight: 700 !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-top: 0.6rem !important;
+  margin-bottom: 0.4rem !important;
+  color: #f4f4f5 !important;
+}
+
+.post-markdown.wmde-markdown h3 {
+  font-size: 0.875rem !important; 
+  font-weight: 600 !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.post-markdown.wmde-markdown p {
+  margin-bottom: 0.6rem !important;
+  color: #d4d4d8 !important;
+}
+
+.post-markdown.wmde-markdown a {
+  color: #38bdf8 !important;
+  text-decoration: none !important;
+}
+.post-markdown.wmde-markdown a:hover {
+  text-decoration: underline !important;
+}
+
+.post-markdown.wmde-markdown hr {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  margin: 0.75rem 0 !important;
+}
+
+.post-markdown.wmde-markdown blockquote {
+  border-left: 2px solid rgba(56, 189, 248, 0.6) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  padding: 0.25rem 0.875rem !important;
+  margin: 0.5rem 0 !important;
+  color: #a1a1aa !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+
+.post-markdown.wmde-markdown pre {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.75rem !important;
+  margin: 0.75rem 0 !important;
+}
+
+.post-markdown.wmde-markdown hr {
+  height: 1px !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 1.25rem 0 !important;
+  background: linear-gradient(
+    90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.15) 50%, 
+    transparent 100%
+  ) !important;
+}
