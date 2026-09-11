@@ -27,7 +27,7 @@ export default function RightSidebar() {
 
     return (
         <aside className="hidden lg:block w-80 p-4 text-zinc-400">
-            <div className="sticky top-6 space-y-4">
+            <div className="sticky space-y-4">
                 
                 <div className="border border-white/5 p-4 bg-white/[0.02] backdrop-blur-md rounded-2xl">
                     <div className="flex items-center gap-2 mb-3 text-zinc-100 font-bold text-sm">

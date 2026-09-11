@@ -11,12 +11,30 @@ interface TitlebarMessageProps {
 
 import { X } from "lucide-react";
 import Link from "next/link";
+import { LinearBlur } from "progressive-blur";
 
 export default function TitlebarMessage({ Id, Name, UserName, Info, Avatar, isOnline, isTyping, onClose }: TitlebarMessageProps) 
 {
     return (
-        <div className="sticky top-0 shrink-0 z-1000 flex items-center h-14 px-3 border-b border-white/5 bg-black/60 backdrop-blur-sm">
-            <div className="flex flex-row gap-4 items-center">
+        <div className="sticky top-0 shrink-0 z-50 flex items-center h-14 px-3 bg-transparent relative">
+            <LinearBlur
+                side="top"
+                steps={6}
+                strength={20}
+                falloffPercentage={100}
+                tint="rgba(2, 2, 2, 0.75)"
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 120,
+                    zIndex: 0,
+                    pointerEvents: "none",
+                }}
+            />
+            
+            <div className="flex flex-row gap-4 items-center relative z-10">
                 {onClose && (
                     <button 
                         onClick={onClose}

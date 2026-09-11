@@ -1,5 +1,6 @@
 import { upload } from '@vercel/blob/client';
 import { Loader2, Paperclip, SendHorizontal, X } from 'lucide-react';
+import { LinearBlur } from 'progressive-blur';
 import { useEffect, useRef, useState } from 'react';
 
 interface BottomInputProps {
@@ -77,7 +78,23 @@ export default function BottomInput({value, onChange, onSend, onKeyDown, disable
     };
 
     return (
-        <div className="shrink-0 sticky bottom-0 bg-black/70 backdrop-blur-md border-t border-white/5 px-4 py-2 flex flex-col gap-2">
+        <div className="shrink-0 sticky bottom-0 bg-transparent px-4 py-2 flex flex-col gap-2 z-50 relative">
+            <LinearBlur
+                side="bottom"
+                steps={6}
+                strength={20}
+                falloffPercentage={100}
+                tint="rgba(2, 2, 2, 0.75)"
+                style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 140,
+                    zIndex: 0,
+                    pointerEvents: "none",
+                }}
+            />
             
              {attachments.length > 0 && (
                 <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-thin">
@@ -96,7 +113,7 @@ export default function BottomInput({value, onChange, onSend, onKeyDown, disable
                 </div>
             )}
 
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-2 relative z-10">
                 <input 
                     type="file" 
                     ref={fileInputRef} 

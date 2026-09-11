@@ -22,6 +22,7 @@ import { PostService } from "@/services/postService";
 import "@uiw/react-markdown-preview/markdown.css";
 import "@uiw/react-md-editor/markdown-editor.css";
 import { useRouter } from "next/navigation";
+import { LinearBlur } from "progressive-blur";
 import { useEffect, useRef, useState } from "react";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), { ssr: false });
@@ -76,6 +77,7 @@ export default function Post({
 }: PostProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLongPost, setIsLongPost] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const [isLiked, setIsLiked] = useState(isLikedByMe);
@@ -148,6 +150,7 @@ export default function Post({
     const checkHeight = () => {
       if (contentRef.current) {
         const realHeight = contentRef.current.scrollHeight;
+        setContentHeight(realHeight);
         if (realHeight > 250) {
           setIsLongPost(true);
         } else {
@@ -284,7 +287,7 @@ export default function Post({
   };
 
   return (
-    <div className="py-4 border border-white/5 rounded-xl bg-zinc-950/50 text-zinc-100 px-4 mx-2">
+    <div className="py-4 border border-white/5 rounded-xl bg-white/[0.02] text-zinc-100 px-4 mx-2">
       <div className="flex items-center justify-between mb-2">
       <div className="flex items-center space-x-3 mb-2">
         <div className="relative w-10 h-10 shrink-0">
@@ -400,10 +403,14 @@ export default function Post({
         ) : (
         <div
           ref={contentRef}
-          className={`relative overflow-hidden transition-all duration-300 rounded-xl ${
-            isLongPost && !isExpanded ? "max-h-[200px]" : "max-h-none"
-          }
-          `}
+          style={{
+    maxHeight: isLongPost
+      ? isExpanded
+        ? `${contentHeight}px`
+        : "200px"
+      : undefined,
+  }}
+  className="relative overflow-hidden transition-[max-height] duration-500 ease-in-out rounded-xl"
         >
           <MarkdownPreview
           className="post-markdown"
@@ -430,19 +437,36 @@ export default function Post({
               rehypeRaw as any,
             ]}
           />
-        </div>
+
+          {isLongPost && !isExpanded && (
+              <LinearBlur
+                side="bottom"
+                steps={5}
+                strength={4}
+                falloffPercentage={90}
+                tint="rgba(5, 5, 5, 0.75)"
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 180,
+                  pointerEvents: "none",
+                  zIndex: 10,
+                }}
+              />
+            )}
+          </div>
         )}
 
         {isLongPost && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-5 text-xs font-semibold text-white/60 hover:text-sky-400 transition-colors focus:outline-none"
+            className="mt-2 text-xs font-semibold text-white-100/10 hover:text-sky-300 transition-colors focus:outline-none flex items-center gap-1"
           >
-            {isExpanded ? "Show less" : "Show more"}
+            <span>{isExpanded ? "Show less" : "Show more"}</span>
           </button>
         )}
-        
-          
 
         {Attachments && Attachments.length > 0 && (
           <div className="relative bg-black border border-white/5 rounded-xl mt-4 h-auto sm:h-[400px] w-full flex items-center justify-center overflow-hidden">
@@ -460,7 +484,7 @@ export default function Post({
         )}
 
         {repostOfPost && (
-          <div className="mt-3 rounded-xl border border-white/10 bg-zinc-900/10 hover:border-white/20 transition duration-200 overflow-hidden group/repost">
+          <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.005] hover:border-white/20 transition duration-200 overflow-hidden group/repost">
             <div 
               onClick={() => router.push(`/post/${repostOfPost.id}`)} 
               className="block p-3.5 pb-2 cursor-pointer"
@@ -562,7 +586,7 @@ export default function Post({
           const isMyComment = userData?.userName?.toLowerCase() === cleanCommentUser;
 
           return (
-            <div key={comment.id} className="relative flex gap-3 text-sm p-4 rounded-2xl bg-zinc-950/50 border border-white/5 group">
+            <div key={comment.id} className="relative flex gap-3 text-sm p-4 rounded-2xl bg-white/[0.01] border border-white/5 group">
                 <div className="relative w-8 h-8 shrink-0">
                     <Link href={`/profile/${cleanCommentUser}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
                         {comment.authorAvatar && (

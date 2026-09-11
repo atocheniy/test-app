@@ -5,13 +5,13 @@ import ExperienceCard from "@/components/exp_card";
 import Post from "@/components/post";
 import ProjectCard from "@/components/project_card";
 import PublicBlock from "@/components/public_block";
+import { PostSkeleton, ProfileSkeleton } from "@/components/skeletons";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
 import { UserService } from "@/services/userService";
 import { upload } from "@vercel/blob/client";
 import { ArrowUpRight, Briefcase, ChevronDown, Code2, Globe, Mail, MapPin, Send, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
-
 
 export default function Profile() {
     const { userData, UserNameNormalized, userPostsData , refreshUserPostsData} = useApplication();
@@ -47,9 +47,16 @@ export default function Profile() {
         (u) => u.toLowerCase() === cleanUsername.toLowerCase()
     );
 
+    const [isPostsLoading, setIsPostsLoading] = useState(userPostsData.length === 0);
+
     useEffect(() => {
-        refreshUserPostsData();
         document.title = 'Profile';
+        const load = async () => {
+            if (userPostsData.length === 0) setIsPostsLoading(true);
+            await refreshUserPostsData();
+            setIsPostsLoading(false);
+        };
+        load();
     }, []);
 
     const handleSaveProfile = async (e: React.FormEvent) => {
@@ -116,8 +123,12 @@ export default function Profile() {
         }
     };
 
+    if (!userData?.id || userData.userName === '...') {
+        return <ProfileSkeleton />;
+    }
+
     return (
-        <div>
+        <div className="animate-fade-in">
             <div>
                 <Titlebar title="Profile"></Titlebar>
 
@@ -421,12 +432,35 @@ export default function Profile() {
                 <div>
                     <PublicBlock Avatar={userData.avatar}></PublicBlock>
                                 
-                    <div className="flex flex-col gap-4 p-6 max-sm:p-0 max-sm:py-6 max-sm:pb-[90px]">
-                        {userPostsData.map((p, index) => {
-                            return (
-                                <Post key={index} Id={p.id} Name={userData.fullName} UserName={UserNameNormalized} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={userData.avatar} Likes={p.likesCount} isLikedByMe={p.isLikedByMe} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} repostsCount={p.repostsCount} repostOfPost={p.repostOfPost}/>
-                            );
-                        })}
+                   <div className="flex flex-col gap-4 p-6 max-sm:p-0 max-sm:py-6 max-sm:pb-[90px]">
+                        {isPostsLoading ? (
+                            <>
+                                <PostSkeleton />
+                                <PostSkeleton />
+                            </>
+                        ) : userPostsData.length === 0 ? (
+                            <p className="text-xs text-zinc-500 text-center py-8 select-none">No posts yet</p>
+                        ) : (
+                            userPostsData.map((p) => (
+                                <div key={p.id} className="animate-fade-in">
+                                    <Post 
+                                        Id={p.id} 
+                                        Name={userData.fullName} 
+                                        UserName={UserNameNormalized} 
+                                        Content={p.content} 
+                                        Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} 
+                                        Avatar={userData.avatar} 
+                                        Likes={p.likesCount} 
+                                        isLikedByMe={p.isLikedByMe} 
+                                        Comments={p.commentsCount} 
+                                        Attachments={p.attachments} 
+                                        commentsList={p.commentsList} 
+                                        repostsCount={p.repostsCount} 
+                                        repostOfPost={p.repostOfPost}
+                                    />
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>

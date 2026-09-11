@@ -14,6 +14,7 @@ import Link from "next/link";
 
 export default function Home() {
     const { userData, onlineUsers } = useApplication();
+    const isUserLoading = !userData?.id || userData.userName === '...';
 
     const quickActions = [
         {
@@ -51,7 +52,7 @@ export default function Home() {
     ];
 
     return (
-        <div className="flex flex-col min-h-full pb-10">
+        <div className="flex flex-col min-h-full pb-10 animate-fade-in">
             <Titlebar title="Dashboard" />
 
             <div className="p-6 max-w-5xl space-y-6">
@@ -63,8 +64,13 @@ export default function Home() {
                                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                                 Branch of Workspace
                             </div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
-                                Welcome back, {userData?.fullName}!
+                            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+                                <span>Welcome back,</span>
+                                {isUserLoading ? (
+                                    <span className="inline-block h-7 md:h-8 w-36 bg-white/10 rounded-xl animate-pulse align-middle" />
+                                ) : (
+                                    <span className="text-zinc-100">{userData.fullName}</span>
+                                )}!
                             </h1>
                             <p className="text-sm text-zinc-400 max-w-md">
                                 Central hub for sharing code, chatting with colleagues, and exploring career opportunities.

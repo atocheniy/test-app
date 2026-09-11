@@ -71,7 +71,7 @@ export default function Search() {
     }, [query]);
 
     return (
-        <div className="flex flex-col min-h-full pb-12">
+        <div className="flex flex-col min-h-full pb-12 animate-fade-in">
             <Titlebar title="Search" />
 
             <div className="p-4 sm:p-6  space-y-6">

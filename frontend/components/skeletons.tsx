@@ -1,33 +1,33 @@
 export function PostSkeleton() {
   return (
-    <div className="py-6 border-b border-white/5 space-y-4 animate-pulse">
-      
+    <div className="py-4 border border-white/5 rounded-xl bg-zinc-950/30 px-4 mx-2 sm:mx-5 space-y-3 animate-pulse">
       <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 bg-zinc-800 rounded-full"></div>
-        
-        <div className="space-y-2">
-          <div className="h-3 w-28 bg-zinc-800 rounded"></div>
-          <div className="h-2.5 w-16 bg-zinc-800 rounded"></div>
+        <div className="w-10 h-10 bg-white/5 rounded-full shrink-0" />
+        <div className="space-y-1.5 flex-1">
+          <div className="h-3.5 w-28 bg-white/5 rounded-md" />
+          <div className="h-2.5 w-20 bg-white/5 rounded-md" />
         </div>
       </div>
-      
-      <div className="space-y-2.5">
-        <div className="h-3 w-full bg-zinc-800 rounded"></div>
-        <div className="h-3 w-[92%] bg-zinc-800 rounded"></div>
-        <div className="h-3 w-[40%] bg-zinc-800 rounded"></div>
+
+      <div className="space-y-2 pt-1">
+        <div className="h-3 w-full bg-white/5 rounded" />
+        <div className="h-3 w-[85%] bg-white/5 rounded" />
       </div>
 
-      <div className="h-44 w-full bg-zinc-800 rounded-2xl"></div>
-      
+      <div className="flex gap-8 pt-2">
+        <div className="h-3 w-8 bg-white/5 rounded" />
+        <div className="h-3 w-8 bg-white/5 rounded" />
+        <div className="h-3 w-8 bg-white/5 rounded" />
+      </div>
     </div>
   );
 }
 
+
 export default function FeedSkeleton() {
   return (
-    <div className="space-y-1">
-      <div className="h-6 w-24 bg-zinc-800 rounded mb-6 animate-pulse"></div>
-      
+    <div className="flex flex-col gap-3 sm:gap-4 px-1 sm:px-6 pt-2">
+      <PostSkeleton />
       <PostSkeleton />
       <PostSkeleton />
     </div>

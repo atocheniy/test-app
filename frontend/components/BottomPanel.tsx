@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { MessageCircle, Newspaper, Search, UserPen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import { LinearBlur } from "progressive-blur";
 
 const links = [
   { name: 'Feed', href: '/feed', icon: Newspaper },
@@ -13,66 +13,28 @@ const links = [
   { name: 'Profile', href: '/profile', icon: UserPen },
 ];
 
-function ProgressiveBlur({
-  side = "bottom",
-  height = 128,
-  maxBlur = 20,
-  layers = 8,
-}: {
-  side?: "top" | "bottom";
-  height?: number;
-  maxBlur?: number;
-  layers?: number;
-}) {
-  const items = useMemo(() => {
-    const pct = (n: number) =>
-      `${Math.min(100, Math.max(0, (n / layers) * 100))}%`;
-
-    const dir = side === "bottom" ? "to top" : "to bottom";
-
-    return Array.from({ length: layers }, (_, i) => {
-      const blur = maxBlur / 2 ** i;
-      const mask = `linear-gradient(${dir},
-        transparent ${pct(i - 1)},
-        black ${pct(i)},
-        black ${pct(i + 1)},
-        transparent ${pct(i + 2)})`;
-      return { blur, mask };
-    });
-  }, [side, layers, maxBlur]);
-
-  return (
-    <div
-      aria-hidden
-      className={clsx(
-        "pointer-events-none absolute inset-x-0",
-        side === "bottom" ? "bottom-0" : "top-0"
-      )}
-      style={{ height }}
-    >
-      {items.map(({ blur, mask }, i) => (
-        <div
-          key={i}
-          className="absolute inset-0"
-          style={{
-            backdropFilter: `blur(${blur}px)`,
-            WebkitBackdropFilter: `blur(${blur}px)`,
-            maskImage: mask,
-            WebkitMaskImage: mask,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
 export default function BottomPanel() {
   const pathname = usePathname();
 
   return (
     <div className="hidden max-sm:block fixed inset-x-0 bottom-0 z-1000 pointer-events-none">
       <div className="relative h-32">
-        <ProgressiveBlur side="bottom" height={128} maxBlur={20} layers={8} />
+        <LinearBlur
+                side="bottom"
+                steps={6}
+                strength={20}
+                falloffPercentage={100}
+                tint="rgba(2, 2, 2, 0.75)"
+                style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 140,
+                    zIndex: 0,
+                    pointerEvents: "none",
+                }}
+            />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
       </div>
 

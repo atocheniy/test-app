@@ -1,18 +1,19 @@
 'use client';
 
+import clsx from 'clsx';
+import { LayoutGrid, Menu, MessageCircle, MessageSquareWarning, Newspaper, Search, Settings } from 'lucide-react';
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
-import clsx from 'clsx';
-import {Menu, Settings, UserPen, Search, Newspaper, MessageSquareWarning, MessageCircle} from 'lucide-react';
 
-import { useRouter } from 'next/navigation';
 import { useApplication } from "@/context/ApplicationContext";
+import { useRouter } from 'next/navigation';
 
 const links = [
   { name: 'Home', href: '/home', icon: Menu },
   { name: 'Feed', href: '/feed', icon: Newspaper},
   { name: 'Search', href: '/search', icon: Search },
   { name: 'Messages', href: '/messages', icon: MessageCircle },
+  { name: 'Explore Hub', href: '/other', icon: LayoutGrid}
 ];
 
 export default function Sidebar() {
@@ -25,7 +26,7 @@ export default function Sidebar() {
     return (
          <aside className="w-78 hidden md:flex text-white p-3 flex flex-col h-screen sticky top-0">
             <div>
-                <div className="p-3 mb-4 border border-white/5  rounded-2xl text-sm font-bold text-white flex flex-row items-center gap-2">
+                <div className="p-3 mb-4 border border-white/5 bg-white/[0.02]  rounded-2xl text-sm font-bold text-white flex flex-row items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40px" height="34px" className="border border-white/15 rounded-xl">
                         <rect width="100" height="100" rx="40" fill="#000000" />
                         <g fill="#FFFFFF">
@@ -99,7 +100,7 @@ export default function Sidebar() {
                 onClick={(e) => {
                     router.push('/profile');
                 }} 
-                className="mt-4 p-3 bg-white/5 border rounded-2xl text-sm text-zinc-400 flex flex-row gap-3 items-center justify-start hover:bg-stone-950 hover:border border-white/5 cursor-pointer transition-all duration-150"
+                className="mt-4 p-3 bg-white/[0.02] border rounded-2xl text-sm text-zinc-400 flex flex-row gap-3 items-center justify-start hover:bg-stone-950 hover:border border-white/5 cursor-pointer transition-all duration-150"
             >
                 <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
                     {userData.avatar && (

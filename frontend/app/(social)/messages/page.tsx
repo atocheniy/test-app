@@ -4,13 +4,13 @@ import BottomInput from "@/components/bottomInput";
 import MessagePreview from "@/components/messagePreview";
 import ReceivedMessage from "@/components/receivedMessage";
 import SentMessage from "@/components/sentMessage";
-import Titlebar from "@/components/titlebar";
 import TitlebarMessage from "@/components/titlebarMessage";
 import { useApplication } from "@/context/ApplicationContext";
 import { ChatItem, ChatService, MessageItem } from "@/services/chatService";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
+import TitlebarMessages from "@/components/titlebarMessages";
 import * as signalR from "@microsoft/signalr";
 import { Edit, Reply, X } from "lucide-react";
 
@@ -21,6 +21,7 @@ function MessagesContent() {
     const { userData, connection, onlineUsers } = useApplication();
 
     const [chats, setChats] = useState<ChatItem[]>([]);
+    const [isChatsLoading, setIsChatsLoading] = useState(true);
     const [activeChat, setActiveChat] = useState<ChatItem | null>(null);
     const [messages, setMessages] = useState<MessageItem[]>([]);
     const [inputText, setInputText] = useState("");
@@ -75,6 +76,8 @@ function MessagesContent() {
             }
         } catch (error) {
             console.error("Ошибка загрузки чатов:", error);
+        } finally {
+            setIsChatsLoading(false);
         }
      };
 
@@ -317,58 +320,77 @@ function MessagesContent() {
     return (
           <div className="flex flex-row h-full" >
                <div className={`flex flex-col w-[500px] max-sm:w-full border-r border-white/5 overflow-y-auto no-scrollbar max-sm:border-r-0 min-h-full ${activeChat ? 'max-sm:hidden' : 'flex'}`}>
-                    <Titlebar title="Messages"></Titlebar>
+                    <TitlebarMessages title="Messages"></TitlebarMessages>
 
                     <div className="flex flex-col">
-                         {chats.length === 0 ? (
-                         <div className="p-4 text-center text-zinc-500">No chats yet</div>
-                         ) : (
-                          chats.map(chat => {
-
-                               const isUserOnline = chat.userName 
-                ? onlineUsers?.includes(chat.userName) 
-                : false;
-                         return (
-                              <div 
-                                   key={chat.id} 
-                                   onClick={() => handleSelectChat(chat)}
-                                   className={`cursor-pointer transition ${activeChat?.id === chat.id ? 'bg-white/5' : 'hover:bg-white/[0.02]'}`}
-                              >
-                                   <MessagePreview 
-                                        Id={chat.id} 
-                                        Name={chat.name} 
-                                        UserName={chat.userName || ""} 
-                                        Content={chat.content || "No messages yet"} 
-                                        Time={chat.time} 
-                                        Avatar={chat.avatar || userData.avatar} 
-                                        isOnline={isUserOnline}
-                                   />
-                              </div>
-                               );
-                              })
-                    )}
+                         {isChatsLoading ? (
+                            <div className="flex flex-col">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                    <div key={i} className="flex items-center gap-3 p-3.5 px-4 border-b border-white/[0.02] animate-pulse">
+                                        <div className="w-10 h-10 rounded-full bg-white/5 shrink-0" />
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <div className="h-3 w-28 bg-white/5 rounded" />
+                                                <div className="h-2.5 w-10 bg-white/5 rounded" />
+                                            </div>
+                                            <div className="h-2.5 w-44 bg-white/5 rounded" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : chats.length === 0 ? (
+                            <div className="p-4 text-center text-xs text-zinc-500">No chats yet</div>
+                        ) : (
+                            <div className="animate-fade-in flex flex-col">
+                                {chats.map(chat => {
+                                    const isUserOnline = chat.userName ? onlineUsers?.includes(chat.userName) : false;
+                                    return (
+                                        <div 
+                                            key={chat.id} 
+                                            onClick={() => handleSelectChat(chat)}
+                                            className={`cursor-pointer transition ${activeChat?.id === chat.id ? 'bg-white/5' : 'hover:bg-white/[0.02]'}`}
+                                        >
+                                            <MessagePreview 
+                                                Id={chat.id} 
+                                                Name={chat.name} 
+                                                UserName={chat.userName || ""} 
+                                                Content={chat.content || "No messages yet"} 
+                                                Time={chat.time} 
+                                                Avatar={chat.avatar || userData.avatar} 
+                                                isOnline={isUserOnline}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
                {activeChat ? (
-  <div className="flex flex-col w-full overflow-y-auto no-scrollbar  max-sm:fixed max-sm:top-0 max-sm:inset-x-0 max-sm:bottom-16 max-sm:z-50 max-sm:bg-black/75 max-sm:backdrop-blur-xl">
-                   <TitlebarMessage 
-                        Id={activeChat.id} 
-                        Name={activeChat.name} 
-                        UserName={activeChat.userName || ""} 
-                        Info={isPartnerOnline ? "Online" : "Offline"} 
-                        Avatar={activeChat.avatar || userData.avatar} 
-                        isOnline={isPartnerOnline}
-                        onClose={() => setActiveChat(null)}
-                        isTyping={isPartnerTyping}
-                    />
+                    <div className="flex flex-col w-full h-full relative overflow-hidden no-scrollbar  max-sm:fixed max-sm:inset-0 max-sm:z-[1001] max-sm:bg-black/75 max-sm:backdrop-blur-xl">
+                                        <div className="absolute top-0 inset-x-0 z-20">
+                                    <TitlebarMessage 
+                                            Id={activeChat.id} 
+                                            Name={activeChat.name} 
+                                            UserName={activeChat.userName || ""} 
+                                            Info={isPartnerOnline ? "Online" : "Offline"} 
+                                            Avatar={activeChat.avatar || userData.avatar} 
+                                            isOnline={isPartnerOnline}
+                                            onClose={() => setActiveChat(null)}
+                                            isTyping={isPartnerTyping}
+                                        />
+                                        </div>
 
-                     <div className="flex-1 p-4 flex flex-col gap-1 overflow-y-auto">
-                        {loading ? (
-                            <div className="text-center text-zinc-500 my-auto">Loading messages...</div>
-                        ) : messages.length === 0 ? (
-                            <div className="text-center text-zinc-500 my-auto">Write first message</div>
-                        ) : (
-                            messages.map((msg) => 
+                                        <div className="flex-1 p-4 pt-20 pb-25 flex flex-col gap-1 relative z-10 overflow-y-auto">
+                                            {loading ? (
+                        <div className="flex-1 flex flex-col justify-end gap-3 p-2 animate-pulse">
+                            
+                        </div>
+                    ) : messages.length === 0 ? (
+                        <div className="text-center text-zinc-500 my-auto text-xs">Write first message</div>
+                    ) : (
+                        <div className="animate-fade-in flex flex-col gap-1">
+                            {messages.map((msg) => 
                                 msg.isMine ? (
                                     <SentMessage 
                                         key={msg.id} 
@@ -395,57 +417,60 @@ function MessagesContent() {
                                         onReply={handleStartReply}
                                     />
                                 )
-                            )
-                        )}
+                            )}
+                        </div>
+                    )}
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {replyingMessage && (
-                        <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-t border-white/5 text-xs text-zinc-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
-                            <div className="flex items-center gap-2 truncate">
-                                <Reply size={14} className="text-sky-400 shrink-0" />
-                                <div className="flex flex-col truncate">
-                                    <span className="font-semibold text-sky-400 text-[11px]">
-                                        Replying to {replyingMessage.authorName}
-                                    </span>
-                                    <span className="truncate text-zinc-400 text-[11px] max-w-md">
-                                        {replyingMessage.content || "📷 Attachment"}
-                                    </span>
+                    <div className="absolute bottom-0 inset-x-0 z-20 flex flex-col">
+                        {replyingMessage && (
+                            <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-t border-white/5 text-xs text-zinc-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                                <div className="flex items-center gap-2 truncate">
+                                    <Reply size={14} className="text-sky-400 shrink-0" />
+                                    <div className="flex flex-col truncate">
+                                        <span className="font-semibold text-sky-400 text-[11px]">
+                                            Replying to {replyingMessage.authorName}
+                                        </span>
+                                        <span className="truncate text-zinc-400 text-[11px] max-w-md">
+                                            {replyingMessage.content || "📷 Attachment"}
+                                        </span>
+                                    </div>
                                 </div>
+                                <button 
+                                    onClick={() => setReplyingMessage(null)}
+                                    className="p-1 hover:bg-white/10 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
+                                    title="Cancel reply"
+                                >
+                                    <X size={14} />
+                                </button>
                             </div>
-                            <button 
-                                onClick={() => setReplyingMessage(null)}
-                                className="p-1 hover:bg-white/10 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
-                                title="Cancel reply"
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
-                    )}
+                        )}
 
-                    {editingMessage && (
-                        <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-t border-white/5 text-xs text-zinc-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
-                            <div className="flex items-center gap-2 truncate">
-                                <Edit size={14} className="text-sky-400 shrink-0" />
-                                <span className="font-semibold text-sky-400">Editing message:</span>
-                                <span className="truncate text-zinc-400 max-w-md">{editingMessage.content}</span>
+                        {editingMessage && (
+                            <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-t border-white/5 text-xs text-zinc-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                                <div className="flex items-center gap-2 truncate">
+                                    <Edit size={14} className="text-sky-400 shrink-0" />
+                                    <span className="font-semibold text-sky-400">Editing message:</span>
+                                    <span className="truncate text-zinc-400 max-w-md">{editingMessage.content}</span>
+                                </div>
+                                <button 
+                                    onClick={handleCancelEdit}
+                                    className="p-1 hover:bg-white/10 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
+                                    title="Cancel edit"
+                                >
+                                    <X size={14} />
+                                </button>
                             </div>
-                            <button 
-                                onClick={handleCancelEdit}
-                                className="p-1 hover:bg-white/10 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
-                                title="Cancel edit"
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
-                    )}
+                        )}
 
-                    <BottomInput 
-                        value={inputText}
-                        onChange={handleInputChange}
-                        onSend={handleSendMessage}
-                        placeholder="Type a message..."
-                    />
+                        <BottomInput 
+                            value={inputText}
+                            onChange={handleInputChange}
+                            onSend={handleSendMessage}
+                            placeholder="Type a message..."
+                        />
+                    </div>
                 </div>
                ) : (
                <div className="hidden sm:flex flex-1 items-center justify-center text-zinc-600">

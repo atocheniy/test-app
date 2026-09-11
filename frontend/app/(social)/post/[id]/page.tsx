@@ -1,6 +1,7 @@
 'use client'
 
 import Post from "@/components/post";
+import { PostSkeleton } from "@/components/skeletons";
 import Titlebar from "@/components/titlebar";
 import TitlebarBack from "@/components/titlebarBack";
 import { useApplication } from "@/context/ApplicationContext";
@@ -8,6 +9,7 @@ import { CommentsService } from "@/services/commentService";
 import { Check, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { LinearBlur } from "progressive-blur";
 import { useEffect, useState } from "react";
 
 export default function PagePost() {
@@ -90,16 +92,37 @@ export default function PagePost() {
         }
     };
 
-    if (!currentPost || !currentPost.id) {
+    const isPostLoading = !currentPost || currentPost.id !== idFromUrl;
+    
+    if (isPostLoading) {
         return (
-            <div className="min-h-screen bg-[#000000] flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-zinc-800 border-t-zinc-200 rounded-full animate-spin" />
+            <div className="flex flex-col min-h-full">
+                <TitlebarBack title="Post" />
+                
+                <div className="flex flex-col lg:p-6 md:p-6 py-6">
+                    <PostSkeleton />
+                </div>
+
+                <div className="w-full border-t border-white/5" />
+                <Titlebar title="Comments" />
+
+                <div className="flex flex-col gap-4 p-6 lg:px-11 md:px-11">
+                    {[1, 2].map((i) => (
+                        <div key={i} className="flex gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse">
+                            <div className="w-8 h-8 rounded-full bg-white/5 shrink-0" />
+                            <div className="flex-1 space-y-2">
+                                <div className="h-3 w-28 bg-white/5 rounded" />
+                                <div className="h-3 w-full bg-white/5 rounded" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }
 
     return(
-        <div className="flex flex-col min-h-full justify-between">
+        <div className="flex flex-col min-h-full justify-between animate-fade-in">
             <div className="flex-1 flex flex-col">
                 <div>
                     <TitlebarBack title={`Post from ${currentPost.authorName}`} />
@@ -123,7 +146,7 @@ export default function PagePost() {
                             const isMyComment = userData?.userName?.toLowerCase() === cleanUser;
 
                             return (
-                                <div key={comment.id} className="relative flex gap-3 text-sm p-4 rounded-2xl bg-zinc-950/50 border border-white/5 group">
+                                <div key={comment.id} className="relative flex gap-3 text-sm p-4 rounded-2xl bg-white/[0.02] border border-white/5 group">
                                     <div className="relative w-8 h-8 shrink-0">
                                         <Link href={`/profile/${cleanUser}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
                                             {comment.authorAvatar ? (
@@ -238,20 +261,36 @@ export default function PagePost() {
                 </div>
             </div>
 
-           <div className="mt-0 bg-black/60 backdrop-blur-sm sticky bottom-0 border-t border-white/5 p-3 flex flex-row items-center gap-4 px-6 relative z-1110">
-                <div className="w-8 h-8 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
+           <div className="sticky bottom-0 p-3 px-6 max-sm:bottom-7 flex flex-row items-center gap-4 relative z-1050">
+                <LinearBlur
+                    side="bottom"
+                    steps={5}
+                    strength={20}
+                    falloffPercentage={100}
+                    tint="rgba(2, 2, 2, 0.75)"
+                    style={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 140,
+                        zIndex: 0,
+                        pointerEvents: "none",
+                    }}
+                />
+                <div className="w-8 h-8 bg-zinc-700 rounded-full shrink-0 overflow-hidden relative z-10">
                     {userData.avatar && (
                         <img src={userData.avatar} className="w-full h-full object-cover" alt="My Avatar" />
                     )}
                 </div>
 
-                <form onSubmit={handleSendComment} className="flex-1 flex flex-row items-center gap-3">
+                <form onSubmit={handleSendComment} className="flex-1 flex flex-row items-center gap-3 relative z-10">
                     <textarea
                         rows={1}
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
                         placeholder="Write a comment..."
-                        className="flex-1 p-2.5 px-4 text-sm text-zinc-100 bg-zinc-950 border border-white/5 rounded-2xl focus:outline-none transition focus:ring-1 focus:ring-white/20 resize-none [field-sizing:content] min-h-[38px] max-h-[120px]"
+                        className="flex-1 p-2.5 px-4 text-sm text-zinc-100 bg-white/[0.02] border border-white/10 rounded-2xl focus:outline-none transition focus:ring-1 focus:ring-white/20 resize-none [field-sizing:content] min-h-[38px] max-h-[120px]"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();

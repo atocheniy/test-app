@@ -9,6 +9,7 @@ import { useApplication } from "@/context/ApplicationContext";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { PostSkeleton } from "@/components/skeletons";
 import { ChatService } from "@/services/chatService";
 import { useRouter } from 'next/navigation';
 
@@ -23,6 +24,9 @@ export default function Profile() {
 
     const { onlineUsers } = useApplication();
     const cleanUsername = otherUserData.userName;
+
+    const isProfileLoading = !otherUserData?.id || otherUserData.userName.toLowerCase() !== usernameFromUrl.toLowerCase();
+    const [isPostsLoading, setIsPostsLoading] = useState(true);
 
     const isAuthorOnline = onlineUsers.some(
         (u) => u.toLowerCase() === cleanUsername.toLowerCase()
@@ -48,12 +52,19 @@ export default function Profile() {
     const isOwnProfile = usernameFromUrl.toLowerCase() === userData.userName.toLowerCase();
     
     useEffect(() => {
-        refreshOtherUserPostsData(usernameFromUrl);
-        refreshOtherUserData(usernameFromUrl);
-    }, []);
+        document.title = `@${usernameFromUrl}`;
+        setIsPostsLoading(true);
+
+        Promise.all([
+            refreshOtherUserData(usernameFromUrl),
+            refreshOtherUserPostsData(usernameFromUrl)
+        ]).finally(() => {
+            setIsPostsLoading(false);
+        });
+    }, [usernameFromUrl]);
 
     return (
-        <div>
+        <div className="animate-fade-in">
             <div>
                 <Titlebar title="Profile"></Titlebar>
 
@@ -200,11 +211,34 @@ export default function Profile() {
                 <div>
                                 
                     <div className="flex flex-col gap-4 p-6 max-sm:p-0 max-sm:py-6 max-sm:pb-[90px]">
-                        {otherUserPostsData.map((p, index) => {
-                            return (
-                                <Post key={index} Id={p.id} Name={otherUserData.fullName} UserName={"@" + otherUserData.userName} Content={p.content} Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Avatar={otherUserData.avatar} Likes={p.likesCount} isLikedByMe={p.isLikedByMe} Comments={p.commentsCount} Attachments={p.attachments} commentsList={p.commentsList} repostsCount={p.repostsCount} repostOfPost={p.repostOfPost}/>
-                            );
-                        })}
+                        {isPostsLoading ? (
+                            <>
+                                <PostSkeleton />
+                                <PostSkeleton />
+                            </>
+                        ) : otherUserPostsData.length === 0 ? (
+                            <p className="text-xs text-zinc-500 text-center py-8 select-none">No posts yet</p>
+                        ) : (
+                            otherUserPostsData.map((p) => (
+                                <div key={p.id} className="animate-fade-in">
+                                    <Post 
+                                        Id={p.id} 
+                                        Name={otherUserData.fullName} 
+                                        UserName={"@" + otherUserData.userName} 
+                                        Content={p.content} 
+                                        Time={new Date(p.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} 
+                                        Avatar={otherUserData.avatar} 
+                                        Likes={p.likesCount} 
+                                        isLikedByMe={p.isLikedByMe} 
+                                        Comments={p.commentsCount} 
+                                        Attachments={p.attachments} 
+                                        commentsList={p.commentsList} 
+                                        repostsCount={p.repostsCount} 
+                                        repostOfPost={p.repostOfPost}
+                                    />
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
