@@ -26,13 +26,15 @@ namespace server.Controllers
 
         // GET: api/Chat
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Chat>>> GetMyChats()
+        public async Task<IActionResult> GetMyChats()
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
 
             var chats = await _context.Chat
                 .Where(c => c.Participants.Any(p => p.UserId == currentUserId))
-                .OrderByDescending(c => c.UpdatedAt)
+                .OrderByDescending(c => c.Participants.Where(p => p.UserId == currentUserId).Select(p => p.IsPinned).FirstOrDefault())
+                .ThenByDescending(c => c.UpdatedAt)
                 .Select(c => new
                 {
                     Id = c.Id,
@@ -52,7 +54,11 @@ namespace server.Controllers
                         .OrderByDescending(m => m.SentAt)
                         .Select(m => m.Content)
                         .FirstOrDefault(),
-                    Time = c.UpdatedAt.ToString("HH:mm")
+                    Time = c.UpdatedAt.ToString("HH:mm"),
+                    IsPinned = c.Participants
+                        .Where(p => p.UserId == currentUserId)
+                        .Select(p => p.IsPinned)
+                        .FirstOrDefault()
                 })
                 .ToListAsync();
 
@@ -149,11 +155,63 @@ namespace server.Controllers
             return Ok(new { chatId = newChat.Id });
         }
 
-        // DELETE: api/Chat/5
+        // POST: api/Chat/{id}/pin
+        [HttpPost("{id}/pin")]
+        public async Task<IActionResult> TogglePin(Guid id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+            var participant = await _context.ChatParticipant
+                .FirstOrDefaultAsync(cp => cp.ChatId == id && cp.UserId == currentUserId);
+
+            if (participant == null)
+                return NotFound("Chat not found");
+
+            participant.IsPinned = !participant.IsPinned;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { isPinned = participant.IsPinned });
+        }
+
+        // POST: api/Chat/{id}/clear
+        [HttpPost("{id}/clear")]
+        public async Task<IActionResult> ClearChat(Guid id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+            var participant = await _context.ChatParticipant
+                .FirstOrDefaultAsync(cp => cp.ChatId == id && cp.UserId == currentUserId);
+
+            if (participant == null)
+                return NotFound("Chat not found");
+
+            var messages = await _context.Message.Where(m => m.ChatId == id).ToListAsync();
+            foreach (var m in messages)
+            {
+                m.ReplyToId = null;
+            }
+            await _context.SaveChangesAsync();
+
+            _context.Message.RemoveRange(messages);
+
+            var chat = await _context.Chat.FindAsync(id);
+            if (chat != null)
+            {
+                chat.UpdatedAt = DateTime.UtcNow;
+            }
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // DELETE: api/Chat/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteChat(Guid id)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
             
             var chat = await _context.Chat
                 .Include(c => c.Participants)
@@ -161,6 +219,14 @@ namespace server.Controllers
 
             if (chat == null)
                 return NotFound();
+
+            var messages = await _context.Message.Where(m => m.ChatId == id).ToListAsync();
+            foreach (var m in messages)
+            {
+                m.ReplyToId = null;
+            }
+            await _context.SaveChangesAsync();
+            _context.Message.RemoveRange(messages);
 
             _context.Chat.Remove(chat);
             await _context.SaveChangesAsync();

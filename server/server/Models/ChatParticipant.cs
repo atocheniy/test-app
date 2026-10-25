@@ -1,4 +1,4 @@
-﻿namespace server.Models;
+namespace server.Models;
 
 public class ChatParticipant
 {
@@ -10,4 +10,5 @@ public class ChatParticipant
     
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastReadAt { get; set; } 
+    public bool IsPinned { get; set; } = false;
 }

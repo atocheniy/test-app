@@ -38,8 +38,89 @@ export interface User{
 
     followers: number;
     followings: number;
+    watchersCount?: number;
+    watchingCount?: number;
+    isWatching?: boolean;
     
     technologies?: string[];
+    focus?: string;
+    preferredLanguage?: 'ru' | 'en';
+    projects?: UserProject[];
+    experiences?: UserExperience[];
+}
+
+export enum ProjectStatus {
+    InDevelopment = 0,
+    Beta = 1,
+    Released = 2,
+    Archived = 3,
+}
+
+export interface UserProject {
+    id: string;
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    bannerUrl?: string;
+    images?: string[];
+    githubUrl?: string;
+    liveUrl?: string;
+    technologies?: string[];
+    status?: ProjectStatus;
+    starsCount?: number;
+    postsCount?: number;
+    createdAt?: string;
+}
+
+export interface ProjectDetails extends UserProject {
+    userId: string;
+    authorName?: string;
+    authorUsername?: string;
+    authorAvatar?: string;
+    isStarredByMe: boolean;
+    isMyProject: boolean;
+}
+
+export interface CreateProjectData {
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    bannerUrl?: string;
+    images?: string[];
+    githubUrl?: string;
+    liveUrl?: string;
+    technologies?: string[];
+    status?: ProjectStatus;
+}
+
+export interface UpdateProjectData {
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    bannerUrl?: string;
+    images?: string[];
+    githubUrl?: string;
+    liveUrl?: string;
+    technologies?: string[];
+    status?: ProjectStatus;
+}
+
+export interface UserExperience {
+    id: string;
+    companyName: string;
+    position: string;
+    mode?: string;
+    period: string;
+    description?: string;
+    createdAt?: string;
+}
+
+export interface CreateExperienceData {
+    companyName: string;
+    position: string;
+    mode?: string;
+    period: string;
+    description?: string;
 }
 
 export interface Post{
@@ -68,6 +149,22 @@ export interface Post{
     }[];
 
     repostOfPost?: RepostPreview | null;
+
+    community?: {
+        id: string;
+        name: string;
+        slug: string;
+        avatar?: string;
+    } | null;
+
+    project?: {
+        id: string;
+        name: string;
+        imageUrl?: string;
+        status?: ProjectStatus;
+    } | null;
+
+    recommendationReason?: string;
 }   
 
 export interface Comment{
@@ -85,6 +182,9 @@ export interface CreatePost{
     content: string;
     attachments: string[];
     repostOfPostId?: string;
+    communityId?: string;
+    projectId?: string;
+    showInGeneralFeed?: boolean;
 }
 
 export interface CreateComment{
@@ -144,3 +244,130 @@ export interface RepostPreview {
   authorUsername: string;
   authorAvatar?: string;
 }
+
+export interface CreateCommunityData {
+    name: string;
+    slug: string;
+    description?: string;
+    avatar?: string;
+    banner?: string;
+    type?: number;
+    postingPolicy?: number;
+    kind?: number | string;
+    websiteUrl?: string;
+    location?: string;
+    industry?: string;
+    companySize?: string;
+}
+
+export enum CommunityKind {
+    Community = 0,
+    Company = 1
+}
+
+export const isCompanyEntity = (kind: any): boolean => {
+    return kind === 1 || kind === '1' || kind === 'Company' || (typeof kind === 'string' && kind.toLowerCase() === 'company');
+};
+
+export enum WorkFormat {
+    Remote = 0,
+    Hybrid = 1,
+    Office = 2
+}
+
+export enum SeniorityLevel {
+    Intern = 0,
+    Junior = 1,
+    Middle = 2,
+    Senior = 3,
+    Lead = 4
+}
+
+export enum VacancyStatus {
+    Open = 0,
+    Paused = 1,
+    Closed = 2
+}
+
+export interface Vacancy {
+    id: string;
+    companyId: string;
+    companyName: string;
+    companySlug: string;
+    companyAvatar?: string;
+    companyLocation?: string;
+    isCompanyVerified?: boolean;
+    title: string;
+    description: string;
+    salaryFrom?: number | null;
+    salaryTo?: number | null;
+    currency?: string;
+    format: WorkFormat | number | string;
+    level: SeniorityLevel | number | string;
+    stack: string[];
+    status: VacancyStatus | number | string;
+    createdById: string;
+    createdByName?: string;
+    createdByUsername?: string;
+    createdByAvatar?: string;
+    created: string;
+    matchPercent?: number;
+    matchReason?: string;
+    score?: number;
+}
+
+export interface CreateVacancyData {
+    title: string;
+    description: string;
+    salaryFrom?: number | null;
+    salaryTo?: number | null;
+    currency?: string;
+    format: number;
+    level: number;
+    stack: string[];
+}
+
+export interface Community {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    rules?: string;
+    avatar?: string;
+    banner?: string;
+    type: number | string;
+    postingPolicy: number | string;
+    kind: number | string;
+    websiteUrl?: string;
+    location?: string;
+    industry?: string;
+    companySize?: string;
+    isVerified?: boolean;
+    vacanciesCount?: number;
+    membersCount: number;
+    watchersCount: number;
+    postsCount: number;
+    creatorName?: string;
+    creatorUsername?: string;
+    creatorAvatar?: string;
+    membersList?: {
+        id: string;
+        name: string;
+        username: string;
+        avatar?: string;
+        role: number | string;
+    }[];
+    pendingEmployees?: {
+        id: string;
+        name: string;
+        username: string;
+        avatar?: string;
+        workStatus?: string;
+        technologies?: string[];
+    }[];
+    isMember?: boolean;
+    isWatching?: boolean;
+    myRole?: number | null;
+    myMemberStatus?: number | null;
+}
+

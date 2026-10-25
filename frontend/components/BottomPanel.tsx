@@ -5,16 +5,18 @@ import { MessageCircle, Newspaper, Search, UserPen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LinearBlur } from "progressive-blur";
-
-const links = [
-  { name: 'Feed', href: '/feed', icon: Newspaper },
-  { name: 'Search', href: '/search', icon: Search },
-  { name: 'Messages', href: '/messages', icon: MessageCircle },
-  { name: 'Profile', href: '/profile', icon: UserPen },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function BottomPanel() {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const links = [
+    { name: t.nav.feed, href: '/feed', icon: Newspaper },
+    { name: t.nav.search, href: '/search', icon: Search },
+    { name: t.nav.messages, href: '/messages', icon: MessageCircle },
+    { name: t.nav.profile, href: '/profile', icon: UserPen },
+  ];
 
   return (
     <div className="hidden max-sm:block fixed inset-x-0 bottom-0 z-1000 pointer-events-none">

@@ -2,9 +2,11 @@
 
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { UserService } from "@/services/userService";
 import {
     KeyRound,
+    Languages,
     Lock,
     LogOut,
     Palette,
@@ -13,12 +15,19 @@ import {
     X
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 export default function Settings() {
     const { userData, logout } = useApplication();
+    const { language, setLanguage, t } = useLanguage();
 
+    const [mounted, setMounted] = useState(false);
     const [showOnlineStatus, setShowOnlineStatus] = useState(true);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
     const [allowDirectMessages, setAllowDirectMessages] = useState(true);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [blurEnabled, setBlurEnabled] = useState(true);
@@ -29,6 +38,43 @@ export default function Settings() {
 
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [passwordError, setPasswordError] = useState("");
+    const [passwordSuccess, setPasswordSuccess] = useState("");
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setPasswordError("");
+        setPasswordSuccess("");
+
+        if (!oldPassword || !newPassword) return;
+
+        if (newPassword.length < 6) {
+            setPasswordError("Пароль должен содержать минимум 6 символов");
+            return;
+        }
+
+        setIsChangingPassword(true);
+        try {
+            await UserService.changePassword({ oldPassword, newPassword });
+            setPasswordSuccess("Пароль успешно обновлен!");
+            setOldPassword("");
+            setNewPassword("");
+            setTimeout(() => {
+                setIsPasswordModalOpen(false);
+                setPasswordSuccess("");
+            }, 1200);
+        } catch (err: any) {
+            console.error("Ошибка смены пароля:", err);
+            const errDetail = err?.response?.data?.[0]?.description 
+                || (typeof err?.response?.data === 'string' ? err?.response?.data : null)
+                || err?.response?.data?.message 
+                || "Неверный текущий пароль или ошибка сервера";
+            setPasswordError(errDetail);
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
 
     const handleDeleteAccount = async () => {
         setIsDeleting(true);
@@ -60,7 +106,7 @@ export default function Settings() {
 
     return (
         <div className="flex flex-col min-h-full pb-16 animate-fade-in">
-            <Titlebar title="Settings" />
+            <Titlebar title={t.settings.title} />
 
             <div className="p-4 sm:p-6 space-y-6">
 
@@ -84,10 +130,10 @@ export default function Settings() {
                         </div>
 
                         <Link
-                            href={`/profile/${userData.userName}`}
+                            href="/profile"
                             className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-zinc-200 border border-white/5 transition self-start sm:self-auto"
                         >
-                            View Public Profile
+                            {t.settings.viewProfile}
                         </Link>
                     </div>
 
@@ -96,24 +142,69 @@ export default function Settings() {
 
                 <div className="p-5 sm:p-6 rounded-3xl border border-white/5 bg-zinc-950/20 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
+                        <Languages size={16} className="text-cyan-400" />
+                        <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                            {t.settings.languageSubtitle}
+                        </h2>
+                    </div>
+
+                    <div className="divide-y divide-white/5">
+                        <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="pr-4">
+                                <h4 className="text-sm font-medium text-zinc-200">{t.settings.languageTitle}</h4>
+                                <p className="text-xs text-zinc-500">{t.settings.languageDesc}</p>
+                            </div>
+                            
+                            <div className="inline-flex items-center p-1 rounded-2xl bg-zinc-900/80 border border-white/10 shrink-0 self-start sm:self-auto">
+                                <button
+                                    type="button"
+                                    onClick={() => setLanguage('ru')}
+                                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                                        language === 'ru'
+                                            ? 'bg-white text-black shadow-lg shadow-white/10'
+                                            : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    <span className="text-[11px] font-bold">RU</span>
+                                    <span>{t.settings.russian}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setLanguage('en')}
+                                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                                        language === 'en'
+                                            ? 'bg-white text-black shadow-lg shadow-white/10'
+                                            : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    <span className="text-[11px] font-bold">EN</span>
+                                    <span>{t.settings.english}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-5 sm:p-6 rounded-3xl border border-white/5 bg-zinc-950/20 space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
                         <Shield size={16} className="text-blue-400" />
                         <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                            Security & Credentials
+                            {t.settings.securityTitle}
                         </h2>
                     </div>
 
                     <div className="divide-y divide-white/5">
                         <div className="py-3 flex items-center justify-between">
                             <div>
-                                <h4 className="text-sm font-medium text-zinc-200">Password</h4>
-                                <p className="text-xs text-zinc-500">Change your secret password regularly</p>
+                                <h4 className="text-sm font-medium text-zinc-200">{t.settings.passwordTitle}</h4>
+                                <p className="text-xs text-zinc-500">{t.settings.passwordDesc}</p>
                             </div>
                             <button
                                 onClick={() => setIsPasswordModalOpen(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-zinc-300 transition"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-zinc-300 transition cursor-pointer"
                             >
                                 <KeyRound size={13} />
-                                Change
+                                {t.settings.changePasswordBtn}
                             </button>
                         </div>
                     </div>
@@ -123,23 +214,23 @@ export default function Settings() {
                     <div className="flex items-center gap-2 mb-2">
                         <Lock size={16} className="text-purple-400" />
                         <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                            Privacy & Social
+                            {t.settings.privacyTitle}
                         </h2>
                     </div>
 
                     <div className="divide-y divide-white/5">
                         <div className="py-3 flex items-center justify-between">
                             <div className="pr-4">
-                                <h4 className="text-sm font-medium text-zinc-200">Display Online Status</h4>
-                                <p className="text-xs text-zinc-500">Show a green indicator when you are active on the site</p>
+                                <h4 className="text-sm font-medium text-zinc-200">{t.settings.onlineStatusTitle}</h4>
+                                <p className="text-xs text-zinc-500">{t.settings.onlineStatusDesc}</p>
                             </div>
                             <Toggle active={showOnlineStatus} onToggle={() => setShowOnlineStatus(!showOnlineStatus)} />
                         </div>
 
                         <div className="py-3 flex items-center justify-between">
                             <div className="pr-4">
-                                <h4 className="text-sm font-medium text-zinc-200">Allow Direct Messages</h4>
-                                <p className="text-xs text-zinc-500">Anyone in the community can start a private chat with you</p>
+                                <h4 className="text-sm font-medium text-zinc-200">{t.settings.directMessagesTitle}</h4>
+                                <p className="text-xs text-zinc-500">{t.settings.directMessagesDesc}</p>
                             </div>
                             <Toggle active={allowDirectMessages} onToggle={() => setAllowDirectMessages(!allowDirectMessages)} />
                         </div>
@@ -150,23 +241,23 @@ export default function Settings() {
                     <div className="flex items-center gap-2 mb-2">
                         <Palette size={16} className="text-emerald-400" />
                         <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                            Interface & Effects
+                            {t.settings.interfaceTitle}
                         </h2>
                     </div>
 
                     <div className="divide-y divide-white/5">
                         <div className="py-3 flex items-center justify-between">
                             <div className="pr-4">
-                                <h4 className="text-sm font-medium text-zinc-200">Progressive Blur & Glassmorphism</h4>
-                                <p className="text-xs text-zinc-500">Enable soft gradient blur in headers, feed, and chat panels</p>
+                                <h4 className="text-sm font-medium text-zinc-200">{t.settings.blurTitle}</h4>
+                                <p className="text-xs text-zinc-500">{t.settings.blurDesc}</p>
                             </div>
                             <Toggle active={blurEnabled} onToggle={() => setBlurEnabled(!blurEnabled)} />
                         </div>
 
                         <div className="py-3 flex items-center justify-between">
                             <div className="pr-4">
-                                <h4 className="text-sm font-medium text-zinc-200">Message Notification Sounds</h4>
-                                <p className="text-xs text-zinc-500">Play a subtle audio chime upon receiving new messages</p>
+                                <h4 className="text-sm font-medium text-zinc-200">{t.settings.soundTitle}</h4>
+                                <p className="text-xs text-zinc-500">{t.settings.soundDesc}</p>
                             </div>
                             <Toggle active={soundEnabled} onToggle={() => setSoundEnabled(!soundEnabled)} />
                         </div>
@@ -177,36 +268,36 @@ export default function Settings() {
                     <div className="flex items-center gap-2 mb-2">
                         <Trash2 size={16} className="text-red-400" />
                         <h2 className="text-xs font-bold text-red-400 uppercase tracking-wider">
-                            Danger Zone
+                            {t.settings.dangerTitle}
                         </h2>
                     </div>
 
                     <div className="divide-y divide-red-500/10">
                         <div className="py-3 flex items-center justify-between">
                             <div>
-                                <h4 className="text-sm font-medium text-zinc-200">Sign Out</h4>
-                                <p className="text-xs text-zinc-500">Log out of your current session on this device</p>
+                                <h4 className="text-sm font-medium text-zinc-200">{t.settings.signOutTitle}</h4>
+                                <p className="text-xs text-zinc-500">{t.settings.signOutDesc}</p>
                             </div>
                             <button
                                 onClick={logout}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/5 transition cursor-pointer"
                             >
                                 <LogOut size={13} />
-                                Sign Out
+                                {t.settings.signOutBtn}
                             </button>
                         </div>
 
                         <div className="py-3 flex items-center justify-between">
                             <div>
-                                <h4 className="text-sm font-medium text-red-300">Delete Account</h4>
-                                <p className="text-xs text-zinc-500">Permanently delete your profile, posts, and chats</p>
+                                <h4 className="text-sm font-medium text-red-300">{t.settings.deleteAccountTitle}</h4>
+                                <p className="text-xs text-zinc-500">{t.settings.deleteAccountDesc}</p>
                             </div>
                             <button
                                 onClick={() => setIsDeleteModalOpen(true)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition cursor-pointer"
                             >
                                 <Trash2 size={13} />
-                                Delete
+                                {t.settings.deleteBtn}
                             </button>
                         </div>
                     </div>
@@ -214,28 +305,40 @@ export default function Settings() {
 
             </div>
 
-            {isPasswordModalOpen && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+            {isPasswordModalOpen && mounted && createPortal(
+                <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
                     <div className="w-full max-w-[420px] bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 shadow-2xl relative">
                         <div className="flex justify-between items-center mb-5">
-                            <h3 className="text-base font-bold text-zinc-100">Change Password</h3>
+                            <h3 className="text-base font-bold text-zinc-100">{t.settings.modalChangePasswordTitle}</h3>
                             <button
-                                onClick={() => setIsPasswordModalOpen(false)}
-                                className="p-1 rounded-full text-zinc-500 hover:text-white transition"
+                                onClick={() => {
+                                    setIsPasswordModalOpen(false);
+                                    setPasswordError("");
+                                    setPasswordSuccess("");
+                                    setOldPassword("");
+                                    setNewPassword("");
+                                }}
+                                className="p-1 rounded-full text-zinc-500 hover:text-white transition cursor-pointer"
                             >
                                 <X size={16} />
                             </button>
                         </div>
 
-                        <form onSubmit={(e) => {
-                            e.preventDefault();
-                            alert("Пароль успешно обновлен!");
-                            setIsPasswordModalOpen(false);
-                            setOldPassword("");
-                            setNewPassword("");
-                        }} className="space-y-3">
+                        <form onSubmit={handleChangePassword} className="space-y-3">
+                            {passwordError && (
+                                <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                                    {passwordError}
+                                </div>
+                            )}
+
+                            {passwordSuccess && (
+                                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">
+                                    {passwordSuccess}
+                                </div>
+                            )}
+
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase">Current Password</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase">{t.settings.currentPasswordLabel}</label>
                                 <input
                                     type="password"
                                     value={oldPassword}
@@ -245,7 +348,7 @@ export default function Settings() {
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase">New Password</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase">{t.settings.newPasswordLabel}</label>
                                 <input
                                     type="password"
                                     value={newPassword}
@@ -256,45 +359,48 @@ export default function Settings() {
                             </div>
                             <button
                                 type="submit"
-                                className="w-full py-2.5 mt-3 rounded-xl bg-white text-black text-xs font-semibold hover:bg-zinc-200 transition"
+                                disabled={isChangingPassword}
+                                className="w-full py-2.5 mt-3 rounded-xl bg-white text-black text-xs font-semibold hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer"
                             >
-                                Update Password
+                                {isChangingPassword ? t.settings.updatingPasswordBtn : t.settings.updatePasswordBtn}
                             </button>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {isDeleteModalOpen && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+            {isDeleteModalOpen && mounted && createPortal(
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
                     <div className="w-full max-w-[420px] bg-[#0a0a0a] border border-red-500/20 rounded-3xl p-6 shadow-2xl relative text-center">
                         <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mx-auto mb-4">
                             <Trash2 size={24} />
                         </div>
-                        <h3 className="text-base font-bold text-zinc-100">Delete Account?</h3>
+                        <h3 className="text-base font-bold text-zinc-100">{t.settings.modalDeleteTitle}</h3>
                         <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
-                            This action is permanent. All your posts, messages, bookmarks, and account details will be irreversibly erased.
+                            {t.settings.modalDeleteDesc}
                         </p>
 
                         <div className="flex gap-2 mt-6">
                             <button
                                 type="button"
                                 onClick={() => setIsDeleteModalOpen(false)}
-                                className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-semibold transition"
+                                className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-semibold transition cursor-pointer"
                             >
-                                Cancel
+                                {t.settings.cancelBtn}
                             </button>
                             <button
                                 type="button"
                                 disabled={isDeleting}
                                 onClick={handleDeleteAccount}
-                                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition disabled:opacity-50"
+                                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
                             >
-                                {isDeleting ? "Deleting..." : "Yes, Delete"}
+                                {isDeleting ? t.settings.deletingBtn : t.settings.confirmDeleteBtn}
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
         </div>

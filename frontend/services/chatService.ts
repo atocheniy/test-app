@@ -8,6 +8,7 @@ export interface ChatItem {
     content: string | null;
     time: string;
     userName?: string;
+    isPinned?: boolean;
 }
 
 export interface MessageItem {
@@ -63,5 +64,18 @@ export const ChatService = {
 
     async markAsRead(chatId: string) {
         return await $api.post(`/Message/read/${chatId}`);
+    },
+
+    async togglePinChat(chatId: string) {
+        const response = await $api.post<{ isPinned: boolean }>(`/Chat/${chatId}/pin`);
+        return response.data;
+    },
+
+    async clearChat(chatId: string) {
+        return await $api.post(`/Chat/${chatId}/clear`);
+    },
+
+    async deleteChat(chatId: string) {
+        return await $api.delete(`/Chat/${chatId}`);
     }
 };

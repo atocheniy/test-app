@@ -20,7 +20,7 @@ export default function Titlebar({ title }: { title: string }) {
                     inset: 0,
                     zIndex: 0,
                     pointerEvents: "none",
-                    height: 120,
+                    height: 100,
                 }}
             />
 

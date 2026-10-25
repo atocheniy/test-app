@@ -7,7 +7,7 @@ import SentMessage from "@/components/sentMessage";
 import TitlebarMessage from "@/components/titlebarMessage";
 import { useApplication } from "@/context/ApplicationContext";
 import { ChatItem, ChatService, MessageItem } from "@/services/chatService";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
 import TitlebarMessages from "@/components/titlebarMessages";
@@ -15,7 +15,8 @@ import * as signalR from "@microsoft/signalr";
 import { Edit, Reply, X } from "lucide-react";
 
 function MessagesContent() {
-     const searchParams = useSearchParams();
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const queryChatId = searchParams.get('chatId');
 
     const { userData, connection, onlineUsers } = useApplication();
@@ -26,6 +27,13 @@ function MessagesContent() {
     const [messages, setMessages] = useState<MessageItem[]>([]);
     const [inputText, setInputText] = useState("");
     const [loading, setLoading] = useState(false);
+    
+    const [confirmAction, setConfirmAction] = useState<{
+        type: 'clear' | 'delete';
+        chatId: string;
+        chatName: string;
+    } | null>(null);
+    const [isActionLoading, setIsActionLoading] = useState(false);
     
     const [editingMessage, setEditingMessage] = useState<{ id: string; content: string; attachments?: string[] } | null>(null);
 
@@ -313,6 +321,65 @@ function MessagesContent() {
         setInputText("");
     };
 
+    const handleOpenProfile = (userName?: string) => {
+        if (!userName) return;
+        router.push(`/profile/${userName.replace('@', '')}`);
+    };
+
+    const handleTogglePin = async (chatId: string) => {
+        try {
+            const res = await ChatService.togglePinChat(chatId);
+            setChats(prev => {
+                const updated = prev.map(c => 
+                    c.id.toLowerCase() === chatId.toLowerCase() ? { ...c, isPinned: res.isPinned } : c
+                );
+                return [...updated].sort((a, b) => {
+                    if (!!a.isPinned === !!b.isPinned) return 0;
+                    return a.isPinned ? -1 : 1;
+                });
+            });
+            if (activeChat?.id.toLowerCase() === chatId.toLowerCase()) {
+                setActiveChat(prev => prev ? { ...prev, isPinned: res.isPinned } : null);
+            }
+        } catch (error) {
+            console.error("Ошибка при закреплении/откреплении чата:", error);
+        }
+    };
+
+    const handleConfirmAction = async () => {
+        if (!confirmAction) return;
+        setIsActionLoading(true);
+
+        try {
+            if (confirmAction.type === 'clear') {
+                await ChatService.clearChat(confirmAction.chatId);
+                setChats(prev => prev.map(c => 
+                    c.id.toLowerCase() === confirmAction.chatId.toLowerCase() 
+                        ? { ...c, content: "" }
+                        : c
+                ));
+                if (activeChat?.id.toLowerCase() === confirmAction.chatId.toLowerCase()) {
+                    setMessages([]);
+                }
+            } else if (confirmAction.type === 'delete') {
+                await ChatService.deleteChat(confirmAction.chatId);
+                setChats(prev => prev.filter(c => c.id.toLowerCase() !== confirmAction.chatId.toLowerCase()));
+                if (activeChat?.id.toLowerCase() === confirmAction.chatId.toLowerCase()) {
+                    if (connection) {
+                        connection.invoke("LeaveChat", confirmAction.chatId).catch(console.error);
+                    }
+                    setActiveChat(null);
+                    setMessages([]);
+                }
+            }
+        } catch (error) {
+            console.error("Ошибка выполнения действия:", error);
+        } finally {
+            setIsActionLoading(false);
+            setConfirmAction(null);
+        }
+    };
+
     const isPartnerOnline = activeChat?.userName 
         ? onlineUsers?.includes(activeChat.userName)
         : false;
@@ -358,6 +425,11 @@ function MessagesContent() {
                                                 Time={chat.time} 
                                                 Avatar={chat.avatar || userData.avatar} 
                                                 isOnline={isUserOnline}
+                                                isPinned={chat.isPinned}
+                                                onOpenProfile={() => handleOpenProfile(chat.userName)}
+                                                onTogglePin={() => handleTogglePin(chat.id)}
+                                                onClearChat={() => setConfirmAction({ type: 'clear', chatId: chat.id, chatName: chat.name })}
+                                                onDeleteChat={() => setConfirmAction({ type: 'delete', chatId: chat.id, chatName: chat.name })}
                                             />
                                         </div>
                                     );
@@ -476,6 +548,52 @@ function MessagesContent() {
                <div className="hidden sm:flex flex-1 items-center justify-center text-zinc-600">
                     Select a conversation to start messaging
                </div>
+          )}
+
+          {confirmAction && (
+              <div 
+                  className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
+                  onClick={() => !isActionLoading && setConfirmAction(null)}
+              >
+                  <div 
+                      className="bg-zinc-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl flex flex-col gap-4 text-center animate-in zoom-in-95 duration-150"
+                      onClick={(e) => e.stopPropagation()}
+                  >
+                      <div className="flex flex-col gap-1.5">
+                          <h3 className="text-base font-semibold text-zinc-100">
+                              {confirmAction.type === 'clear' ? 'Очистить переписку?' : 'Удалить чат?'}
+                          </h3>
+                          <p className="text-xs text-zinc-400 leading-relaxed">
+                              {confirmAction.type === 'clear'
+                                  ? `Все сообщения в чате с "${confirmAction.chatName}" будут безвозвратно удалены.`
+                                  : `Чат с "${confirmAction.chatName}" и вся переписка будут безвозвратно удалены.`}
+                          </p>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 pt-2">
+                          <button
+                              type="button"
+                              disabled={isActionLoading}
+                              onClick={() => setConfirmAction(null)}
+                              className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition disabled:opacity-50 cursor-pointer"
+                          >
+                              Отмена
+                          </button>
+                          <button
+                              type="button"
+                              disabled={isActionLoading}
+                              onClick={handleConfirmAction}
+                              className={`px-4 py-2 rounded-xl text-xs font-medium transition disabled:opacity-50 cursor-pointer flex items-center justify-center min-w-[80px] ${
+                                  confirmAction.type === 'clear'
+                                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
+                                      : 'bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20'
+                              }`}
+                          >
+                              {isActionLoading ? 'Подождите...' : confirmAction.type === 'clear' ? 'Очистить' : 'Удалить'}
+                          </button>
+                      </div>
+                  </div>
+              </div>
           )}
      </div>
     )

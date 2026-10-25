@@ -5,6 +5,7 @@ import { PostSkeleton } from "@/components/skeletons";
 import Titlebar from "@/components/titlebar";
 import TitlebarBack from "@/components/titlebarBack";
 import { useApplication } from "@/context/ApplicationContext";
+import { formatPostTime } from "@/libs/format";
 import { CommentsService } from "@/services/commentService";
 import { Check, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -128,7 +129,7 @@ export default function PagePost() {
                     <TitlebarBack title={`Post from ${currentPost.authorName}`} />
                         
                     <div className="flex flex-col lg:p-6 md:p-6 py-6">
-                        <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={new Date(currentPost.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount} repostsCount={currentPost.repostsCount} repostOfPost={currentPost.repostOfPost}></Post>
+                        <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={formatPostTime(currentPost.created)} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount} repostsCount={currentPost.repostsCount} repostOfPost={currentPost.repostOfPost} community={currentPost.community} project={currentPost.project}></Post>
                     </div>
 
                     <div className="w-full border-t border-white/5"></div>
@@ -148,7 +149,7 @@ export default function PagePost() {
                             return (
                                 <div key={comment.id} className="relative flex gap-3 text-sm p-4 rounded-2xl bg-white/[0.02] border border-white/5 group">
                                     <div className="relative w-8 h-8 shrink-0">
-                                        <Link href={`/profile/${cleanUser}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
+                                        <Link href={isMyComment ? '/profile' : `/profile/${cleanUser}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
                                             {comment.authorAvatar ? (
                                                 <img src={comment.authorAvatar} className="w-full h-full object-cover" alt="Avatar" />
                                             ) : (
@@ -163,13 +164,13 @@ export default function PagePost() {
                                     <div className="flex-1">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-baseline gap-2">
-                                                <Link href={`/profile/${cleanUser}`} className="font-semibold text-zinc-100 text-xs hover:underline cursor-pointer">
+                                                <Link href={isMyComment ? '/profile' : `/profile/${cleanUser}`} className="font-semibold text-zinc-100 text-xs hover:underline cursor-pointer">
                                                     {comment.authorName}
                                                 </Link>
                                                 <span className="text-zinc-500 text-[10px]">@{cleanUser}</span>
                                                 <span className="text-zinc-500 text-[10px]">·</span>
                                                 <span className="text-zinc-500 text-[10px]">
-                                                    {new Date(comment.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {formatPostTime(comment.created)}
                                                 </span>
                                             </div>
 

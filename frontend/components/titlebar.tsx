@@ -2,7 +2,13 @@
 
 import { LinearBlur } from "progressive-blur";
 
-export default function Titlebar({ title }: { title: string }) {
+export default function Titlebar({ 
+    title, 
+    children 
+}: { 
+    title: string; 
+    children?: React.ReactNode; 
+}) {
     return (
         <div className="sticky top-0 shrink-0 z-50 flex items-center h-14 px-6 relative">
             <LinearBlur
@@ -16,11 +22,14 @@ export default function Titlebar({ title }: { title: string }) {
                     inset: 0,
                     zIndex: 0,
                     pointerEvents: "none",
-                    height: 120,
+                    height: 100,
                 }}
             />
 
-            <h1 className="text-lg font-bold text-zinc-100 relative z-10">{title}</h1>
+            <div className="flex items-center gap-6 relative z-10 w-full">
+                <h1 className="text-lg font-bold text-zinc-100 shrink-0">{title}</h1>
+                {children}
+            </div>
         </div>
     );
 }

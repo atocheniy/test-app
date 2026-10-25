@@ -1,4 +1,7 @@
-﻿namespace server.Models;
+using System;
+using System.Collections.Generic;
+
+namespace server.Models;
 
 public class Post
 {
@@ -18,6 +21,16 @@ public class Post
     
     public Guid? RepostOfPostId { get; set; }
     public Post? RepostOfPost { get; set; } 
+    
+    public Guid? CommunityId { get; set; }
+    public Community? Community { get; set; }
+    
+    public bool IsPostedAsCommunity { get; set; } = false;
+
+    public Guid? ProjectId { get; set; }
+    public UserProject? Project { get; set; }
+
+    public bool ShowInGeneralFeed { get; set; } = true;
     
     public string UserId { get; set; } = string.Empty;
     public ApplicationUser User { get; set; }

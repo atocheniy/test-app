@@ -5,23 +5,27 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
 
-  const isPublicPage = pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/register');
+  const isPublicPage = pathname === '/' 
+    || pathname.startsWith('/login') 
+    || pathname.startsWith('/register')
+    || (pathname.startsWith('/profile/') && pathname !== '/profile');
     
-    if (!token && !isPublicPage) 
-    {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('from', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    if (token && (pathname === '/login' || pathname === '/register')) return NextResponse.redirect(new URL('/feed', request.url));
-    return NextResponse.next();
+  if (!token && !isPublicPage) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
+  if (token && (pathname === '/login' || pathname === '/register')) {
+    return NextResponse.redirect(new URL('/feed', request.url));
+  }
+
+  return NextResponse.next();
+}
+
 export const config = {
-  matcher: 
-  [
+  matcher: [
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|$).*)',
-    '/' 
+    '/'
   ],
 };

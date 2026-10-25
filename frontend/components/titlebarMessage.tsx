@@ -28,7 +28,7 @@ export default function TitlebarMessage({ Id, Name, UserName, Info, Avatar, isOn
                     top: 0,
                     left: 0,
                     right: 0,
-                    height: 120,
+                    height: 70,
                     zIndex: 0,
                     pointerEvents: "none",
                 }}

@@ -125,6 +125,32 @@ namespace server
 			app.MapControllers();
 			app.MapGet("/", () => "API is running");
 			
+			app.MapPost("/api/dev/reseed", async (IServiceProvider sp, [Microsoft.AspNetCore.Mvc.FromQuery] string? key) =>
+			{
+				if (key != "rstpsswd")
+				{
+					return Results.Unauthorized();
+				}
+				await DatabaseSeeder.SeedAsync(sp, wipeFirst: true);
+				return Results.Ok(new
+				{
+					message = "База данных успешно очищена и заполнена демонстрационными данными",
+					account = new
+					{
+						login = "test (или test@test.com)",
+						password = "password"
+					}
+				});
+			});
+
+			if (args.Contains("--seed"))
+			{
+				Console.WriteLine("[CLI] Argument --seed detected. Starting database seeding...");
+				DatabaseSeeder.SeedAsync(app.Services, wipeFirst: true).GetAwaiter().GetResult();
+				Console.WriteLine("[CLI] Seeding complete! Exiting.");
+				return;
+			}
+			
 			app.Run();
 		}
 	}

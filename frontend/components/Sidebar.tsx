@@ -6,25 +6,26 @@ import Link from "next/link";
 import { usePathname } from 'next/navigation';
 
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useRouter } from 'next/navigation';
-
-const links = [
-  { name: 'Home', href: '/home', icon: Menu },
-  { name: 'Feed', href: '/feed', icon: Newspaper},
-  { name: 'Search', href: '/search', icon: Search },
-  { name: 'Messages', href: '/messages', icon: MessageCircle },
-  { name: 'Explore Hub', href: '/other', icon: LayoutGrid}
-];
 
 export default function Sidebar() {
     const { userData, UserNameNormalized } = useApplication();
-    const { refreshUserData } = useApplication();
+    const { t } = useLanguage();
     
     const pathname = usePathname();
     const router = useRouter();
 
+    const links = [
+        { name: t.nav.home, href: '/home', icon: Menu },
+        { name: t.nav.feed, href: '/feed', icon: Newspaper },
+        { name: t.nav.search, href: '/search', icon: Search },
+        { name: t.nav.messages, href: '/messages', icon: MessageCircle },
+        { name: t.nav.explore, href: '/other', icon: LayoutGrid }
+    ];
+
     return (
-         <aside className="w-78 hidden md:flex text-white p-3 flex flex-col h-screen sticky top-0">
+         <aside className="w-64 shrink-0 hidden md:flex text-white p-3 flex flex-col h-screen sticky top-0">
             <div>
                 <div className="p-3 mb-4 border border-white/5 bg-white/[0.02]  rounded-2xl text-sm font-bold text-white flex flex-row items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40px" height="34px" className="border border-white/15 rounded-xl">
@@ -35,7 +36,7 @@ export default function Sidebar() {
                             <path d="M 50,58 L 80,78 H 65 L 50,69 L 35,78 H 20 Z" />
                         </g>
                     </svg>
-                    Site
+                    {t.nav.site}
                 </div>
                 <nav>
                     <ul className="space-y-1">
@@ -43,7 +44,7 @@ export default function Sidebar() {
                             const LinkIcon = link.icon;
                             return (
                                 <Link 
-                                    key={link.name}
+                                    key={link.href}
                                     href={link.href} 
                                     className={clsx(
                                         "block py-1.5 px-3 text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-md transition-all duration-150 flex flex-row gap-2 items-center",
@@ -61,7 +62,7 @@ export default function Sidebar() {
             </div>
 
             <div className="mt-8">
-                <h1 className="text-md font-semibold text-zinc-100 p-2">For applicants</h1>
+                <h1 className="text-md font-semibold text-zinc-100 p-2">{t.nav.forApplicants}</h1>
                 <nav>
                     <ul className="space-y-1">
                         <li>
@@ -75,7 +76,7 @@ export default function Sidebar() {
                                 )}
                             >
                                 <MessageSquareWarning className="w-4 h-4 stroke-[1.8]"/>
-                                Vacancies
+                                {t.nav.vacancies}
                             </Link>
                         </li>    
                     </ul>
@@ -90,7 +91,7 @@ export default function Sidebar() {
                             className="border border-white/5 block py-1.5 px-3 text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-xl transition-all duration-150 flex flex-row gap-2 items-center"
                         >
                             <Settings className="w-4 h-4 stroke-[1.8]"/>
-                            Settings
+                            {t.nav.settings}
                         </Link>
                     </li>
                 </ul>

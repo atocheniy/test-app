@@ -1,3 +1,5 @@
+import { Pencil, Trash2 } from 'lucide-react';
+
 interface ExperienceCardProps 
 {
     icon?: string;
@@ -6,30 +8,66 @@ interface ExperienceCardProps
     mode?: string;
     time: string;
     description?: string;
+    onEdit?: () => void;
+    onDelete?: () => void;
 }
 
-export default function ExperienceCard({ icon, name, post, mode, time, description }: ExperienceCardProps) {
+export default function ExperienceCard({ icon, name, post, mode, time, description, onEdit, onDelete }: ExperienceCardProps) {
+    const displayIcon = icon || (name ? name[0].toUpperCase() : 'E');
+
     return (
-        <div className="p-5 border border-white/5 rounded-2xl bg-zinc-950/10 hover:border-white/10 transition-colors duration-300">
+        <div className="p-5 border border-white/5 rounded-2xl bg-zinc-950/20 hover:border-white/10 transition-colors duration-300 group">
             <div className="flex flex-row items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center shrink-0 shadow-inner">
-                    <span className="text-xs font-bold text-zinc-400">{icon}</span>
+                    <span className="text-xs font-bold text-zinc-300">{displayIcon}</span>
                 </div>
-                <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h4 className="text-sm font-semibold text-zinc-100">{post}</h4>
-                            <p className="text-xs text-zinc-500 mt-0.5">{name} • {mode}</p>
+                <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0">
+                            <h4 className="text-sm font-semibold text-zinc-100 truncate">{post}</h4>
+                            <p className="text-xs text-zinc-500 mt-0.5 truncate">
+                                {name} {mode ? `• ${mode}` : ''}
+                            </p>
                         </div>
-                        <span className="text-xs text-zinc-500 font-medium bg-zinc-900/50 border border-white/5 px-2.5 py-1 rounded-lg">
-                            {time}
-                        </span>
+                        
+                        <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-xs text-zinc-500 font-medium bg-zinc-900/60 border border-white/5 px-2.5 py-1 rounded-lg">
+                                {time}
+                            </span>
+
+                            {(onEdit || onDelete) && (
+                                <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                                    {onEdit && (
+                                        <button
+                                            type="button"
+                                            onClick={onEdit}
+                                            className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition"
+                                            title="Редактировать место работы"
+                                        >
+                                            <Pencil size={12} />
+                                        </button>
+                                    )}
+                                    {onDelete && (
+                                        <button
+                                            type="button"
+                                            onClick={onDelete}
+                                            className="p-1 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                                            title="Удалить место работы"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
-            <p className="text-xs text-zinc-400 leading-relaxed mt-4 pl-14">
-                {description}
-            </p>
+            {description && (
+                <p className="text-xs text-zinc-400 leading-relaxed mt-3 pl-14 whitespace-pre-line">
+                    {description}
+                </p>
+            )}
         </div>
-    )
+    );
 }

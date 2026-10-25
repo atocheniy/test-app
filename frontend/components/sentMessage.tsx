@@ -1,5 +1,6 @@
+import { isVideoUrl } from "@/libs/format";
 import type { ReplyInfo } from "@/types/auth";
-import { Check, CheckCheck, Copy, Edit, MoreVertical, Trash2 } from "lucide-react";
+import { Check, CheckCheck, Copy, Edit, MoreVertical, Reply, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface Message {
@@ -18,8 +19,19 @@ interface Message {
 
 export default function sentMessage ({ Id, Content, Time, IsRead = false, Attachments, ReplyTo,  AuthorName = "You", onDelete, onEdit, onReply }: Message) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [menuPlacement, setMenuPlacement] = useState<'top' | 'bottom'>('top');
     const [copied, setCopied] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    const handleToggleMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!isMenuOpen && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setMenuPlacement(rect.top < 200 ? 'bottom' : 'top');
+        }
+        setIsMenuOpen((prev) => !prev);
+    };
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -65,13 +77,23 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                 {Attachments && Attachments.length > 0 && (
                     <div className={`grid gap-1.5 mb-1 ${Attachments.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                         {Attachments.map((url, index) => (
-                            <img 
-                                key={index} 
-                                src={url} 
-                                alt="Attachment" 
-                                className="rounded-xl max-h-60 w-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
-                                onClick={() => window.open(url, '_blank')}
-                            />
+                            isVideoUrl(url) ? (
+                                <video 
+                                    key={index} 
+                                    src={url} 
+                                    controls 
+                                    playsInline 
+                                    className="rounded-xl max-h-60 w-full object-cover bg-black" 
+                                />
+                            ) : (
+                                <img 
+                                    key={index} 
+                                    src={url} 
+                                    alt="Attachment" 
+                                    className="rounded-xl max-h-60 w-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                                    onClick={() => window.open(url, '_blank')}
+                                />
+                            )
                         ))}
                     </div>
                 )}
@@ -96,11 +118,9 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                         )}
 
                         <button
+                            ref={buttonRef}
                             type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsMenuOpen((prev) => !prev);
-                            }}
+                            onClick={handleToggleMenu}
                             className={`p-0.5 rounded hover:bg-white/10 text-zinc-400 hover:text-zinc-100 transition-all ${
                                 isMenuOpen ? 'opacity-100 bg-white/10 text-zinc-100' : 'opacity-0 group-hover:opacity-100'
                             }`}
@@ -110,8 +130,24 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                         </button>
 
                         {isMenuOpen && (
-                            <div className="absolute right-0 bottom-full mb-1.5 w-32 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl py-1 z-50 flex flex-col text-xs text-zinc-300 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100">
+                            <div className={`absolute right-0 ${
+                                menuPlacement === 'bottom' ? 'top-full mt-1.5' : 'bottom-full mb-1.5'
+                            } w-32 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl py-1 z-50 flex flex-col text-xs text-zinc-300 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100`}>
                                 
+                                {onReply && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            onReply({ id: Id, content: Content || "", authorName: AuthorName });
+                                        }}
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100 transition-colors text-left w-full"
+                                    >
+                                        <Reply size={13} />
+                                        <span>Reply</span>
+                                    </button>
+                                )}
+
                                 {Content && (
                                     <button
                                         type="button"
@@ -130,7 +166,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                             setIsMenuOpen(false);
                                             onEdit(Id, Content, Attachments);
                                         }}
-                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100  hover:text-red-300 transition-colors text-left w-full"
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100 transition-colors text-left w-full"
                                     >
                                         <Edit size={13} />
                                         <span>Edit</span>

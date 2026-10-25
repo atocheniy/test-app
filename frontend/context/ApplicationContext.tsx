@@ -23,7 +23,10 @@ interface ApplicationContextType {
     refreshUserData: () => Promise<void>;
 
     postsData: Post[];
-    refreshPostsData: () => Promise<void>;
+    refreshPostsData: (filter?: string) => Promise<void>;
+    hasMorePosts: boolean;
+    isLoadingMorePosts: boolean;
+    loadMorePosts: () => Promise<void>;
 
     currentPost: Post;
     refreshCurrentPost: (id: string) => Promise<void>;
@@ -33,11 +36,16 @@ interface ApplicationContextType {
 
     userPostsData: Post[];
     refreshUserPostsData: () => Promise<void>;
+    hasMoreUserPosts: boolean;
+    isLoadingMoreUserPosts: boolean;
+    loadMoreUserPosts: () => Promise<void>;
 
     otherUserPostsData: Post[];
     otherUserData: User;
-
     refreshOtherUserPostsData: (username: string) => Promise<void>;
+    hasMoreOtherUserPosts: boolean;
+    isLoadingMoreOtherUserPosts: boolean;
+    loadMoreOtherUserPosts: (username?: string) => Promise<void>;
     refreshOtherUserData: (username: string) => Promise<void>;
 
     onlineUsers: string[];
@@ -53,14 +61,26 @@ const ApplicationContext = createContext<ApplicationContextType | null>(null);
 
 export const ApplicationProvider = ({ children }: { children: React.ReactNode }) => {
    
-    const [userData, setUserData] = useState<User>({ id: '', fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
+    const [userData, setUserData] = useState<User>({ id: '', fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [], focus: '', projects: [], experiences: [] });
     const [UserNameNormalized, setUserNameNormalized] = useState<string>('');
 
-    const [otherUserData, setOtherUserData] = useState<User>({ id: '', fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
+    const [otherUserData, setOtherUserData] = useState<User>({ id: '', fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [], focus: '', projects: [], experiences: [] });
     const [otherUserPostsData, setOtherUserPostsData] = useState<Post[]>([]);
+    const [otherUserPostsCursor, setOtherUserPostsCursor] = useState<string | null>(null);
+    const [hasMoreOtherUserPosts, setHasMoreOtherUserPosts] = useState<boolean>(true);
+    const [isLoadingMoreOtherUserPosts, setIsLoadingMoreOtherUserPosts] = useState<boolean>(false);
+    const [currentOtherUsername, setCurrentOtherUsername] = useState<string>('');
 
     const [postsData, setPostsData] = useState<Post[]>([]);
+    const [postsCursor, setPostsCursor] = useState<string | null>(null);
+    const [hasMorePosts, setHasMorePosts] = useState<boolean>(true);
+    const [isLoadingMorePosts, setIsLoadingMorePosts] = useState<boolean>(false);
+    const [currentFeedFilter, setCurrentFeedFilter] = useState<string | undefined>(undefined);
+
     const [userPostsData, setUserPostsData] = useState<Post[]>([]);
+    const [userPostsCursor, setUserPostsCursor] = useState<string | null>(null);
+    const [hasMoreUserPosts, setHasMoreUserPosts] = useState<boolean>(true);
+    const [isLoadingMoreUserPosts, setIsLoadingMoreUserPosts] = useState<boolean>(false);
 
     const [commentsData, setCommentsData] = useState<Comment[]>([]);
 
@@ -104,46 +124,130 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             
         } catch (error) {
             console.error("Ошибка обновления данных пользователя", error);
-            setUserData({id: '', fullName: 'Гость', email: 'Ошибка загрузки', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
+            setUserData({id: '', fullName: 'Гость', email: 'Ошибка загрузки', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [], focus: '', projects: [], experiences: [] });
             setUserNameNormalized("...");
         }
     };
 
-    const refreshPostsData = async () => {
+    const refreshPostsData = async (filter?: string) => {
         try {
-            const data = await PostService.getAllPosts();
+            setCurrentFeedFilter(filter);
+            const data = await PostService.getAllPosts(filter, null, 15);
             console.log("Данные постов от сервера:", data);
-            setPostsData(data);
-            
+            setPostsData(data.items || []);
+            setPostsCursor(data.nextCursor || null);
+            setHasMorePosts(data.hasMore || false);
         } catch (error) {
             console.error("Ошибка обновления данных постов", error);
             setPostsData([]);
+            setPostsCursor(null);
+            setHasMorePosts(false);
         }
-    }
+    };
+
+    const loadMorePosts = async () => {
+        if (!hasMorePosts || isLoadingMorePosts || !postsCursor) return;
+        try {
+            setIsLoadingMorePosts(true);
+            const data = await PostService.getAllPosts(currentFeedFilter, postsCursor, 15);
+            if (data.items && data.items.length > 0) {
+                setPostsData(prev => {
+                    const existingIds = new Set(prev.map(p => p.id));
+                    const newUnique = data.items.filter(p => !existingIds.has(p.id));
+                    return [...prev, ...newUnique];
+                });
+                setPostsCursor(data.nextCursor || null);
+                setHasMorePosts(data.hasMore || false);
+            } else {
+                setHasMorePosts(false);
+                setPostsCursor(null);
+            }
+        } catch (error) {
+            console.error("Ошибка дозагрузки постов", error);
+        } finally {
+            setIsLoadingMorePosts(false);
+        }
+    };
 
     const refreshUserPostsData = async () => {
         try {
-            const data = await PostService.getUserPosts();
-            console.log("Данные постов от сервера:", data);
-            setUserPostsData(data);
-            
+            const data = await PostService.getUserPosts(null, 15);
+            console.log("Данные постов пользователя от сервера:", data);
+            setUserPostsData(data.items || []);
+            setUserPostsCursor(data.nextCursor || null);
+            setHasMoreUserPosts(data.hasMore || false);
         } catch (error) {
             console.error("Ошибка обновления данных постов", error);
             setUserPostsData([]);
+            setUserPostsCursor(null);
+            setHasMoreUserPosts(false);
         }
-    }
+    };
+
+    const loadMoreUserPosts = async () => {
+        if (!hasMoreUserPosts || isLoadingMoreUserPosts || !userPostsCursor) return;
+        try {
+            setIsLoadingMoreUserPosts(true);
+            const data = await PostService.getUserPosts(userPostsCursor, 15);
+            if (data.items && data.items.length > 0) {
+                setUserPostsData(prev => {
+                    const existingIds = new Set(prev.map(p => p.id));
+                    const newUnique = data.items.filter(p => !existingIds.has(p.id));
+                    return [...prev, ...newUnique];
+                });
+                setUserPostsCursor(data.nextCursor || null);
+                setHasMoreUserPosts(data.hasMore || false);
+            } else {
+                setHasMoreUserPosts(false);
+                setUserPostsCursor(null);
+            }
+        } catch (error) {
+            console.error("Ошибка дозагрузки постов пользователя", error);
+        } finally {
+            setIsLoadingMoreUserPosts(false);
+        }
+    };
 
     const refreshOtherUserPostsData = async (username: string) => {
         try {
-            const data = await PostService.getOtherUserPosts(username);
-            console.log("Данные постов от сервера:", data);
-            setOtherUserPostsData(data);
-            
+            setCurrentOtherUsername(username);
+            const data = await PostService.getOtherUserPosts(username, null, 15);
+            console.log("Данные постов другого пользователя от сервера:", data);
+            setOtherUserPostsData(data.items || []);
+            setOtherUserPostsCursor(data.nextCursor || null);
+            setHasMoreOtherUserPosts(data.hasMore || false);
         } catch (error) {
             console.error("Ошибка обновления данных постов", error);
             setOtherUserPostsData([]);
+            setOtherUserPostsCursor(null);
+            setHasMoreOtherUserPosts(false);
         }
-    }
+    };
+
+    const loadMoreOtherUserPosts = async (username?: string) => {
+        const targetUsername = username || currentOtherUsername;
+        if (!hasMoreOtherUserPosts || isLoadingMoreOtherUserPosts || !otherUserPostsCursor || !targetUsername) return;
+        try {
+            setIsLoadingMoreOtherUserPosts(true);
+            const data = await PostService.getOtherUserPosts(targetUsername, otherUserPostsCursor, 15);
+            if (data.items && data.items.length > 0) {
+                setOtherUserPostsData(prev => {
+                    const existingIds = new Set(prev.map(p => p.id));
+                    const newUnique = data.items.filter(p => !existingIds.has(p.id));
+                    return [...prev, ...newUnique];
+                });
+                setOtherUserPostsCursor(data.nextCursor || null);
+                setHasMoreOtherUserPosts(data.hasMore || false);
+            } else {
+                setHasMoreOtherUserPosts(false);
+                setOtherUserPostsCursor(null);
+            }
+        } catch (error) {
+            console.error("Ошибка дозагрузки постов другого пользователя", error);
+        } finally {
+            setIsLoadingMoreOtherUserPosts(false);
+        }
+    };
 
      const refreshOtherUserData = async (username: string) => {
         try {
@@ -153,7 +257,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             
         } catch (error) {
             console.error("Ошибка обновления данных пользователя", error);
-            setOtherUserData({ id: '', fullName: 'Гость', email: 'Ошибка загрузки', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
+            setOtherUserData({ id: '', fullName: 'Гость', email: 'Ошибка загрузки', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [], focus: '', projects: [], experiences: [] });
         }
     };
 
@@ -167,7 +271,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         }
         else 
         {
-            setUserData({ id: '', fullName: 'Гость', email: '', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [] });
+            setUserData({ id: '', fullName: 'Гость', email: '', userName: '...', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [], focus: '', projects: [], experiences: [] });
             setUserNameNormalized("...");
         }
     }, []);
@@ -176,9 +280,10 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         const token = Cookies.get('token');
         if (!token || !userData.userName || userData.userName === '...') return;
 
+        const hubBaseUrl = (process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:5223') + '/chathub';
+
         const newConnection = new signalR.HubConnectionBuilder()
-            .withUrl("https://atocheniy-test-app-api.hf.space/chathub", {
-            //.withUrl("http://localhost:5223/chathub", {
+            .withUrl(hubBaseUrl, {
                 accessTokenFactory: () => token,
                 // skipNegotiation: true, 
                 transport: signalR.HttpTransportType.WebSockets 
@@ -200,11 +305,26 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
                 if (prev.some((p) => p.id === newPost.id)) return prev;
                 return [newPost, ...prev];
             });
+
+            if (newPost.authorUsername?.toLowerCase() === userData.userName?.toLowerCase()) {
+                setUserPostsData((prev) => {
+                    if (prev.some((p) => p.id === newPost.id)) return prev;
+                    return [newPost, ...prev];
+                });
+            }
+        });
+
+        newConnection.on("postDeleted", (data: { id: string }) => {
+            console.log("Пост удален через SignalR:", data.id);
+
+            setPostsData((prev) => prev.filter((p) => p.id !== data.id));
+            setUserPostsData((prev) => prev.filter((p) => p.id !== data.id));
+            setOtherUserPostsData((prev) => prev.filter((p) => p.id !== data.id));
         });
 
         newConnection.on("commentCreated", (newComment: any) => {
             console.log("Опубликован новый комментарий:", newComment);
-            
+
             setCurrentPost((prev) => {
                 if (prev && prev.id === newComment.postId) {
                     const commentsList = prev.commentsList || [];
@@ -344,13 +464,22 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         refreshUserData, 
         postsData,
         refreshPostsData,
+        hasMorePosts,
+        isLoadingMorePosts,
+        loadMorePosts,
         currentPost,
         refreshCurrentPost,
         userPostsData,
         refreshUserPostsData,
+        hasMoreUserPosts,
+        isLoadingMoreUserPosts,
+        loadMoreUserPosts,
         otherUserPostsData,
         otherUserData,
         refreshOtherUserPostsData,
+        hasMoreOtherUserPosts,
+        isLoadingMoreOtherUserPosts,
+        loadMoreOtherUserPosts,
         refreshOtherUserData,
         commentsData,
         refreshCommentsData,
@@ -359,7 +488,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         repostTarget,
         setRepostTarget,
         logout 
-    }), [userData, postsData, userPostsData, otherUserPostsData, otherUserData, currentPost, commentsData, onlineUsers, connection, repostTarget]);
+    }), [userData, postsData, hasMorePosts, isLoadingMorePosts, userPostsData, hasMoreUserPosts, isLoadingMoreUserPosts, otherUserPostsData, hasMoreOtherUserPosts, isLoadingMoreOtherUserPosts, otherUserData, currentPost, commentsData, onlineUsers, connection, repostTarget]);
 
     return (
         <ApplicationContext.Provider value={ contextValue }>

@@ -47,15 +47,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 relative">
-        <div className="absolute top-6 right-6 z-20 flex items-center gap-3 text-xs md:text-sm">
-            <span className="text-zinc-500 hidden sm:inline">Offering a job?</span>
-            <a 
-            href="/register/employer"
-            className="px-3.5 py-1.5 rounded-lg border border-white/5 bg-zinc-950 hover:bg-zinc-900 hover:border-white/10 text-zinc-300 transition-all font-medium"
-            >
-            Employer registration
-            </a>
-      </div>
+        
 
       <div className="w-full max-w-[400px] bg-[#0a0a0a] border border-white/5 rounded-[32px] p-8 md:p-10 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-white/[0.02] rounded-full blur-3xl pointer-events-none" />

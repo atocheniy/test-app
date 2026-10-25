@@ -10,4 +10,6 @@ public class UpdateDetailsDto
     public string? XUrl { get; set; }
     public string? DiscordUrl { get; set; }
     public string? WebsiteUrl { get; set; }
+    public string? Focus { get; set; }
+    public string[]? Technologies { get; set; }
 }

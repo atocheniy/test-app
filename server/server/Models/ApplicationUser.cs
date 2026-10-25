@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace server.Models;
 
@@ -27,10 +27,15 @@ public class ApplicationUser : IdentityUser
     
     public string[]? Technologies { get; set; }
     
+    public string? Focus { get; set; }
+    
     public bool IsActive { get; set; } = true;
     public string? Room { get; set; }
+    public string PreferredLanguage { get; set; } = "ru";
     
     public virtual ICollection<ChatParticipant> Chats { get; set; } = new List<ChatParticipant>();
+    public virtual ICollection<UserProject> Projects { get; set; } = new List<UserProject>();
+    public virtual ICollection<UserExperience> Experiences { get; set; } = new List<UserExperience>();
     
     public DateTime ConnectedAt { get; set; }
 }
