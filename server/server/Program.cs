@@ -36,7 +36,9 @@ namespace server
 									|| uri.Host.EndsWith(".vercel.app") 
 									|| uri.Host == "test-app-xi-murex.vercel.app"
 									|| uri.Host == "compileapp.ru"
-									|| uri.Host.EndsWith(".compileapp.ru");
+									|| uri.Host.EndsWith(".compileapp.ru")
+									|| uri.Host == "compileapp.site"
+									|| uri.Host.EndsWith(".compileapp.site");
 							}
 							return false;
 						})

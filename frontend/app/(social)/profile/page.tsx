@@ -27,10 +27,12 @@ import {
     MapPin,
     Plus,
     Send,
+    Settings,
     SlidersHorizontal,
     Sparkles,
     X
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -460,8 +462,8 @@ export default function Profile() {
                         />
                     )}
 
-                    <div className="flex flex-row items-end gap-6 relative z-10">
-                        <div className="relative w-40 h-40 max-sm:w-30 max-sm:h-30 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] shadow-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 relative z-10">
+                        <div className="relative w-28 h-28 sm:w-40 sm:h-40 rounded-full shrink-0 -mt-14 sm:-mt-20 border-4 border-[#0a0a0a] shadow-lg">
                             <div className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
                                 {userData.avatar ? (
                                     <img src={userData.avatar} className="w-full h-full object-cover" alt="Avatar" />
@@ -473,28 +475,36 @@ export default function Profile() {
                             </div>
                             {isAuthorOnline && (
                                 <span 
-                                    className="absolute bottom-2 right-2 w-5 h-5 bg-white border-2 border-[#0a0a0a] rounded-full" 
+                                    className="absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 w-4 h-4 sm:w-5 sm:h-5 bg-white border-2 border-[#0a0a0a] rounded-full" 
                                     title={isRu ? "В сети" : "Online"}
                                 />
                             )}
                         </div>
-                        <div className="mb-2 max-sm:mt-5">
-                            <h2 className="text-2xl font-bold text-zinc-100">{userData.fullName}</h2>
-                            <div className="flex flex-row items-center gap-2">
-                                <p className="text-sm text-zinc-400">{UserNameNormalized}</p>
+                        <div className="mb-1 sm:mb-2 min-w-0">
+                            <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 break-words">{userData.fullName}</h2>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+                                <p className="text-sm text-zinc-400 break-all">{UserNameNormalized}</p>
                                 <span className="text-sm text-zinc-400">•</span>
                                 <p className="text-sm text-zinc-400">{userData.watchersCount ?? userData.followers ?? 0} {t.profile.watchers}</p>
                                 <span className="text-sm text-zinc-400">•</span>
                                 <p className="text-sm text-zinc-400">{userData.watchingCount ?? userData.followings ?? 0} {t.profile.watching}</p>
                             </div>
                         </div>
-                        <div className="ml-auto mb-5">
+                        <div className="sm:ml-auto sm:mb-5 flex flex-wrap items-center gap-2">
                             <button 
                                 className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition cursor-pointer"
                                 onClick={handleOpenEditProfile}
                             >
                                 {t.profile.editProfile}
                             </button>
+                            <Link
+                                href="/settings"
+                                className="md:hidden inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium bg-white/10 text-zinc-200 border border-white/10 rounded-3xl hover:bg-white/15 hover:text-white transition"
+                                title={t.nav.settings}
+                            >
+                                <Settings size={15} />
+                                <span>{t.nav.settings}</span>
+                            </Link>
                         </div>
                     </div>
 
@@ -536,11 +546,11 @@ export default function Profile() {
                         </div>
                     </div>
 
-                    <div className="mt-8 border-b border-white/5 flex items-center gap-4 sm:gap-6">
+                    <div className="mt-8 border-b border-white/5 flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar">
                         <button
                             type="button"
                             onClick={() => setProfileTab('details')}
-                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer ${
+                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer shrink-0 whitespace-nowrap ${
                                 profileTab === 'details'
                                     ? 'border-white text-white'
                                     : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -553,7 +563,7 @@ export default function Profile() {
                         <button
                             type="button"
                             onClick={() => setProfileTab('projects')}
-                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer ${
+                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer shrink-0 whitespace-nowrap ${
                                 profileTab === 'projects'
                                     ? 'border-white text-white'
                                     : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -571,7 +581,7 @@ export default function Profile() {
                         <button
                             type="button"
                             onClick={() => setProfileTab('experience')}
-                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer ${
+                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer shrink-0 whitespace-nowrap ${
                                 profileTab === 'experience'
                                     ? 'border-white text-white'
                                     : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -1043,7 +1053,7 @@ export default function Profile() {
                         </div>
 
                         {/* Avatar & Banner upload */}
-                        <div className="grid grid-cols-2 gap-3 mb-6 pb-6 border-b border-white/5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 pb-6 border-b border-white/5">
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Аватар" : "Avatar"}</label>
                                 <input 
@@ -1113,7 +1123,7 @@ export default function Profile() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 pt-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{t.profile.location}</label>
                                     <input

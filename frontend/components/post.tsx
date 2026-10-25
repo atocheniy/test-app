@@ -307,7 +307,7 @@ export default function Post({
   };
 
   return (
-    <div className="py-4 border border-white/5 rounded-xl bg-white/[0.02] text-zinc-100 px-4 mx-2">
+    <div className="py-4 border border-white/5 rounded-xl bg-white/[0.02] text-zinc-100 px-4 mx-2 min-w-0 overflow-hidden">
       {recommendationReason ? (
         <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400 mb-2 pl-0.5">
           <Sparkles className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -325,8 +325,8 @@ export default function Post({
           </Link>
         </div>
       ) : null}
-      <div className="flex items-center justify-between mb-2">
-      <div className="flex items-center space-x-3 mb-2">
+      <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="flex items-center space-x-3 mb-2 min-w-0 flex-1">
         <div className="relative w-10 h-10 shrink-0">
           <Link
             href={isMyPost ? '/profile' : `/profile/${cleanUsername}`}
@@ -341,8 +341,8 @@ export default function Post({
             />
           )}
         </div>
-        <div className="flex items-baseline space-x-2 flex-wrap gap-y-1">
-          <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer">
+        <div className="flex items-baseline space-x-2 flex-wrap gap-y-1 min-w-0">
+          <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer truncate max-w-full">
             <Link
               href={isMyPost ? '/profile' : `/profile/${cleanUsername}`}
               className="font-semibold text-zinc-100 hover:underline cursor-pointer"
@@ -350,14 +350,14 @@ export default function Post({
               {Name}
             </Link>
           </span>
-          <span className="text-zinc-500 text-sm">{UserName}</span>
+          <span className="text-zinc-500 text-sm truncate max-w-full">{UserName}</span>
 
           {community && (
             <>
               <span className="text-zinc-600 text-xs">{isRu ? 'в' : 'in'}</span>
               <Link 
                 href={`/c/${community.slug}`}
-                className="font-medium text-xs text-sky-400 hover:underline font-mono bg-sky-500/10 px-1.5 py-0.5 rounded"
+                className="font-medium text-xs text-sky-400 hover:underline font-mono bg-sky-500/10 px-1.5 py-0.5 rounded truncate max-w-full"
               >
                 c/{community.slug}
               </Link>
@@ -369,14 +369,14 @@ export default function Post({
               <span className="text-zinc-600 text-xs">{isRu ? 'в' : 'in'}</span>
               <Link 
                 href={`/project/${project.id}`}
-                className="inline-flex items-center gap-1.5 font-medium text-xs text-zinc-200 hover:text-white hover:underline bg-white/5 hover:bg-white/10 border border-white/10 px-2 py-0.5 rounded-md transition-colors"
+                className="inline-flex items-center gap-1.5 font-medium text-xs text-zinc-200 hover:text-white hover:underline bg-white/5 hover:bg-white/10 border border-white/10 px-2 py-0.5 rounded-md transition-colors max-w-full min-w-0"
               >
                 {project.imageUrl ? (
-                  <img src={project.imageUrl} alt="" className="w-3.5 h-3.5 rounded object-cover" />
+                  <img src={project.imageUrl} alt="" className="w-3.5 h-3.5 rounded object-cover shrink-0" />
                 ) : (
-                  <Code2 className="w-3 h-3 text-zinc-400" />
+                  <Code2 className="w-3 h-3 text-zinc-400 shrink-0" />
                 )}
-                <span>p/{project.name}</span>
+                <span className="truncate">p/{project.name}</span>
               </Link>
             </>
           )}
@@ -385,7 +385,7 @@ export default function Post({
           <span className="text-zinc-500 text-sm">{Time}</span>
         </div>
       </div>
-      <div className="relative" ref={menuRef}>
+      <div className="relative shrink-0" ref={menuRef}>
           <button
             onClick={() => setIsMenuOpen((prev) => !prev)}
             className="p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-full transition duration-150"
@@ -638,7 +638,7 @@ export default function Post({
           </div>
         )}
 
-        <div className="flex items-center gap-10 max-w-[280px] mt-4 text-zinc-500">
+        <div className="flex items-center gap-8 sm:gap-10 w-[260px] sm:w-[280px] max-w-[calc(100vw-2rem)] mt-4 text-zinc-500">
           <Link href={`/post/${Id}`}>
             <button className="flex items-center gap-2 hover:text-sky-500 transition-colors group" title={t.post.comment}>
               <MessageCircle className="w-4 h-4 stroke-[1.8]" />
@@ -692,20 +692,20 @@ export default function Post({
                     )}
                 </div>
 
-                <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-baseline gap-2">
-                            <Link href={isMyComment ? '/profile' : `/profile/${cleanCommentUser}`} className="font-semibold text-zinc-100 text-xs hover:underline cursor-pointer">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                            <Link href={isMyComment ? '/profile' : `/profile/${cleanCommentUser}`} className="font-semibold text-zinc-100 text-xs hover:underline cursor-pointer truncate max-w-full">
                                 {comment.authorName}
                             </Link>
-                            <span className="text-zinc-500 text-[10px]">@{cleanCommentUser}</span>
+                            <span className="text-zinc-500 text-[10px] truncate">@{cleanCommentUser}</span>
                             <span className="text-zinc-500 text-[10px]">·</span>
                             <span className="text-zinc-500 text-[10px]">
                                 {formatPostTime(comment.created)}
                             </span>
                         </div>
 
-                        <div className="relative">
+                        <div className="relative shrink-0">
                             <button
                                 type="button"
                                 onClick={() => setActiveMenuCommentId(activeMenuCommentId === comment.id ? null : comment.id)}

@@ -93,7 +93,7 @@ export default function Settings() {
         <button
             type="button"
             onClick={onToggle}
-            className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 cursor-pointer ${
+            className={`w-11 h-6 shrink-0 flex items-center rounded-full p-1 transition-colors duration-200 cursor-pointer ${
                 active ? 'bg-white' : 'bg-zinc-800'
             }`}
         >
@@ -113,7 +113,7 @@ export default function Settings() {
 
                 <div className="p-5 sm:p-6 rounded-3xl border border-white/10 bg-white/[0.01] backdrop-blur-xl relative overflow-hidden">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 min-w-0">
                             <div className="w-14 h-14 rounded-full overflow-hidden bg-zinc-800 shrink-0 border border-white/10">
                                 {userData.avatar ? (
                                     <img src={userData.avatar} className="w-full h-full object-cover" alt="Avatar" />
@@ -123,16 +123,16 @@ export default function Settings() {
                                     </div>
                                 )}
                             </div>
-                            <div className="flex flex-col">
-                                <h3 className="text-base font-bold text-zinc-100">{userData.fullName}</h3>
-                                <span className="text-xs text-zinc-400">@{userData.userName}</span>
-                                <span className="text-[11px] text-zinc-500 mt-0.5">{userData.email}</span>
+                            <div className="flex flex-col min-w-0">
+                                <h3 className="text-base font-bold text-zinc-100 truncate">{userData.fullName}</h3>
+                                <span className="text-xs text-zinc-400 truncate">@{userData.userName}</span>
+                                <span className="text-[11px] text-zinc-500 mt-0.5 truncate">{userData.email}</span>
                             </div>
                         </div>
 
                         <Link
                             href="/profile"
-                            className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-zinc-200 border border-white/5 transition self-start sm:self-auto"
+                            className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-zinc-200 border border-white/5 transition self-start sm:self-auto shrink-0"
                         >
                             {t.settings.viewProfile}
                         </Link>
@@ -151,12 +151,12 @@ export default function Settings() {
 
                     <div className="divide-y divide-white/5">
                         <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div className="pr-4">
+                            <div className="min-w-0 flex-1 pr-2">
                                 <h4 className="text-sm font-medium text-zinc-200">{t.settings.languageTitle}</h4>
                                 <p className="text-xs text-zinc-500">{t.settings.languageDesc}</p>
                             </div>
                             
-                            <div className="inline-flex items-center p-1 rounded-2xl bg-zinc-900/80 border border-white/10 shrink-0 self-start sm:self-auto">
+                            <div className="inline-flex flex-wrap items-center p-1 rounded-2xl bg-zinc-900/80 border border-white/10 shrink-0 self-start sm:self-auto max-w-full">
                                 <button
                                     type="button"
                                     onClick={() => setLanguage('ru')}
@@ -195,14 +195,14 @@ export default function Settings() {
                     </div>
 
                     <div className="divide-y divide-white/5">
-                        <div className="py-3 flex items-center justify-between">
-                            <div>
+                        <div className="py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1">
                                 <h4 className="text-sm font-medium text-zinc-200">{t.settings.passwordTitle}</h4>
                                 <p className="text-xs text-zinc-500">{t.settings.passwordDesc}</p>
                             </div>
                             <button
                                 onClick={() => setIsPasswordModalOpen(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-zinc-300 transition cursor-pointer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-zinc-300 transition cursor-pointer shrink-0"
                             >
                                 <KeyRound size={13} />
                                 {t.settings.changePasswordBtn}
@@ -220,16 +220,16 @@ export default function Settings() {
                     </div>
 
                     <div className="divide-y divide-white/5">
-                        <div className="py-3 flex items-center justify-between">
-                            <div className="pr-4">
+                        <div className="py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1 pr-2">
                                 <h4 className="text-sm font-medium text-zinc-200">{t.settings.onlineStatusTitle}</h4>
                                 <p className="text-xs text-zinc-500">{t.settings.onlineStatusDesc}</p>
                             </div>
                             <Toggle active={showOnlineStatus} onToggle={() => setShowOnlineStatus(!showOnlineStatus)} />
                         </div>
 
-                        <div className="py-3 flex items-center justify-between">
-                            <div className="pr-4">
+                        <div className="py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1 pr-2">
                                 <h4 className="text-sm font-medium text-zinc-200">{t.settings.directMessagesTitle}</h4>
                                 <p className="text-xs text-zinc-500">{t.settings.directMessagesDesc}</p>
                             </div>
@@ -247,16 +247,16 @@ export default function Settings() {
                     </div>
 
                     <div className="divide-y divide-white/5">
-                        <div className="py-3 flex items-center justify-between">
-                            <div className="pr-4">
+                        <div className="py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1 pr-2">
                                 <h4 className="text-sm font-medium text-zinc-200">{t.settings.blurTitle}</h4>
                                 <p className="text-xs text-zinc-500">{t.settings.blurDesc}</p>
                             </div>
                             <Toggle active={blurEnabled} onToggle={() => setBlurEnabled(!blurEnabled)} />
                         </div>
 
-                        <div className="py-3 flex items-center justify-between">
-                            <div className="pr-4">
+                        <div className="py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1 pr-2">
                                 <h4 className="text-sm font-medium text-zinc-200">{t.settings.soundTitle}</h4>
                                 <p className="text-xs text-zinc-500">{t.settings.soundDesc}</p>
                             </div>
@@ -274,28 +274,28 @@ export default function Settings() {
                     </div>
 
                     <div className="divide-y divide-red-500/10">
-                        <div className="py-3 flex items-center justify-between">
-                            <div>
+                        <div className="py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1">
                                 <h4 className="text-sm font-medium text-zinc-200">{t.settings.signOutTitle}</h4>
                                 <p className="text-xs text-zinc-500">{t.settings.signOutDesc}</p>
                             </div>
                             <button
                                 onClick={logout}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/5 transition cursor-pointer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/5 transition cursor-pointer shrink-0"
                             >
                                 <LogOut size={13} />
                                 {t.settings.signOutBtn}
                             </button>
                         </div>
 
-                        <div className="py-3 flex items-center justify-between">
-                            <div>
+                        <div className="py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1">
                                 <h4 className="text-sm font-medium text-red-300">{t.settings.deleteAccountTitle}</h4>
                                 <p className="text-xs text-zinc-500">{t.settings.deleteAccountDesc}</p>
                             </div>
                             <button
                                 onClick={() => setIsDeleteModalOpen(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition cursor-pointer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition cursor-pointer shrink-0"
                             >
                                 <Trash2 size={13} />
                                 {t.settings.deleteBtn}
@@ -308,7 +308,7 @@ export default function Settings() {
 
             {isPasswordModalOpen && mounted && createPortal(
                 <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-                    <div className="w-full max-w-[420px] bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 shadow-2xl relative">
+                    <div className="w-full max-w-[420px] mx-4 bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 shadow-2xl relative">
                         <div className="flex justify-between items-center mb-5">
                             <h3 className="text-base font-bold text-zinc-100">{t.settings.modalChangePasswordTitle}</h3>
                             <button
@@ -373,7 +373,7 @@ export default function Settings() {
 
             {isDeleteModalOpen && mounted && createPortal(
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-                    <div className="w-full max-w-[420px] bg-[#0a0a0a] border border-red-500/20 rounded-3xl p-6 shadow-2xl relative text-center">
+                    <div className="w-full max-w-[420px] mx-4 bg-[#0a0a0a] border border-red-500/20 rounded-3xl p-6 shadow-2xl relative text-center">
                         <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mx-auto mb-4">
                             <Trash2 size={24} />
                         </div>

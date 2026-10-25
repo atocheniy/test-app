@@ -50,7 +50,7 @@ export default function Register() {
     };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 relative">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 px-4 relative">
       <button
         type="button"
         onClick={() => setLanguage(isRu ? 'en' : 'ru')}
@@ -59,7 +59,7 @@ export default function Register() {
         {isRu ? 'RU / EN' : 'EN / RU'}
       </button>
 
-      <div className="w-full max-w-[400px] bg-[#0a0a0a] border border-white/5 rounded-[32px] p-8 md:p-10 shadow-2xl relative overflow-hidden">
+      <div className="w-full max-w-[400px] mx-4 bg-[#0a0a0a] border border-white/5 rounded-[32px] p-6 sm:p-8 md:p-10 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-white/[0.02] rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col items-center mb-8 relative z-10">

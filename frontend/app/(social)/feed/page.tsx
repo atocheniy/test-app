@@ -92,7 +92,7 @@ export default function Feed() {
         <div className="flex flex-col min-h-full">
            
             <Titlebar title={t.feed.title}>
-                <div className="flex items-center gap-5">
+                <div className="flex items-center gap-3 sm:gap-5 flex-wrap overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => handleTabChange('all')}
                         className={`text-sm font-semibold transition relative py-1 ${
@@ -120,7 +120,7 @@ export default function Feed() {
 
             <PublicBlock Avatar={userData.avatar} onPostCreated={() => refreshPostsData(feedTab === 'watching' ? 'watching' : undefined)}></PublicBlock>
             
-            <div className="flex flex-col max-sm:mb-[60px] gap-4 p-6 py-6 max-sm:p-0 max-sm:py-6" >
+            <div className="flex flex-col max-sm:mb-[60px] gap-4 p-6 py-6 max-sm:p-0 max-sm:py-6 min-w-0 w-full overflow-x-hidden" >
                 {isLoading ? (
                     <>
                         <PostSkeleton />
@@ -159,7 +159,7 @@ export default function Feed() {
                         );
 
                         return (
-                            <div key={p.id} className="animate-fade-in flex flex-col gap-4">
+                            <div key={p.id} className="animate-fade-in flex flex-col gap-4 min-w-0">
                                 <Post 
                                     Id={p.id} 
                                     Avatar={p.authorAvatar} 

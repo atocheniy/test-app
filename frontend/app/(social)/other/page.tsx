@@ -38,7 +38,7 @@ export default function OtherPage() {
     const [communityDesc, setCommunityDesc] = useState("");
     const [createType, setCreateType] = useState<number>(0);
     const [createPostingPolicy, setCreatePostingPolicy] = useState<number>(0);
-    const [createKind, setCreateKind] = useState<number>(0); // 0 Community, 1 Company
+    const [createKind, setCreateKind] = useState<number>(0);
     const [companyWebsite, setCompanyWebsite] = useState("");
     const [companyLocation, setCompanyLocation] = useState("");
     const [companyIndustry, setCompanyIndustry] = useState("");
@@ -197,12 +197,12 @@ export default function OtherPage() {
     ];
 
     return (
-        <div className="flex flex-col min-h-full pb-14 animate-fade-in">
+        <div className="flex flex-col min-h-full pb-14 animate-fade-in min-w-0 w-full overflow-x-hidden">
             <Titlebar title={t.explore.title} />
 
-            <div className="p-4 sm:p-6 max-w-5xl space-y-8">
+            <div className="p-4 sm:p-6 max-w-5xl space-y-8 min-w-0">
                 
-                <div className="relative overflow-hidden rounded-3xl border border-white/10 p-6 md:p-8 backdrop-blur-xl bg-white/[0.01]">
+                <div className="relative overflow-hidden rounded-3xl border border-white/10 p-5 sm:p-6 md:p-8 backdrop-blur-xl bg-white/[0.01]">
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="space-y-2">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium">
@@ -220,7 +220,7 @@ export default function OtherPage() {
                         <div className="flex items-center gap-3 shrink-0">
                             <button 
                                 onClick={() => setIsCreateCommunityOpen(true)}
-                                className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition active:scale-95 shadow-lg shadow-white/5 cursor-pointer"
+                                className="w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-3 rounded-2xl bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition active:scale-95 shadow-lg shadow-white/5 cursor-pointer"
                             >
                                 <Plus size={16} />
                                 {isRu ? "Создать сообщество" : "Create Community"}
@@ -232,7 +232,7 @@ export default function OtherPage() {
                 </div>
 
                 <div className="space-y-4">
-                    <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center justify-between gap-2 flex-wrap px-1">
                         <div className="flex items-center gap-2">
                             <Users size={16} className="text-zinc-400" />
                             <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
@@ -261,7 +261,7 @@ export default function OtherPage() {
                                     <div className="absolute -top-12 -right-12 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
 
                                     <div>
-                                        <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
                                             <div className="w-10 h-10 rounded-xl border border-white/10 bg-black/40 text-zinc-200 flex items-center justify-center font-bold text-sm overflow-hidden shrink-0">
                                                 {club.avatar ? (
                                                     <img src={club.avatar} className="w-full h-full object-cover" alt="" />
@@ -298,9 +298,9 @@ export default function OtherPage() {
                                         </p>
                                     </div>
 
-                                    <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between">
-                                        <span className="text-[11px] font-mono text-zinc-500">c/{club.slug}</span>
-                                        <span className="px-3 py-1 text-xs font-semibold rounded-lg bg-white/5 group-hover:bg-white text-zinc-300 group-hover:text-black transition">
+                                    <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between gap-2">
+                                        <span className="text-[11px] font-mono text-zinc-500 truncate min-w-0">c/{club.slug}</span>
+                                        <span className="px-3 py-1 text-xs font-semibold rounded-lg bg-white/5 group-hover:bg-white text-zinc-300 group-hover:text-black transition shrink-0">
                                             {isRu ? "Открыть" : "Open"}
                                         </span>
                                     </div>
@@ -356,7 +356,7 @@ export default function OtherPage() {
 
             {isCreateCommunityOpen && mounted && createPortal(
                 <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-                    <div className="w-full max-w-[480px] max-h-[90vh] overflow-y-auto no-scrollbar bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl relative">
+                    <div className="w-full max-w-[480px] mx-4 max-h-[90vh] overflow-y-auto no-scrollbar bg-[#0a0a0a] border border-white/10 rounded-3xl p-5 sm:p-6 md:p-8 shadow-2xl relative">
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h3 className="text-lg font-bold text-zinc-100">{isRu ? "Создать сообщество" : "Create Community"}</h3>

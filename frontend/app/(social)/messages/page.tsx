@@ -81,7 +81,7 @@ function MessagesContent() {
                 }
             }
 
-            const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 640;
+            const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
             if (data.length > 0 && !activeChat && isDesktop) {
                 handleSelectChat(data[0]);
             }
@@ -388,8 +388,8 @@ function MessagesContent() {
         : false;
 
     return (
-          <div className="flex flex-row h-full" >
-               <div className={`flex flex-col w-[500px] max-sm:w-full border-r border-white/5 overflow-y-auto no-scrollbar max-sm:border-r-0 min-h-full ${activeChat ? 'max-sm:hidden' : 'flex'}`}>
+          <div className="flex flex-row h-full w-full min-w-0 overflow-hidden" >
+               <div className={`flex-col w-full md:w-80 lg:w-96 border-r border-white/5 overflow-y-auto no-scrollbar max-md:border-r-0 min-h-full ${activeChat ? 'hidden md:flex' : 'flex'}`}>
                     <TitlebarMessages title={isRu ? 'Сообщения' : 'Messages'}></TitlebarMessages>
 
                     <div className="flex flex-col">
@@ -442,7 +442,7 @@ function MessagesContent() {
                     </div>
                 </div>
                {activeChat ? (
-                    <div className="flex flex-col w-full h-full relative overflow-hidden no-scrollbar  max-sm:fixed max-sm:inset-0 max-sm:z-[1001] max-sm:bg-black/75 max-sm:backdrop-blur-xl">
+                    <div className="w-full flex flex-col flex-1 min-w-0 h-full relative overflow-hidden no-scrollbar max-md:fixed max-md:inset-0 max-md:z-[1001] max-md:bg-black/75 max-md:backdrop-blur-xl">
                                         <div className="absolute top-0 inset-x-0 z-20">
                                     <TitlebarMessage 
                                             Id={activeChat.id} 
@@ -548,7 +548,7 @@ function MessagesContent() {
                     </div>
                 </div>
                ) : (
-               <div className="hidden sm:flex flex-1 items-center justify-center text-zinc-600">
+               <div className="hidden md:flex flex-1 items-center justify-center text-zinc-600">
                     {isRu ? 'Выберите диалог, чтобы начать общение' : 'Select a conversation to start messaging'}
                </div>
           )}
@@ -559,7 +559,7 @@ function MessagesContent() {
                   onClick={() => !isActionLoading && setConfirmAction(null)}
               >
                   <div 
-                      className="bg-zinc-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl flex flex-col gap-4 text-center animate-in zoom-in-95 duration-150"
+                      className="bg-zinc-900 border border-white/10 rounded-2xl p-6 w-full max-w-[500px] mx-4 shadow-2xl flex flex-col gap-4 text-center animate-in zoom-in-95 duration-150"
                       onClick={(e) => e.stopPropagation()}
                   >
                       <div className="flex flex-col gap-1.5">

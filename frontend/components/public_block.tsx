@@ -303,7 +303,7 @@ export default function PublicBlock({
             <form onSubmit={handleCreatePost}>
                 {isCodeMode ? (
                     <div className="mx-4 mb-3 p-4 rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-2xl flex flex-col gap-3 animate-fade-in backdrop-blur-md">
-                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/10">
                             <div className="flex items-center gap-2">
                                 <div className="p-1.5 rounded-lg bg-white/5 text-zinc-200 border border-white/10">
                                     <FileCode2 size={16} />
@@ -447,7 +447,7 @@ export default function PublicBlock({
                             )}
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
                             <span className="text-xs text-zinc-500 font-mono">
                                 {codeSnippet.split('\n').filter(Boolean).length} {isRu ? "строк" : "lines"} · {codeSnippet.length} {isRu ? "симв." : "chars"}
                             </span>
@@ -597,8 +597,8 @@ export default function PublicBlock({
                     </div>
                 )}
 
-                <div className="flex flex-row justify-between items-center gap-2">
-                    <div className="flex flex-row items-center gap-1 p-2 px-4">
+                <div className="flex flex-row flex-wrap justify-between items-center gap-2 p-2 px-3 sm:px-4">
+                    <div className="flex flex-row items-center gap-1">
                         <input 
                             ref={fileInputRef}
                             type="file" 
@@ -653,7 +653,7 @@ export default function PublicBlock({
                             <Newspaper className="w-5 h-5"/>
                         </button>
                     </div>
-                    <div className="flex items-center gap-3.5 pr-4">
+                    <div className="flex items-center gap-2 sm:gap-3.5 ml-auto">
                         {ProjectId && (
                             <label className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 cursor-pointer select-none transition-colors">
                                 <input 

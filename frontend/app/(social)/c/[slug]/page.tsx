@@ -521,8 +521,8 @@ export default function Profile() {
                         />
                     )}
 
-                    <div className="flex flex-row items-end gap-6 relative z-10">
-                        <div className="relative w-40 h-40 max-sm:w-30 max-sm:h-30 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 relative z-10">
+                        <div className="relative w-28 h-28 sm:w-40 sm:h-40 rounded-full shrink-0 -mt-14 sm:-mt-16 border-4 border-[#0a0a0a] z-10 shadow-lg">
                             <div className="block w-full h-full rounded-full overflow-hidden cursor-pointer bg-zinc-800">
                                 {community.avatar ? (
                                     <img src={community.avatar} className="w-full h-full object-cover" alt="Avatar" />
@@ -534,9 +534,9 @@ export default function Profile() {
                             </div>
                         </div>
 
-                        <div className="mb-2 max-sm:mt-5 min-w-0">
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-2xl font-bold text-zinc-100 truncate">{community.name}</h2>
+                        <div className="mb-1 sm:mb-2 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 break-words">{community.name}</h2>
                                 {community.isVerified && (
                                     <span title={isRu ? "Верифицировано" : "Verified"} className="flex items-center">
                                         <CheckCircle2 size={20} className="text-blue-400 shrink-0" />
@@ -545,7 +545,7 @@ export default function Profile() {
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2 mt-1">
-                                <p className="text-sm text-zinc-400 font-mono">c/{community.slug}</p>
+                                <p className="text-sm text-zinc-400 font-mono break-all">c/{community.slug}</p>
                                 <span className="text-sm text-zinc-600">•</span>
                                 <p className="text-sm text-zinc-400">{community.watchersCount || 0} {t.profile.watchers}</p>
                                 <span className="text-sm text-zinc-600">•</span>
@@ -581,7 +581,7 @@ export default function Profile() {
                             </div>
                         </div>
 
-                        <div className="ml-auto mb-5 flex items-center gap-2 shrink-0">
+                        <div className="sm:ml-auto sm:mb-5 flex flex-wrap items-center gap-2 shrink-0">
                             {isCanEdit && (
                                 <button
                                     className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition"
@@ -605,7 +605,7 @@ export default function Profile() {
 
                             <button
                                 onClick={handleToggleWatch}
-                                className={`px-5 py-2 text-sm font-semibold rounded-3xl transition ${
+                                className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition ${
                                     community?.isWatching
                                         ? "bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/25"
                                         : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white"
@@ -635,7 +635,7 @@ export default function Profile() {
                                 !isOwner && (
                                     <button
                                         onClick={handleToggleJoin}
-                                        className={`px-5 py-2 text-sm font-semibold rounded-3xl transition ${
+                                        className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition ${
                                             community?.isMember
                                                 ? "bg-white/10 text-white hover:bg-red-500/20 hover:text-red-400"
                                                 : "bg-white text-black hover:bg-zinc-200"
@@ -691,10 +691,10 @@ export default function Profile() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex items-center gap-6 border-b border-white/5 px-10 max-sm:px-5">
+                <div className="flex items-center gap-4 sm:gap-6 border-b border-white/5 px-10 max-sm:px-5 overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setActiveTab('posts')}
-                        className={`pb-3 text-sm font-semibold transition relative cursor-pointer ${
+                        className={`pb-3 text-sm font-semibold transition relative cursor-pointer shrink-0 whitespace-nowrap ${
                             activeTab === 'posts' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                     >
@@ -705,7 +705,7 @@ export default function Profile() {
                     {isCompany && (
                         <button
                             onClick={() => setActiveTab('vacancies')}
-                            className={`pb-3 text-sm font-semibold transition relative flex items-center gap-1.5 cursor-pointer ${
+                            className={`pb-3 text-sm font-semibold transition relative flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                                 activeTab === 'vacancies' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                             }`}
                         >
@@ -721,7 +721,7 @@ export default function Profile() {
 
                     <button
                         onClick={() => setActiveTab('about')}
-                        className={`pb-3 text-sm font-semibold transition relative cursor-pointer ${
+                        className={`pb-3 text-sm font-semibold transition relative cursor-pointer shrink-0 whitespace-nowrap ${
                             activeTab === 'about' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                     >
@@ -731,7 +731,7 @@ export default function Profile() {
 
                     <button
                         onClick={() => setActiveTab('employees')}
-                        className={`pb-3 text-sm font-semibold transition relative flex items-center gap-1.5 cursor-pointer ${
+                        className={`pb-3 text-sm font-semibold transition relative flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                             activeTab === 'employees' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                     >
@@ -855,7 +855,7 @@ export default function Profile() {
                 {/* Tab: VACANCIES (Company only) */}
                 {activeTab === 'vacancies' && isCompany && (
                     <div className="p-6 md:p-8 space-y-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <h3 className="text-base font-bold text-zinc-100">{isRu ? "Открытые вакансии" : "Open Vacancies"}</h3>
                                 <p className="text-xs text-zinc-400">{isRu ? `Карьерные возможности в ${community.name}` : `Career opportunities at ${community.name}`}</p>
@@ -886,7 +886,7 @@ export default function Profile() {
                                         key={v.id}
                                         className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition space-y-3"
                                     >
-                                        <div className="flex items-start justify-between gap-4">
+                                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                                             <div>
                                                 <div className="flex flex-wrap items-center gap-2 mb-1">
                                                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -1074,7 +1074,7 @@ export default function Profile() {
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
                                 {community.membersList?.map((m: any) => {
                                     const isOnline = onlineUsers.some(
                                         (u) => u.toLowerCase() === m.username?.toLowerCase()
@@ -1209,7 +1209,7 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
                                         {isRu ? "Зарплата от" : "Salary from"}
@@ -1293,7 +1293,7 @@ export default function Profile() {
             {/* Modal: Edit Community / Company */}
             {isEditOpen && mounted && createPortal(
                 <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-                    <div className="w-full max-w-[480px] max-h-[85vh] overflow-y-auto no-scrollbar bg-[#0a0a0a] border border-white/10 rounded-[32px] p-8 shadow-2xl relative">
+                    <div className="w-full max-w-[480px] max-h-[85vh] overflow-y-auto no-scrollbar bg-[#0a0a0a] border border-white/10 rounded-[32px] p-6 md:p-8 shadow-2xl relative">
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h3 className="text-lg font-bold text-zinc-100">

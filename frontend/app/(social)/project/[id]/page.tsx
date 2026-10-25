@@ -371,10 +371,10 @@ export default function ProjectPage() {
                             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
                         </div>
 
-                        <div className="relative px-6 pb-3 pt-3">
+                        <div className="relative px-4 sm:px-6 pb-3 pt-3">
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
-                                <div className="flex items-end gap-4 min-w-0">
-                                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-4 border-[#0a0a0a] bg-zinc-900 shadow-2xl overflow-hidden flex items-center justify-center shrink-0 -mt-12 sm:-mt-14 relative z-10">
+                                <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 min-w-0">
+                                    <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl border-4 border-[#0a0a0a] bg-zinc-900 shadow-2xl overflow-hidden flex items-center justify-center shrink-0 -mt-10 sm:-mt-14 relative z-10">
                                         {allImages.length > 0 ? (
                                             <img
                                                 src={allImages[0]}
@@ -390,7 +390,7 @@ export default function ProjectPage() {
 
                                     <div className="flex flex-col gap-1 pb-1 min-w-0">
                                         <div className="flex items-center gap-2.5 flex-wrap">
-                                            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">
+                                            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight break-words">
                                                 {project.name}
                                             </h2>
                                             {statusInfo && (
@@ -401,7 +401,7 @@ export default function ProjectPage() {
                                             )}
                                         </div>
 
-                                        <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-400">
                                             <span>{isRu ? "Создатель:" : "Creator:"}</span>
                                             <Link
                                                 href={isOwner ? '/profile' : `/profile/${project.authorUsername}`}
@@ -847,7 +847,7 @@ export default function ProjectPage() {
                                     </button>
                                 </div>
                                 {editImages.length > 0 && (
-                                    <div className="grid grid-cols-4 gap-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                         {editImages.map((img, idx) => (
                                             <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-white/10 group">
                                                 <img src={img} alt={`Screenshot ${idx}`} className="w-full h-full object-cover" />

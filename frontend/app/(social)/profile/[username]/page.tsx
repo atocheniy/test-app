@@ -204,8 +204,8 @@ export default function Profile() {
                         />
                     )}
 
-                    <div className="flex flex-row items-end gap-6 relative z-10">
-                        <div className="w-40 h-40 max-sm:w-30 max-sm:h-30  bg-zinc-700 rounded-full shrink-0 -mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 relative z-10">
+                        <div className="w-28 h-28 sm:w-40 sm:h-40 bg-zinc-700 rounded-full shrink-0 -mt-14 sm:-mt-20 border-4 border-[#0a0a0a] relative z-10 shadow-lg">
                             <div className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
                                 {otherUserData.avatar && (
                                 <img src={otherUserData.avatar} className="w-full h-full object-cover" alt="Avatar" />
@@ -213,15 +213,15 @@ export default function Profile() {
                             </div>
                             {isAuthorOnline && (
                                 <span 
-                                    className="absolute bottom-2 right-2 w-5 h-5 bg-white border-2 border-[#0a0a0a] rounded-full" 
+                                    className="absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 w-4 h-4 sm:w-5 sm:h-5 bg-white border-2 border-[#0a0a0a] rounded-full" 
                                     title={isRu ? "В сети" : "Online"}
                                 />
                             )}
                         </div>
-                        <div className="mb-2 max-sm:mt-5">
-                            <h2 className="text-2xl font-bold text-zinc-100">{otherUserData.fullName}</h2>
-                            <div className="flex flex-row items-center gap-2">
-                                <p className="text-sm text-zinc-400">@{otherUserData.userName}</p>
+                        <div className="mb-1 sm:mb-2 min-w-0">
+                            <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 break-words">{otherUserData.fullName}</h2>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+                                <p className="text-sm text-zinc-400 break-all">@{otherUserData.userName}</p>
                                 <span className="text-sm text-zinc-400">•</span>
                                 <p className="text-sm text-zinc-400">{watchersCount} {t.profile.watchers}</p>
                                 <span className="text-sm text-zinc-400">•</span>
@@ -229,7 +229,7 @@ export default function Profile() {
                             </div>
                         </div>
 
-                        <div className="ml-auto mb-5 flex items-center gap-2">
+                        <div className="sm:ml-auto sm:mb-5 flex flex-wrap items-center gap-2">
                             {isOwnProfile ? (
                                 <Link 
                                     href="/profile"
@@ -241,7 +241,7 @@ export default function Profile() {
                                 <>
                                     <button 
                                         onClick={handleToggleWatchUser}
-                                        className={`px-5 py-2 text-sm font-semibold rounded-3xl transition ${
+                                        className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition ${
                                             isWatchingUser 
                                                 ? "bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/25" 
                                                 : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white"
@@ -289,11 +289,11 @@ export default function Profile() {
                         )}
                     </div>
 
-                    <div className="mt-8 border-b border-white/5 flex items-center gap-4 sm:gap-6">
+                    <div className="mt-8 border-b border-white/5 flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar">
                         <button
                             type="button"
                             onClick={() => setProfileTab('details')}
-                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer ${
+                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer shrink-0 whitespace-nowrap ${
                                 profileTab === 'details'
                                     ? 'border-white text-white'
                                     : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -306,7 +306,7 @@ export default function Profile() {
                         <button
                             type="button"
                             onClick={() => setProfileTab('projects')}
-                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer ${
+                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer shrink-0 whitespace-nowrap ${
                                 profileTab === 'projects'
                                     ? 'border-white text-white'
                                     : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -324,7 +324,7 @@ export default function Profile() {
                         <button
                             type="button"
                             onClick={() => setProfileTab('experience')}
-                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer ${
+                            className={`flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 transition -mb-px cursor-pointer shrink-0 whitespace-nowrap ${
                                 profileTab === 'experience'
                                     ? 'border-white text-white'
                                     : 'border-transparent text-zinc-400 hover:text-zinc-200'

@@ -67,6 +67,9 @@ body {
   color: #e4e4e7 !important;
   font-size: 15px !important;
   line-height: 1.6 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
 }
 
 .post-markdown.wmde-markdown h1 {
@@ -128,6 +131,8 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 0.75rem !important;
   margin: 0.75rem 0 !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
 }
 
 .post-markdown.wmde-markdown hr {

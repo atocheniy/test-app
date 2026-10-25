@@ -69,7 +69,6 @@ function SearchContent() {
 
     const displayTrends = trendingTopics.length > 0 ? trendingTopics : fallbackTrends;
 
-    // Sync query when URL search param ?q= changes (e.g. clicked on Right_Sidebar or back/forward)
     useEffect(() => {
         const q = searchParams.get('q');
         if (q !== null && q !== undefined) {
@@ -77,7 +76,6 @@ function SearchContent() {
         }
     }, [searchParams]);
 
-    // Load live trending topics
     useEffect(() => {
         PostService.getTrendingTopics(4)
             .then(data => {
@@ -169,10 +167,10 @@ function SearchContent() {
     }, [query]);
 
     return (
-        <div className="flex flex-col min-h-full pb-12 animate-fade-in">
+        <div className="flex flex-col min-h-full pb-12 animate-fade-in min-w-0 w-full overflow-x-hidden">
             <Titlebar title={isRu ? 'Поиск' : 'Search'} />
 
-            <div className="p-4 sm:p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-6 min-w-0">
                 
                 <div className="relative flex items-center">
                     <input 
@@ -192,7 +190,7 @@ function SearchContent() {
                     )}
                 </div>
 
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-white/5 pb-3">
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-white/5 pb-3 max-w-full">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
@@ -234,7 +232,7 @@ function SearchContent() {
                                                 href={`/c/${comm.slug}`}
                                                 className="group p-3.5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15 transition flex items-center justify-between gap-3"
                                             >
-                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className="flex items-center gap-3 overflow-hidden min-w-0">
                                                     <div className="relative w-11 h-11 shrink-0 rounded-2xl overflow-hidden bg-zinc-800 border border-white/10">
                                                         {comm.avatar ? (
                                                             <img src={comm.avatar} className="w-full h-full object-cover" alt="" />
@@ -245,7 +243,7 @@ function SearchContent() {
                                                         )}
                                                     </div>
 
-                                                    <div className="flex flex-col truncate">
+                                                    <div className="flex flex-col truncate min-w-0">
                                                         <span className="text-sm font-bold text-zinc-100 group-hover:text-blue-400 transition truncate">
                                                             {comm.name}
                                                         </span>
@@ -294,7 +292,7 @@ function SearchContent() {
                                                     href={`/profile/${cleanUser}`}
                                                     className="group p-3.5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15 transition flex items-center justify-between gap-3"
                                                 >
-                                                    <div className="flex items-center gap-3 overflow-hidden">
+                                                    <div className="flex items-center gap-3 overflow-hidden min-w-0">
                                                         <div className="relative w-11 h-11 shrink-0 rounded-full overflow-hidden bg-zinc-800 border border-white/10">
                                                             {user.avatar ? (
                                                                 <img src={user.avatar} className="w-full h-full object-cover" alt="" />
@@ -308,7 +306,7 @@ function SearchContent() {
                                                             )}
                                                         </div>
 
-                                                        <div className="flex flex-col truncate">
+                                                        <div className="flex flex-col truncate min-w-0">
                                                             <div className="flex items-center gap-1.5">
                                                                 <span className="text-sm font-bold text-zinc-100 group-hover:text-blue-400 transition truncate">
                                                                     {user.fullName || cleanUser}

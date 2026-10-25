@@ -107,18 +107,18 @@ export default function VacanciesPage() {
     };
 
     return (
-        <div className="flex flex-col min-h-full animate-fade-in">
+        <div className="flex flex-col min-h-full animate-fade-in min-w-0 w-full overflow-x-hidden">
             <Titlebar title={t.nav.vacancies}>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                     <span className="text-xs text-zinc-500 font-mono hidden sm:inline">
                         {isRu ? `${vacancies.length} предложений` : `${vacancies.length} offers`}
                     </span>
                     <Link
                         href="/other"
-                        className="px-3 py-1.5 rounded-xl bg-white text-black hover:bg-zinc-200 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"
+                        className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white text-black hover:bg-zinc-200 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm whitespace-nowrap shrink-0"
                     >
-                        <Building2 size={13} />
-                        {isRu ? "Разместить вакансию" : "Post a Vacancy"}
+                        <Building2 size={13} className="shrink-0" />
+                        <span>{isRu ? "Разместить вакансию" : "Post a Vacancy"}</span>
                     </Link>
                 </div>
             </Titlebar>
@@ -144,7 +144,7 @@ export default function VacanciesPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                        <div className="flex items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5">
+                        <div className="flex flex-wrap items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5 max-w-full overflow-x-auto no-scrollbar">
                             <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">{isRu ? "Сортировка:" : "Sort by:"}</span>
                             <button
                                 onClick={() => setSelectedSort('recommended')}
@@ -179,7 +179,7 @@ export default function VacanciesPage() {
                             </button>
                         </div>
 
-                        <div className="flex items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5">
+                        <div className="flex flex-wrap items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5 max-w-full overflow-x-auto no-scrollbar">
                             <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">{isRu ? "Формат:" : "Format:"}</span>
                             <button
                                 onClick={() => setSelectedFormat(null)}
@@ -223,7 +223,7 @@ export default function VacanciesPage() {
                             </button>
                         </div>
 
-                        <div className="flex items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5">
+                        <div className="flex flex-wrap items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5 max-w-full overflow-x-auto no-scrollbar">
                             <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">{isRu ? "Уровень:" : "Level:"}</span>
                             <button
                                 onClick={() => setSelectedLevel(null)}
@@ -313,7 +313,7 @@ export default function VacanciesPage() {
                                     key={v.id}
                                     className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all space-y-3 backdrop-blur-md"
                                 >
-                                    <div className="flex items-start justify-between gap-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                                         <div className="flex items-start gap-3.5 min-w-0">
                                             <Link
                                                 href={`/c/${v.companySlug}`}
@@ -356,7 +356,10 @@ export default function VacanciesPage() {
 
                                                 <div className="flex flex-wrap items-center gap-2 mt-2">
                                                     {v.matchPercent && (
-                                                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                                        <span
+                                                            title={v.matchReason || undefined}
+                                                            className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1"
+                                                        >
                                                             <Sparkles size={11} className="text-emerald-400" />
                                                             {v.matchPercent}% {isRu ? "совпадение" : "match"}
                                                         </span>
@@ -376,12 +379,6 @@ export default function VacanciesPage() {
                                                             {formatSalary(v.salaryFrom, v.salaryTo, v.currency)}
                                                         </span>
                                                     )}
-
-                                                    {v.matchReason && (
-                                                        <span className="text-[11px] text-zinc-400 hidden sm:inline">
-                                                            · {v.matchReason}
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -390,7 +387,7 @@ export default function VacanciesPage() {
                                             <button
                                                 onClick={() => handleApply(v.id)}
                                                 disabled={isApplyingId === v.id}
-                                                className="px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-lg shadow-white/5"
+                                                className="w-full sm:w-auto flex justify-center px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-lg shadow-white/5"
                                             >
                                                 {isApplyingId === v.id ? (isRu ? "Отправка..." : "Sending...") : t.vacancies.apply}
                                             </button>
@@ -415,7 +412,7 @@ export default function VacanciesPage() {
                                         )}
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-white/5">
                                         <div className="flex flex-wrap gap-1.5">
                                             {v.stack?.map((tech, i) => (
                                                 <button

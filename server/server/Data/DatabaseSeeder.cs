@@ -81,7 +81,7 @@ public static class DatabaseSeeder
             ),
             (
                 "petr_petrov",
-                "petr@compileapp.ru",
+                "petr@compileapp.site",
                 "Петр Петров",
                 "Staff Frontend Architect",
                 "Превращаю сложные интерфейсы в быстрые и отзывчивые веб-приложения.",
@@ -94,7 +94,7 @@ public static class DatabaseSeeder
             ),
             (
                 "alexey_alexeev",
-                "alexey@compileapp.ru",
+                "alexey@compileapp.site",
                 "Алексей Алексеев",
                 "Principal .NET & Cloud Engineer",
                 "Highload, распределенные транзакции, Event Sourcing и Outbox в облаках.",
@@ -107,7 +107,7 @@ public static class DatabaseSeeder
             ),
             (
                 "anna_andreeva",
-                "anna@compileapp.ru",
+                "anna@compileapp.site",
                 "Анна Андреева",
                 "AI Researcher & LLM Engineer",
                 "Исследую мультимодальные модели, RAG-архитектуры и квантование нейросетей.",
@@ -120,7 +120,7 @@ public static class DatabaseSeeder
             ),
             (
                 "sergey_sergeev",
-                "sergey@compileapp.ru",
+                "sergey@compileapp.site",
                 "Сергей Сергеев",
                 "Senior SRE / DevOps Lead",
                 "Автоматизирую всё, что не приколочено. Инфраструктура как код и 99.99% uptime.",
@@ -133,7 +133,7 @@ public static class DatabaseSeeder
             ),
             (
                 "dmitry_dmitriev",
-                "dmitry@compileapp.ru",
+                "dmitry@compileapp.site",
                 "Дмитрий Дмитриев",
                 "Mobile Lead Engineer (Flutter & iOS)",
                 "Создаю кроссплатформенные мобильные приложения с 60+ млн скачиваний.",
@@ -146,7 +146,7 @@ public static class DatabaseSeeder
             ),
             (
                 "elena_vasilieva",
-                "elena@compileapp.ru",
+                "elena@compileapp.site",
                 "Елена Васильева",
                 "Lead Design Systems Engineer",
                 "Мост между продуктовым дизайном в Figma и чистым фронтенд-кодом.",
@@ -159,7 +159,7 @@ public static class DatabaseSeeder
             ),
             (
                 "mikhail_mikhailov",
-                "mikhail@compileapp.ru",
+                "mikhail@compileapp.site",
                 "Михаил Михайлов",
                 "AppSec & Systems Engineer",
                 "Безопасность веб-приложений, аудит смарт-контрактов и системное программирование на Rust.",
@@ -627,7 +627,7 @@ public static class DatabaseSeeder
                     "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=80"
                 },
                 GithubUrl = "https://github.com/test/compile-network",
-                LiveUrl = "https://compileapp.ru",
+                LiveUrl = "https://compileapp.site",
                 Technologies = new[] { "Next.js", "React", "TypeScript", "ASP.NET Core", "C#", "PostgreSQL", "SignalR", "Tailwind CSS" },
                 Status = ProjectStatus.Released,
                 StarsCount = 47,
@@ -668,7 +668,7 @@ public static class DatabaseSeeder
                     "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80"
                 },
                 GithubUrl = "https://github.com/test/voxelcraft-web",
-                LiveUrl = "https://voxelcraft.compileapp.ru",
+                LiveUrl = "https://voxelcraft.compileapp.site",
                 Technologies = new[] { "TypeScript", "WebGPU", "WGSL", "Vite", "Math" },
                 Status = ProjectStatus.Beta,
                 StarsCount = 28,

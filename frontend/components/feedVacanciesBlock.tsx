@@ -73,19 +73,19 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
     };
 
     return (
-        <div className="py-4 px-4 mx-2 border border-white/5 rounded-xl bg-white/[0.02] text-zinc-100 flex flex-col gap-3">
-            <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                <div className="flex items-center gap-2">
-                    <Briefcase size={15} className="text-zinc-400" />
-                    <span className="font-semibold text-sm text-zinc-200">
+        <div className="py-4 px-4 mx-2 border border-white/5 rounded-xl bg-white/[0.02] text-zinc-100 flex flex-col gap-3 min-w-0 overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/5">
+                <div className="flex items-center gap-2 min-w-0">
+                    <Briefcase size={15} className="text-zinc-400 shrink-0" />
+                    <span className="font-semibold text-sm text-zinc-200 truncate">
                         {isRu ? 'Рекомендуемые вакансии' : 'Recommended vacancies'}
                     </span>
-                    <span className="text-[11px] text-zinc-500 font-mono">
+                    <span className="text-[11px] text-zinc-500 font-mono shrink-0">
                         · {vacancies.length}
                     </span>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
                     {onRefresh && (
                         <button
                             type="button"
@@ -99,7 +99,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
 
                     <Link
                         href="/vacancies"
-                        className="text-xs text-zinc-500 hover:text-zinc-300 transition"
+                        className="text-xs text-zinc-500 hover:text-zinc-300 transition whitespace-nowrap"
                     >
                         {isRu ? 'Все вакансии →' : 'All vacancies →'}
                     </Link>
@@ -151,10 +151,10 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                     return (
                         <div
                             key={v.id}
-                            className="w-full sm:w-[calc(50%-6px)] shrink-0 snap-start p-3.5 rounded-xl border border-white/5 bg-zinc-950/40 hover:bg-zinc-950/70 hover:border-white/10 transition flex flex-col justify-between gap-3 group"
+                            className="w-full sm:w-[calc(50%-6px)] shrink-0 snap-start p-3.5 rounded-xl border border-white/5 bg-zinc-950/40 hover:bg-zinc-950/70 hover:border-white/10 transition flex flex-col justify-between gap-3 group min-w-0"
                         >
-                            <div className="flex flex-col gap-2">
-                                <div className="flex items-start justify-between gap-2">
+                            <div className="flex flex-col gap-2 min-w-0">
+                                <div className="flex items-start justify-between gap-2 flex-wrap">
                                     <div className="flex items-center gap-2.5 min-w-0">
                                         <Link
                                             href={`/c/${v.companySlug}`}
