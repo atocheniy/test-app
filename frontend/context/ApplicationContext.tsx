@@ -285,7 +285,8 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(hubBaseUrl, {
                 accessTokenFactory: () => token,
-                // skipNegotiation: true, 
+                withCredentials: false,
+                skipNegotiation: true,
                 transport: signalR.HttpTransportType.WebSockets 
             })
             .withAutomaticReconnect()
