@@ -3,7 +3,7 @@
 import Post from "@/components/post";
 import { PROJECT_STATUS_MAP } from "@/components/project_card";
 import PublicBlock from "@/components/public_block";
-import { PostSkeleton } from "@/components/skeletons";
+import { PostSkeleton, ProfileSkeleton } from "@/components/skeletons";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
 import { ProjectService } from "@/services/projectService";
@@ -310,8 +310,12 @@ export default function ProjectPage() {
 
     const isOwner = Boolean(project?.isMyProject);
 
+    if (isLoadingProject) {
+        return <ProfileSkeleton />;
+    }
+
     return (
-        <div className="flex flex-col min-h-full pb-16">
+        <div className="flex flex-col min-h-full pb-16 animate-fade-in">
             <Titlebar title={project?.name || "Проект"}>
                 <button
                     onClick={() => router.back()}
@@ -322,16 +326,8 @@ export default function ProjectPage() {
                 </button>
             </Titlebar>
 
-            {isLoadingProject ? (
-                <div className="p-6 space-y-6">
-                    <div className="w-full h-48 rounded-2xl bg-zinc-900/60 animate-pulse" />
-                    <div className="space-y-4">
-                        <div className="w-48 h-8 rounded-xl bg-zinc-900/60 animate-pulse" />
-                        <div className="w-full h-20 rounded-xl bg-zinc-900/40 animate-pulse" />
-                    </div>
-                </div>
-            ) : !project ? (
-                <div className="p-12 text-center flex flex-col items-center justify-center">
+            {!project ? (
+                <div className="p-12 text-center flex flex-col items-center justify-center animate-fade-in">
                     <FolderKanban className="w-12 h-12 text-zinc-600 mb-3" />
                     <h3 className="text-lg font-semibold text-zinc-200">Проект не найден</h3>
                     <p className="text-sm text-zinc-400 mt-1">Возможно, он был удалён или ссылка некорректна.</p>
@@ -343,7 +339,7 @@ export default function ProjectPage() {
                     </button>
                 </div>
             ) : (
-                <div className="space-y-6 px-4 sm:px-6">
+                <div className="space-y-6 px-4 sm:px-6 animate-fade-in">
                     <div className="relative rounded-2xl overflow-hidden border border-white/5 bg-zinc-950/40">
                         <div className="relative w-full h-44 sm:h-56 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black overflow-hidden select-none">
                             {project.bannerUrl ? (
@@ -615,26 +611,27 @@ export default function ProjectPage() {
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
+                            <div className="space-y-3 animate-fade-in">
                                 {posts.map((p) => (
-                                    <Post
-                                        key={p.id}
-                                        Id={p.id}
-                                        Name={p.authorName}
-                                        UserName={p.authorUsername}
-                                        Content={p.content}
-                                        Time={p.created ? new Date(p.created).toLocaleDateString() : ""}
-                                        Avatar={p.authorAvatar}
-                                        Likes={p.likesCount}
-                                        isLikedByMe={p.isLikedByMe}
-                                        Comments={p.commentsCount}
-                                        repostsCount={p.repostsCount}
-                                        Attachments={p.attachments}
-                                        commentsList={p.commentsList}
-                                        community={p.community}
-                                        project={p.project || { id: project.id, name: project.name, imageUrl: project.imageUrl, status: project.status }}
-                                        repostOfPost={p.repostOfPost}
-                                    />
+                                    <div key={p.id} className="animate-fade-in">
+                                        <Post
+                                            Id={p.id}
+                                            Name={p.authorName}
+                                            UserName={p.authorUsername}
+                                            Content={p.content}
+                                            Time={p.created ? new Date(p.created).toLocaleDateString() : ""}
+                                            Avatar={p.authorAvatar}
+                                            Likes={p.likesCount}
+                                            isLikedByMe={p.isLikedByMe}
+                                            Comments={p.commentsCount}
+                                            repostsCount={p.repostsCount}
+                                            Attachments={p.attachments}
+                                            commentsList={p.commentsList}
+                                            community={p.community}
+                                            project={p.project || { id: project.id, name: project.name, imageUrl: project.imageUrl, status: project.status }}
+                                            repostOfPost={p.repostOfPost}
+                                        />
+                                    </div>
                                 ))}
 
                                 {hasMore && (
