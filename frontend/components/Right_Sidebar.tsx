@@ -374,7 +374,7 @@ export default function RightSidebar() {
                     <Link href="/terms" className="hover:underline">Terms</Link>
                     <Link href="/privacy" className="hover:underline">Privacy</Link>
                     <Link href="/about" className="hover:underline">About</Link>
-                    <span>© 2026 DevLink</span>
+                    <span>© 2026 Compile</span>
                 </div>
 
             </div>

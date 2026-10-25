@@ -34,7 +34,9 @@ namespace server
 							{
 								return uri.Host == "localhost" 
 									|| uri.Host.EndsWith(".vercel.app") 
-									|| uri.Host == "test-app-xi-murex.vercel.app";
+									|| uri.Host == "test-app-xi-murex.vercel.app"
+									|| uri.Host == "compileapp.ru"
+									|| uri.Host.EndsWith(".compileapp.ru");
 							}
 							return false;
 						})

@@ -32,7 +32,7 @@ export default function PrivacyPage() {
         </div>
 
         <div className="mt-12 text-xs text-zinc-600 border-t border-white/5 pt-6">
-          © 2026 DevLink. Все права защищены.
+          © 2026 Compile. Все права защищены.
         </div>
       </div>
     </div>

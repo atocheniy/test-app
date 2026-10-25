@@ -13,7 +13,7 @@ export const translations = {
             settings: 'Настройки',
             profile: 'Профиль',
             logout: 'Выйти',
-            site: 'DevLink',
+            site: 'Compile',
         },
         feed: {
             title: 'Лента',
@@ -203,7 +203,7 @@ export const translations = {
             settings: 'Settings',
             profile: 'Profile',
             logout: 'Sign Out',
-            site: 'DevLink',
+            site: 'Compile',
         },
         feed: {
             title: 'Feed',

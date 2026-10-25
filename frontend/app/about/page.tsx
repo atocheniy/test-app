@@ -12,9 +12,9 @@ export default function AboutPage() {
           <ArrowLeft size={14} /> Назад
         </Link>
 
-        <h1 className="text-3xl font-bold tracking-tight mb-4">О платформе DevLink</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-4">О платформе Compile</h1>
         <p className="text-zinc-400 leading-relaxed mb-6">
-          DevLink — это современная социальная сеть и платформа интерактивных портфолио для разработчиков программного обеспечения.
+          Compile — это современная социальная сеть и платформа интерактивных портфолио для разработчиков программного обеспечения.
         </p>
 
         <div className="space-y-6 text-sm text-zinc-300">
@@ -37,7 +37,7 @@ export default function AboutPage() {
         </div>
 
         <div className="mt-12 text-xs text-zinc-600 border-t border-white/5 pt-6">
-          © 2026 DevLink. Все права защищены.
+          © 2026 Compile. Все права защищены.
         </div>
       </div>
     </div>

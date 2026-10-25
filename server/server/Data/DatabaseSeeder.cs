@@ -71,7 +71,7 @@ public static class DatabaseSeeder
                 "test@test.com",
                 "Андрей",
                 "Fullstack Engineer & Software Architect",
-                "Создатель DevLink. Разрабатываю распределённые системы и высокопроизводительные веб-приложения.",
+                "Создатель Compile. Разрабатываю распределённые системы и высокопроизводительные веб-приложения.",
                 "C#, .NET 9, Next.js, PostgreSQL, архитектура микросервисов и UI/UX дизайн.",
                 "Москва / Удалённо",
                 "Открыт к предложениям",
@@ -81,7 +81,7 @@ public static class DatabaseSeeder
             ),
             (
                 "petr_petrov",
-                "petr@devlink.io",
+                "petr@compileapp.ru",
                 "Петр Петров",
                 "Staff Frontend Architect",
                 "Превращаю сложные интерфейсы в быстрые и отзывчивые веб-приложения.",
@@ -94,7 +94,7 @@ public static class DatabaseSeeder
             ),
             (
                 "alexey_alexeev",
-                "alexey@devlink.io",
+                "alexey@compileapp.ru",
                 "Алексей Алексеев",
                 "Principal .NET & Cloud Engineer",
                 "Highload, распределенные транзакции, Event Sourcing и Outbox в облаках.",
@@ -107,7 +107,7 @@ public static class DatabaseSeeder
             ),
             (
                 "anna_andreeva",
-                "anna@devlink.io",
+                "anna@compileapp.ru",
                 "Анна Андреева",
                 "AI Researcher & LLM Engineer",
                 "Исследую мультимодальные модели, RAG-архитектуры и квантование нейросетей.",
@@ -120,7 +120,7 @@ public static class DatabaseSeeder
             ),
             (
                 "sergey_sergeev",
-                "sergey@devlink.io",
+                "sergey@compileapp.ru",
                 "Сергей Сергеев",
                 "Senior SRE / DevOps Lead",
                 "Автоматизирую всё, что не приколочено. Инфраструктура как код и 99.99% uptime.",
@@ -133,7 +133,7 @@ public static class DatabaseSeeder
             ),
             (
                 "dmitry_dmitriev",
-                "dmitry@devlink.io",
+                "dmitry@compileapp.ru",
                 "Дмитрий Дмитриев",
                 "Mobile Lead Engineer (Flutter & iOS)",
                 "Создаю кроссплатформенные мобильные приложения с 60+ млн скачиваний.",
@@ -146,7 +146,7 @@ public static class DatabaseSeeder
             ),
             (
                 "elena_vasilieva",
-                "elena@devlink.io",
+                "elena@compileapp.ru",
                 "Елена Васильева",
                 "Lead Design Systems Engineer",
                 "Мост между продуктовым дизайном в Figma и чистым фронтенд-кодом.",
@@ -159,7 +159,7 @@ public static class DatabaseSeeder
             ),
             (
                 "mikhail_mikhailov",
-                "mikhail@devlink.io",
+                "mikhail@compileapp.ru",
                 "Михаил Михайлов",
                 "AppSec & Systems Engineer",
                 "Безопасность веб-приложений, аудит смарт-контрактов и системное программирование на Rust.",
@@ -219,7 +219,7 @@ public static class DatabaseSeeder
             new UserExperience
             {
                 UserId = mainUser.Id,
-                CompanyName = "DevLink Platform",
+                CompanyName = "Compile Platform",
                 Position = "Lead Architect & Founder",
                 Mode = "Full-time",
                 Period = "2024 — Настоящее время",
@@ -616,7 +616,7 @@ public static class DatabaseSeeder
             {
                 Id = Guid.NewGuid(),
                 UserId = mainUser.Id,
-                Name = "DevLink Network",
+                Name = "Compile Network",
                 Description = "Современная экосистема и социальная сеть для разработчиков. Интерактивные мини-профили проектов с девлогами, алгоритмическая лента рекомендаций, микроблогинг с поддержкой Markdown, подсветкой синтаксиса кода, видео и медиа-каруселью.",
                 ImageUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80",
                 BannerUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80",
@@ -626,8 +626,8 @@ public static class DatabaseSeeder
                     "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
                     "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=80"
                 },
-                GithubUrl = "https://github.com/test/devlink-network",
-                LiveUrl = "https://devlink.io",
+                GithubUrl = "https://github.com/test/compile-network",
+                LiveUrl = "https://compileapp.ru",
                 Technologies = new[] { "Next.js", "React", "TypeScript", "ASP.NET Core", "C#", "PostgreSQL", "SignalR", "Tailwind CSS" },
                 Status = ProjectStatus.Released,
                 StarsCount = 47,
@@ -668,7 +668,7 @@ public static class DatabaseSeeder
                     "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80"
                 },
                 GithubUrl = "https://github.com/test/voxelcraft-web",
-                LiveUrl = "https://voxelcraft.devlink.io",
+                LiveUrl = "https://voxelcraft.compileapp.ru",
                 Technologies = new[] { "TypeScript", "WebGPU", "WGSL", "Vite", "Math" },
                 Status = ProjectStatus.Beta,
                 StarsCount = 28,
@@ -722,10 +722,10 @@ public static class DatabaseSeeder
         
         var projectStars = new List<ProjectStar>
         {
-            new ProjectStar { ProjectId = projMap["DevLink Network"].Id, UserId = userMap["petr_petrov"].Id, CreatedAt = DateTime.UtcNow.AddDays(-5) },
-            new ProjectStar { ProjectId = projMap["DevLink Network"].Id, UserId = userMap["alexey_alexeev"].Id, CreatedAt = DateTime.UtcNow.AddDays(-4) },
-            new ProjectStar { ProjectId = projMap["DevLink Network"].Id, UserId = userMap["anna_andreeva"].Id, CreatedAt = DateTime.UtcNow.AddDays(-3) },
-            new ProjectStar { ProjectId = projMap["DevLink Network"].Id, UserId = userMap["sergey_sergeev"].Id, CreatedAt = DateTime.UtcNow.AddDays(-2) },
+            new ProjectStar { ProjectId = projMap["Compile Network"].Id, UserId = userMap["petr_petrov"].Id, CreatedAt = DateTime.UtcNow.AddDays(-5) },
+            new ProjectStar { ProjectId = projMap["Compile Network"].Id, UserId = userMap["alexey_alexeev"].Id, CreatedAt = DateTime.UtcNow.AddDays(-4) },
+            new ProjectStar { ProjectId = projMap["Compile Network"].Id, UserId = userMap["anna_andreeva"].Id, CreatedAt = DateTime.UtcNow.AddDays(-3) },
+            new ProjectStar { ProjectId = projMap["Compile Network"].Id, UserId = userMap["sergey_sergeev"].Id, CreatedAt = DateTime.UtcNow.AddDays(-2) },
             new ProjectStar { ProjectId = projMap["HyperFlow Engine"].Id, UserId = userMap["alexey_alexeev"].Id, CreatedAt = DateTime.UtcNow.AddDays(-3) },
             new ProjectStar { ProjectId = projMap["HyperFlow Engine"].Id, UserId = userMap["mikhail_mikhailov"].Id, CreatedAt = DateTime.UtcNow.AddDays(-1) },
             new ProjectStar { ProjectId = projMap["NeuralRAG Local"].Id, UserId = mainUser.Id, CreatedAt = DateTime.UtcNow.AddDays(-6) },
@@ -743,10 +743,10 @@ public static class DatabaseSeeder
         {
             Id = Guid.NewGuid(),
             UserId = mainUser.Id,
-            ProjectId = projMap["DevLink Network"].Id,
+            ProjectId = projMap["Compile Network"].Id,
             ShowInGeneralFeed = true,
             Created = DateTime.UtcNow.AddHours(-2),
-            Content = @"### 🚀 Релиз DevLink v2.4: Мини-профили проектов и интерактивные девлоги!
+            Content = @"### 🚀 Релиз Compile v2.4: Мини-профили проектов и интерактивные девлоги!
 
 Рад представить масштабное обновление нашей платформы для разработчиков! Теперь каждый проект имеет свой собственный **мини-профиль** с медиа-галереей, амбиентным свечением скриншотов, ссылками на исходный код и хронологическим девлогом.
 
@@ -996,7 +996,7 @@ fn generateTerrain(@builtin(global_invocation_id) id: vec3<u32>) {
 - Контрастные акцентные бейджи для статусов сервисов
 - Микро-интеракции на CSS transforms без лишних JS библиотек
 
-Приятно видеть, как эти принципы находят воплощение в DevLink!",
+Приятно видеть, как эти принципы находят воплощение в Compile!",
             Attachments = new[]
             {
                 "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=80"
@@ -1039,7 +1039,7 @@ fn generateTerrain(@builtin(global_invocation_id) id: vec3<u32>) {
         context.Post.AddRange(posts);
         await context.SaveChangesAsync();
         
-        projMap["DevLink Network"].PostsCount = 1;
+        projMap["Compile Network"].PostsCount = 1;
         projMap["HyperFlow Engine"].PostsCount = 1;
         projMap["VoxelCraft Web"].PostsCount = 1;
         commMap["dotnet-ru"].PostsCount = 1;
@@ -1099,7 +1099,7 @@ fn generateTerrain(@builtin(global_invocation_id) id: vec3<u32>) {
             {
                 PostId = posts[2].Id,
                 UserId = mainUser.Id,
-                Content = "Отличная статья, Алексей! Мы в DevLink как раз используем Outbox для надежной отправки уведомлений и синхронизации поискового индекса.",
+                Content = "Отличная статья, Алексей! Мы в Compile как раз используем Outbox для надежной отправки уведомлений и синхронизации поискового индекса.",
                 Created = DateTime.UtcNow.AddDays(-1).AddHours(-4)
             },
             new Comment
@@ -1180,7 +1180,7 @@ fn generateTerrain(@builtin(global_invocation_id) id: vec3<u32>) {
                 Id = Guid.NewGuid(),
                 ChatId = chat1.Id,
                 SenderId = userMap["petr_petrov"].Id,
-                Content = "Привет, Андрей! Посмотрел обновление DevLink с девлогами проектов — выглядит очень свежо и удобно!",
+                Content = "Привет, Андрей! Посмотрел обновление Compile с девлогами проектов — выглядит очень свежо и удобно!",
                 Attachments = Array.Empty<string>(),
                 SentAt = DateTime.UtcNow.AddHours(-3),
                 IsRead = true

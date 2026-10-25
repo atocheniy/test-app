@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { ApplicationProvider } from "@/context/ApplicationContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+
+export const metadata: Metadata = {
+  title: "Compile — Платформа для разработчиков",
+  description: "Социальная сеть, живые портфолио, девлоги проектов и вакансии для разработчиков.",
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

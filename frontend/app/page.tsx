@@ -18,9 +18,9 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded border border-zinc-800 bg-zinc-950 flex items-center justify-center font-mono font-bold text-xs text-white">
-              DL
+              &gt;_
             </div>
-            <span className="font-semibold text-sm tracking-tight text-white">DevLink</span>
+            <span className="font-semibold text-sm tracking-tight text-white">Compile</span>
           </Link>
 
           <nav className="hidden sm:flex items-center gap-6 text-xs text-zinc-400">
@@ -262,7 +262,7 @@ export default function Home() {
       <footer className="border-t border-zinc-900 py-8">
         <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500 font-mono">
           <div className="flex items-center gap-2">
-            <span className="text-zinc-300 font-semibold font-sans">DevLink</span>
+            <span className="text-zinc-300 font-semibold font-sans">Compile</span>
             <span>&copy; 2026</span>
           </div>
 

@@ -19,7 +19,7 @@ export default function TermsPage() {
           <section className="p-6 rounded-2xl border border-white/5 bg-white/[0.02]">
             <h2 className="text-base font-semibold text-white mb-2">1. Общие положения</h2>
             <p className="text-zinc-400 leading-relaxed">
-              Используя платформу DevLink, вы соглашаетесь соблюдать правила профессионального сообщества, уважать авторские права на исходный код и медиаматериалы, а также соблюдать правила безопасности.
+              Используя платформу Compile, вы соглашаетесь соблюдать правила профессионального сообщества, уважать авторские права на исходный код и медиаматериалы, а также соблюдать правила безопасности.
             </p>
           </section>
 
@@ -32,7 +32,7 @@ export default function TermsPage() {
         </div>
 
         <div className="mt-12 text-xs text-zinc-600 border-t border-white/5 pt-6">
-          © 2026 DevLink. Все права защищены.
+          © 2026 Compile. Все права защищены.
         </div>
       </div>
     </div>
