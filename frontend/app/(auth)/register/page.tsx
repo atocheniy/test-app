@@ -31,6 +31,7 @@ export default function Register() {
         try 
         {
             await AuthService.register({ email, userName, password, fullName });
+            await AuthService.login({ email, password });
             
             await refreshUserData();
             await refreshPostsData();

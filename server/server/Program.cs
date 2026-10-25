@@ -27,7 +27,17 @@ namespace server
 			{
 				options.AddPolicy("AllowReactApp", policy =>
 				{
-					policy.WithOrigins("http://localhost:3000", "https://test-app-xi-murex.vercel.app" )
+					policy.SetIsOriginAllowed(origin =>
+						{
+							if (string.IsNullOrEmpty(origin)) return false;
+							if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+							{
+								return uri.Host == "localhost" 
+									|| uri.Host.EndsWith(".vercel.app") 
+									|| uri.Host == "test-app-xi-murex.vercel.app";
+							}
+							return false;
+						})
 						.AllowAnyMethod()
 						.AllowAnyHeader()
 						.AllowCredentials();
