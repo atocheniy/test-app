@@ -8,6 +8,9 @@ export function proxy(request: NextRequest) {
   const isPublicPage = pathname === '/' 
     || pathname.startsWith('/login') 
     || pathname.startsWith('/register')
+    || pathname === '/about'
+    || pathname === '/terms'
+    || pathname === '/privacy'
     || (pathname.startsWith('/profile/') && pathname !== '/profile');
     
   if (!token && !isPublicPage) {
