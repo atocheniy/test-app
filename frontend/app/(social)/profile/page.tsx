@@ -7,6 +7,7 @@ import PublicBlock from "@/components/public_block";
 import { PostSkeleton, ProfileSkeleton } from "@/components/skeletons";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { UserService } from "@/services/userService";
 import { formatPostTime } from "@/libs/format";
 import type { UserExperience, UserProject } from "@/types/auth";
@@ -41,6 +42,8 @@ const POPULAR_TECHS = [
 
 export default function Profile() {
     const { userData, UserNameNormalized, userPostsData, refreshUserPostsData, hasMoreUserPosts, isLoadingMoreUserPosts, loadMoreUserPosts, refreshUserData, onlineUsers } = useApplication();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
 
     const [mounted, setMounted] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -106,14 +109,14 @@ export default function Profile() {
 
     useEffect(() => {
         setMounted(true);
-        document.title = 'Profile';
+        document.title = t.nav.profile;
         const load = async () => {
             if (userPostsData.length === 0) setIsPostsLoading(true);
             await refreshUserPostsData();
             setIsPostsLoading(false);
         };
         load();
-    }, []);
+    }, [t.nav.profile]);
 
     useEffect(() => {
         if (!hasMoreUserPosts || isLoadingMoreUserPosts) return;
@@ -189,7 +192,7 @@ export default function Profile() {
             setIsEditOpen(false);
         } catch (error) {
             console.error("Ошибка обновления профиля:", error);
-            alert("Не удалось сохранить изменения");
+            alert(isRu ? "Не удалось сохранить изменения" : "Failed to save changes");
         } finally {
             setIsUploading(false);
         }
@@ -291,7 +294,7 @@ export default function Profile() {
             setProjectImages(prev => [...prev, ...newUrls]);
         } catch (error) {
             console.error("Ошибка загрузки изображений проекта:", error);
-            alert("Не удалось загрузить изображения проекта");
+            alert(isRu ? "Не удалось загрузить изображения проекта" : "Failed to upload project images");
         } finally {
             setIsUploadingProjectImages(false);
             if (projectImageInputRef.current) projectImageInputRef.current.value = '';
@@ -334,20 +337,20 @@ export default function Profile() {
             setIsProjectModalOpen(false);
         } catch (error) {
             console.error("Ошибка сохранения проекта:", error);
-            alert("Не удалось сохранить проект");
+            alert(isRu ? "Не удалось сохранить проект" : "Failed to save project");
         } finally {
             setIsSavingProject(false);
         }
     };
 
     const handleDeleteProject = async (projectId: string) => {
-        if (!confirm("Вы уверены, что хотите удалить этот проект?")) return;
+        if (!confirm(isRu ? "Вы уверены, что хотите удалить этот проект?" : "Are you sure you want to delete this project?")) return;
         try {
             await UserService.deleteProject(projectId);
             await refreshUserData();
         } catch (error) {
             console.error("Ошибка удаления проекта:", error);
-            alert("Не удалось удалить проект");
+            alert(isRu ? "Не удалось удалить проект" : "Failed to delete project");
         }
     };
 
@@ -395,20 +398,20 @@ export default function Profile() {
             setIsExpModalOpen(false);
         } catch (error) {
             console.error("Ошибка сохранения места работы:", error);
-            alert("Не удалось сохранить место работы");
+            alert(isRu ? "Не удалось сохранить место работы" : "Failed to save work experience");
         } finally {
             setIsSavingExp(false);
         }
     };
 
     const handleDeleteExperience = async (expId: string) => {
-        if (!confirm("Вы уверены, что хотите удалить эту запись об опыте работы?")) return;
+        if (!confirm(isRu ? "Вы уверены, что хотите удалить эту запись об опыте работы?" : "Are you sure you want to delete this work experience entry?")) return;
         try {
             await UserService.deleteExperience(expId);
             await refreshUserData();
         } catch (error) {
             console.error("Ошибка удаления места работы:", error);
-            alert("Не удалось удалить место работы");
+            alert(isRu ? "Не удалось удалить место работы" : "Failed to delete work experience");
         }
     };
 
@@ -418,7 +421,7 @@ export default function Profile() {
 
     const currentTechStack = (userData.technologies && userData.technologies.length > 0)
         ? userData.technologies
-        : ["No Techs Skills"];
+        : [isRu ? "Навыки не указаны" : "No Techs Skills"];
 
     const projectsList = userData.projects || [];
     const experiencesList = userData.experiences || [];
@@ -426,7 +429,7 @@ export default function Profile() {
     return (
         <div className="animate-fade-in">
             <div>
-                <Titlebar title="Profile" />
+                <Titlebar title={t.nav.profile} />
 
                 <div className="w-full bg-zinc-900 h-48 border-y border-white/5 rounded-b-xl relative overflow-hidden">
                     {userData.banner && (
@@ -471,7 +474,7 @@ export default function Profile() {
                             {isAuthorOnline && (
                                 <span 
                                     className="absolute bottom-2 right-2 w-5 h-5 bg-white border-2 border-[#0a0a0a] rounded-full" 
-                                    title="Online"
+                                    title={isRu ? "В сети" : "Online"}
                                 />
                             )}
                         </div>
@@ -480,9 +483,9 @@ export default function Profile() {
                             <div className="flex flex-row items-center gap-2">
                                 <p className="text-sm text-zinc-400">{UserNameNormalized}</p>
                                 <span className="text-sm text-zinc-400">•</span>
-                                <p className="text-sm text-zinc-400">{userData.watchersCount ?? userData.followers ?? 0} Watchers</p>
+                                <p className="text-sm text-zinc-400">{userData.watchersCount ?? userData.followers ?? 0} {t.profile.watchers}</p>
                                 <span className="text-sm text-zinc-400">•</span>
-                                <p className="text-sm text-zinc-400">{userData.watchingCount ?? userData.followings ?? 0} Watching</p>
+                                <p className="text-sm text-zinc-400">{userData.watchingCount ?? userData.followings ?? 0} {t.profile.watching}</p>
                             </div>
                         </div>
                         <div className="ml-auto mb-5">
@@ -490,7 +493,7 @@ export default function Profile() {
                                 className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition cursor-pointer"
                                 onClick={handleOpenEditProfile}
                             >
-                                Edit Profile
+                                {t.profile.editProfile}
                             </button>
                         </div>
                     </div>
@@ -513,12 +516,12 @@ export default function Profile() {
 
                     <div className="space-y-3 mt-6">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Tech Stack</h3>
+                            <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{t.profile.techStack}</h3>
                             <button
                                 onClick={handleOpenEditProfile}
                                 className="text-[11px] text-zinc-500 hover:text-zinc-300 transition"
                             >
-                                Edit stack
+                                {isRu ? "Изменить стек" : "Edit stack"}
                             </button>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
@@ -544,7 +547,7 @@ export default function Profile() {
                             }`}
                         >
                             <Sparkles size={14} className={profileTab === 'details' ? 'text-blue-400' : 'text-zinc-500'} />
-                            <span>Details & Links</span>
+                            <span>{t.profile.detailsAndLinks}</span>
                         </button>
 
                         <button
@@ -557,7 +560,7 @@ export default function Profile() {
                             }`}
                         >
                             <Code2 size={14} className={profileTab === 'projects' ? 'text-emerald-400' : 'text-zinc-500'} />
-                            <span>Featured Projects</span>
+                            <span>{t.profile.featuredProjects}</span>
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
                                 profileTab === 'projects' ? 'bg-white/20 text-white' : 'bg-white/5 text-zinc-500'
                             }`}>
@@ -575,7 +578,7 @@ export default function Profile() {
                             }`}
                         >
                             <Briefcase size={14} className={profileTab === 'experience' ? 'text-purple-400' : 'text-zinc-500'} />
-                            <span>Experience</span>
+                            <span>{t.profile.experience}</span>
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
                                 profileTab === 'experience' ? 'bg-white/20 text-white' : 'bg-white/5 text-zinc-500'
                             }`}>
@@ -589,7 +592,7 @@ export default function Profile() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start animate-fade-in">
                                 <div className="flex flex-col justify-start p-5 border border-white/5 bg-zinc-950/20 hover:border-white/10 transition-colors duration-200 rounded-2xl">
                                     <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-4">
-                                        Details
+                                        {isRu ? "Детали" : "Details"}
                                     </h4>
                                     
                                     <div className="space-y-3.5">
@@ -598,9 +601,9 @@ export default function Profile() {
                                                 <MapPin size={14} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Location</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{t.profile.location}</span>
                                                 <span className="text-xs text-zinc-200 font-medium">
-                                                    {userData.location || "Not specified"}
+                                                    {userData.location || (isRu ? "Не указано" : "Not specified")}
                                                 </span>
                                             </div>
                                         </div>
@@ -610,13 +613,13 @@ export default function Profile() {
                                                 <Briefcase size={14} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Status</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{t.profile.workStatus}</span>
                                                 <span className="text-xs text-zinc-200 font-medium flex items-center gap-1.5">
                                                     <span className="relative flex h-1.5 w-1.5">
                                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                                                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
                                                     </span>
-                                                    {userData.workStatus || "Open to opportunities"}
+                                                    {userData.workStatus || (isRu ? "Открыт к предложениям" : "Open to opportunities")}
                                                 </span>
                                             </div>
                                         </div>
@@ -626,7 +629,7 @@ export default function Profile() {
                                                 <Sparkles size={14} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Focus</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{t.profile.focus}</span>
                                                 <span className="text-xs text-zinc-200 font-medium">
                                                     {userData.focus || "Fullstack & Realtime Architecture"}
                                                 </span>
@@ -652,13 +655,13 @@ export default function Profile() {
                                             },
                                             userData.vkUrl && { 
                                                 label: 'VK', 
-                                                display: 'VK Profile', 
+                                                display: isRu ? 'Профиль VK' : 'VK Profile', 
                                                 url: userData.vkUrl.startsWith('http') ? userData.vkUrl : `https://${userData.vkUrl}`, 
                                                 icon: Globe 
                                             },
                                             userData.xUrl && { 
                                                 label: 'X (Twitter)', 
-                                                display: 'X Profile', 
+                                                display: isRu ? 'Профиль X' : 'X Profile', 
                                                 url: userData.xUrl.startsWith('http') ? userData.xUrl : `https://${userData.xUrl}`, 
                                                 icon: Globe 
                                             },
@@ -669,7 +672,7 @@ export default function Profile() {
                                                 icon: Globe 
                                             },
                                             userData.websiteUrl && { 
-                                                label: 'Portfolio', 
+                                                label: isRu ? 'Портфолио' : 'Portfolio', 
                                                 display: userData.websiteUrl.replace(/^https?:\/\//, ''), 
                                                 url: userData.websiteUrl.startsWith('http') ? userData.websiteUrl : `https://${userData.websiteUrl}`, 
                                                 icon: Globe 
@@ -688,7 +691,7 @@ export default function Profile() {
                                             <>
                                                 <div className="flex items-center justify-between mb-4">
                                                     <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
-                                                        Links & Contacts
+                                                        {isRu ? "Ссылки и контакты" : "Links & Contacts"}
                                                     </h4>
                                                     <span className="text-[10px] text-zinc-500 font-mono">
                                                         {userLinks.length}
@@ -698,7 +701,7 @@ export default function Profile() {
                                                 <div className="space-y-2">
                                                     {userLinks.length === 0 ? (
                                                         <p className="text-xs text-zinc-500 py-3 text-center">
-                                                            No links added yet
+                                                            {isRu ? "Ссылки ещё не добавлены" : "No links added yet"}
                                                         </p>
                                                     ) : (
                                                         visibleLinks.map((link, idx) => (
@@ -732,7 +735,7 @@ export default function Profile() {
                                                             onClick={() => setIsLinksExpanded(!isLinksExpanded)}
                                                             className="w-full mt-1.5 py-1.5 flex items-center justify-center gap-1.5 text-[11px] font-medium text-zinc-500 hover:text-zinc-300 hover:bg-white/5 rounded-xl transition"
                                                         >
-                                                            <span>{isLinksExpanded ? "Show less" : `Show all (+${userLinks.length - 3})`}</span>
+                                                            <span>{isLinksExpanded ? (isRu ? "Свернуть" : "Show less") : (isRu ? `Показать все (+${userLinks.length - 3})` : `Show all (+${userLinks.length - 3})`)}</span>
                                                             <ChevronDown 
                                                                 size={12} 
                                                                 className={`transition-transform duration-200 ${isLinksExpanded ? "rotate-180" : ""}`} 
@@ -752,7 +755,7 @@ export default function Profile() {
                                 <div className="flex justify-between items-center gap-2">
                                     <div className="flex items-center gap-2">
                                         <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                                            Featured Projects
+                                            {t.profile.featuredProjects}
                                         </h4>
                                         <span className="text-[11px] text-zinc-500 font-mono">
                                             {projectsList.length}
@@ -768,7 +771,7 @@ export default function Profile() {
                                                             onClick={() => handleScrollProjects('left')}
                                                             disabled={!canScrollProjectsLeft}
                                                             className="p-1 rounded-lg text-zinc-400 hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition cursor-pointer"
-                                                            title="Предыдущие проекты"
+                                                            title={isRu ? "Предыдущие проекты" : "Previous projects"}
                                                         >
                                                             <ChevronLeft size={14} />
                                                         </button>
@@ -777,7 +780,7 @@ export default function Profile() {
                                                             onClick={() => handleScrollProjects('right')}
                                                             disabled={!canScrollProjectsRight}
                                                             className="p-1 rounded-lg text-zinc-400 hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition cursor-pointer"
-                                                            title="Следующие проекты"
+                                                            title={isRu ? "Следующие проекты" : "Next projects"}
                                                         >
                                                             <ChevronRight size={14} />
                                                         </button>
@@ -793,7 +796,7 @@ export default function Profile() {
                                                                 ? 'bg-white/15 text-white'
                                                                 : 'text-zinc-400 hover:text-zinc-200'
                                                         }`}
-                                                        title="Режим карусели"
+                                                        title={isRu ? "Режим карусели" : "Carousel view"}
                                                     >
                                                         <SlidersHorizontal size={13} />
                                                     </button>
@@ -805,7 +808,7 @@ export default function Profile() {
                                                                 ? 'bg-white/15 text-white'
                                                                 : 'text-zinc-400 hover:text-zinc-200'
                                                         }`}
-                                                        title="Режим сетки"
+                                                        title={isRu ? "Режим сетки" : "Grid view"}
                                                     >
                                                         <LayoutGrid size={13} />
                                                     </button>
@@ -818,7 +821,7 @@ export default function Profile() {
                                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-zinc-200 transition cursor-pointer"
                                         >
                                             <Plus size={13} />
-                                            <span>Add Project</span>
+                                            <span>{t.profile.addProject}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -829,14 +832,14 @@ export default function Profile() {
                                             <Code2 size={20} />
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-xs font-medium text-zinc-300">Проекты ещё не добавлены</p>
-                                            <p className="text-[11px] text-zinc-500 mt-0.5">Добавьте ваши pet-проекты, open-source библиотеки или коммерческие кейсы</p>
+                                            <p className="text-xs font-medium text-zinc-300">{isRu ? "Проекты ещё не добавлены" : "No projects added yet"}</p>
+                                            <p className="text-[11px] text-zinc-500 mt-0.5">{isRu ? "Добавьте ваши pet-проекты, open-source библиотеки или коммерческие кейсы" : "Add your pet projects, open-source libraries, or commercial cases"}</p>
                                         </div>
                                         <button
                                             onClick={handleOpenAddProject}
                                             className="mt-1 px-3.5 py-1.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition cursor-pointer"
                                         >
-                                            Добавить проект
+                                            {t.profile.addProject}
                                         </button>
                                     </div>
                                 ) : projectsViewMode === 'carousel' ? (
@@ -912,7 +915,7 @@ export default function Profile() {
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-2">
                                         <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                                            Work Experience
+                                            {t.profile.experience}
                                         </h4>
                                         <span className="text-[11px] text-zinc-500 font-mono">
                                             {experiencesList.length}
@@ -923,7 +926,7 @@ export default function Profile() {
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-zinc-200 transition cursor-pointer"
                                     >
                                         <Plus size={13} />
-                                        <span>Add Experience</span>
+                                        <span>{t.profile.addExperience}</span>
                                     </button>
                                 </div>
                                 
@@ -933,14 +936,14 @@ export default function Profile() {
                                             <Briefcase size={20} />
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-xs font-medium text-zinc-300">Опыт работы не указан</p>
-                                            <p className="text-[11px] text-zinc-500 mt-0.5">Расскажите о компаниях, должностях и задачах, над которыми вы работали</p>
+                                            <p className="text-xs font-medium text-zinc-300">{isRu ? "Опыт работы не указан" : "No work experience listed yet"}</p>
+                                            <p className="text-[11px] text-zinc-500 mt-0.5">{isRu ? "Расскажите о компаниях, должностях и задачах, над которыми вы работали" : "Share the companies, roles, and tasks you have worked on"}</p>
                                         </div>
                                         <button
                                             onClick={handleOpenAddExperience}
                                             className="mt-1 px-3.5 py-1.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition cursor-pointer"
                                         >
-                                            Добавить опыт
+                                            {t.profile.addExperience}
                                         </button>
                                     </div>
                                 ) : (
@@ -967,7 +970,7 @@ export default function Profile() {
                 </div>
 
             <div>
-                <Titlebar title="Activity" />
+                <Titlebar title={isRu ? "Активность" : "Activity"} />
                 <div>
                     <PublicBlock Avatar={userData.avatar} />
                                 
@@ -978,7 +981,7 @@ export default function Profile() {
                                 <PostSkeleton />
                             </>
                         ) : userPostsData.length === 0 ? (
-                            <p className="text-xs text-zinc-500 text-center py-8 select-none">No posts yet</p>
+                            <p className="text-xs text-zinc-500 text-center py-8 select-none">{isRu ? "Публикаций пока нет" : "No posts yet"}</p>
                         ) : (
                             userPostsData.map((p) => (
                                 <div key={p.id} className="animate-fade-in">
@@ -1016,7 +1019,7 @@ export default function Profile() {
 
                         {!hasMoreUserPosts && userPostsData.length > 0 && (
                             <div className="py-6 text-center text-xs text-zinc-600 select-none">
-                                Вы просмотрели все публикации
+                                {isRu ? "Вы просмотрели все публикации" : "You've viewed all posts"}
                             </div>
                         )}
                     </div>
@@ -1028,8 +1031,8 @@ export default function Profile() {
                     <div className="w-full max-w-[520px] max-h-[90vh] overflow-y-auto no-scrollbar bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl relative">
                         <div className="flex justify-between items-center mb-6">
                             <div>
-                                <h3 className="text-lg font-bold text-zinc-100">Edit Profile</h3>
-                                <p className="text-xs text-zinc-400 mt-0.5">Customize your information, focus & tech stack</p>
+                                <h3 className="text-lg font-bold text-zinc-100">{t.profile.editProfile}</h3>
+                                <p className="text-xs text-zinc-400 mt-0.5">{isRu ? "Настройте информацию о себе, фокус и технологический стек" : "Customize your information, focus & tech stack"}</p>
                             </div>
                             <button 
                                 onClick={() => setIsEditOpen(false)}
@@ -1042,7 +1045,7 @@ export default function Profile() {
                         {/* Avatar & Banner upload */}
                         <div className="grid grid-cols-2 gap-3 mb-6 pb-6 border-b border-white/5">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Avatar</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Аватар" : "Avatar"}</label>
                                 <input 
                                     type="file" 
                                     accept="image/*"
@@ -1052,7 +1055,7 @@ export default function Profile() {
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Banner</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Баннер" : "Banner"}</label>
                                 <input 
                                     type="file" 
                                     accept="image/*"
@@ -1065,19 +1068,19 @@ export default function Profile() {
 
                         <form onSubmit={handleSaveProfile} className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Display Name</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Отображаемое имя" : "Display Name"}</label>
                                 <input
                                     type="text"
                                     value={editFullName}
                                     onChange={(e) => setEditFullName(e.target.value)}
-                                    placeholder="Your Full Name"
+                                    placeholder={isRu ? "Ваше полное имя" : "Your Full Name"}
                                     required
                                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
                                 />
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Username</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Имя пользователя" : "Username"}</label>
                                 <input
                                     type="text"
                                     value={editUserName}
@@ -1089,22 +1092,22 @@ export default function Profile() {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Bio Headline</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Кратко о себе (Заголовок)" : "Bio Headline"}</label>
                                 <input
                                     type="text"
                                     value={editBioFirstLine}
                                     onChange={(e) => setEditBioFirstLine(e.target.value)}
-                                    placeholder="e.g. Senior Software Engineer"
+                                    placeholder={isRu ? "напр. Senior Software Engineer" : "e.g. Senior Software Engineer"}
                                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
                                 />
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">About You</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "О себе" : "About You"}</label>
                                 <textarea
                                     value={editBioSecondLine}
                                     onChange={(e) => setEditBioSecondLine(e.target.value)}
-                                    placeholder="Tell something about your experience, passions..."
+                                    placeholder={isRu ? "Расскажите о своем опыте, интересах..." : "Tell something about your experience, passions..."}
                                     rows={3}
                                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20 resize-none"
                                 />
@@ -1112,41 +1115,41 @@ export default function Profile() {
 
                             <div className="grid grid-cols-2 gap-3 pt-1">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Location</label>
+                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{t.profile.location}</label>
                                     <input
                                         type="text"
                                         value={editLocation}
                                         onChange={(e) => setEditLocation(e.target.value)}
-                                        placeholder="e.g. Moscow / Remote"
+                                        placeholder={isRu ? "напр. Москва / Удаленно" : "e.g. Moscow / Remote"}
                                         className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/20"
                                     />
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Work Status</label>
+                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{t.profile.workStatus}</label>
                                     <input
                                         type="text"
                                         value={editWorkStatus}
                                         onChange={(e) => setEditWorkStatus(e.target.value)}
-                                        placeholder="e.g. Open to opportunities"
+                                        placeholder={isRu ? "напр. Открыт к предложениям" : "e.g. Open to opportunities"}
                                         className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/20"
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Focus / Specialization</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Фокус / Специализация" : "Focus / Specialization"}</label>
                                 <input
                                     type="text"
                                     value={editFocus}
                                     onChange={(e) => setEditFocus(e.target.value)}
-                                    placeholder="e.g. Fullstack & Realtime Architecture"
+                                    placeholder={isRu ? "напр. Fullstack & Realtime Architecture" : "e.g. Fullstack & Realtime Architecture"}
                                     className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/20"
                                 />
                             </div>
 
                             <div className="space-y-2 pt-2 border-t border-white/5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Tech Stack Tags</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Теги технологического стека" : "Tech Stack Tags"}</label>
                                 
                                 <div className="flex flex-wrap gap-1.5 min-h-[38px] p-2 rounded-xl bg-zinc-950 border border-white/5">
                                     {editTechnologies.map((tech) => (
@@ -1165,7 +1168,7 @@ export default function Profile() {
                                         </span>
                                     ))}
                                     {editTechnologies.length === 0 && (
-                                        <span className="text-xs text-zinc-600 self-center">Стек пока пуст</span>
+                                        <span className="text-xs text-zinc-600 self-center">{isRu ? "Стек пока пуст" : "Stack is empty"}</span>
                                     )}
                                 </div>
 
@@ -1180,7 +1183,7 @@ export default function Profile() {
                                                 handleAddTech(techInput);
                                             }
                                         }}
-                                        placeholder="Add technology (e.g. Docker, Redis)..."
+                                        placeholder={isRu ? "Добавить технологию (напр. Docker, Redis)..." : "Add technology (e.g. Docker, Redis)..."}
                                         className="flex-1 px-3 py-1.5 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/20"
                                     />
                                     <button
@@ -1188,12 +1191,12 @@ export default function Profile() {
                                         onClick={() => handleAddTech(techInput)}
                                         className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-zinc-200 transition"
                                     >
-                                        Add
+                                        {isRu ? "Добавить" : "Add"}
                                     </button>
                                 </div>
 
                                 <div className="flex flex-wrap gap-1 pt-1">
-                                    <span className="text-[10px] text-zinc-500 self-center mr-1">Suggestions:</span>
+                                    <span className="text-[10px] text-zinc-500 self-center mr-1">{isRu ? "Рекомендации:" : "Suggestions:"}</span>
                                     {POPULAR_TECHS.filter(t => !editTechnologies.includes(t)).slice(0, 7).map(t => (
                                         <button
                                             type="button"
@@ -1215,7 +1218,7 @@ export default function Profile() {
                                 >
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                            Social Links & Contacts
+                                            {isRu ? "Соцсети и контакты" : "Social Links & Contacts"}
                                         </span>
                                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-zinc-500 font-mono">
                                             {[editGithub, editTelegram, editVk, editX, editDiscord, editWebsite].filter(Boolean).length}/6
@@ -1268,7 +1271,7 @@ export default function Profile() {
                                             type="text"
                                             value={editWebsite}
                                             onChange={(e) => setEditWebsite(e.target.value)}
-                                            placeholder="Portfolio / Website URL"
+                                            placeholder={isRu ? "Портфолио / Сайт URL" : "Portfolio / Website URL"}
                                             className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/5 focus:outline-none focus:border-white/20"
                                         />
                                     </div>
@@ -1280,7 +1283,7 @@ export default function Profile() {
                                 disabled={isSaving}
                                 className="w-full py-3 mt-4 rounded-xl bg-white text-zinc-950 text-sm font-semibold hover:bg-zinc-200 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
                             >
-                                {isSaving ? "Saving..." : "Save Changes"}
+                                {isSaving ? (isRu ? "Сохранение..." : "Saving...") : (isRu ? "Сохранить изменения" : "Save Changes")}
                             </button>
                         </form>
                     </div>
@@ -1294,9 +1297,9 @@ export default function Profile() {
                         <div className="flex justify-between items-center mb-5">
                             <div>
                                 <h3 className="text-base font-bold text-zinc-100">
-                                    {editingProjectId ? "Edit Project" : "Add Featured Project"}
+                                    {editingProjectId ? (isRu ? "Редактировать проект" : "Edit Project") : (isRu ? "Добавить проект" : "Add Featured Project")}
                                 </h3>
-                                <p className="text-xs text-zinc-400 mt-0.5">Showcase your best builds and open source work</p>
+                                <p className="text-xs text-zinc-400 mt-0.5">{isRu ? "Покажите свои лучшие разработки и open-source проекты" : "Showcase your best builds and open source work"}</p>
                             </div>
                             <button 
                                 onClick={() => setIsProjectModalOpen(false)}
@@ -1310,7 +1313,7 @@ export default function Profile() {
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
                                     <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
-                                        Project Screenshots & Cover {projectImages.length > 0 && `(${projectImages.length})`}
+                                        {isRu ? "Скриншоты и обложка проекта" : "Project Screenshots & Cover"} {projectImages.length > 0 && `(${projectImages.length})`}
                                     </label>
                                     {projectImages.length > 0 && (
                                         <button
@@ -1320,7 +1323,7 @@ export default function Profile() {
                                             className="text-[11px] text-zinc-400 hover:text-white transition flex items-center gap-1 cursor-pointer"
                                         >
                                             <Plus size={12} />
-                                            <span>Добавить ещё</span>
+                                            <span>{isRu ? "Добавить ещё" : "Add more"}</span>
                                         </button>
                                     )}
                                 </div>
@@ -1343,13 +1346,13 @@ export default function Profile() {
                                                 className="w-full h-full object-cover" 
                                             />
                                             <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-medium text-zinc-200">
-                                                {projectActivePreviewIndex === 0 ? "★ Главная обложка" : `Скриншот ${projectActivePreviewIndex + 1}`}
+                                                {projectActivePreviewIndex === 0 ? (isRu ? "★ Главная обложка" : "★ Main cover") : (isRu ? `Скриншот ${projectActivePreviewIndex + 1}` : `Screenshot ${projectActivePreviewIndex + 1}`)}
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveProjectImage(projectActivePreviewIndex)}
                                                 className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 hover:bg-red-500/80 border border-white/10 text-white transition-all cursor-pointer"
-                                                title="Удалить это изображение"
+                                                title={isRu ? "Удалить это изображение" : "Remove this image"}
                                             >
                                                 <X size={13} />
                                             </button>
@@ -1370,7 +1373,7 @@ export default function Profile() {
                                                     <img src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
                                                     {idx === 0 && (
                                                         <span className="absolute bottom-0 inset-x-0 bg-black/70 text-[8px] text-center font-bold text-white py-0.5">
-                                                            Обложка
+                                                            {isRu ? "Обложка" : "Cover"}
                                                         </span>
                                                     )}
                                                 </button>
@@ -1381,14 +1384,14 @@ export default function Profile() {
                                                 onClick={() => projectImageInputRef.current?.click()}
                                                 disabled={isUploadingProjectImages}
                                                 className="w-14 h-14 rounded-lg border border-dashed border-white/20 hover:border-white/40 bg-zinc-950 flex flex-col items-center justify-center text-zinc-400 hover:text-white transition-all flex-shrink-0 cursor-pointer"
-                                                title="Добавить изображение"
+                                                title={isRu ? "Добавить изображение" : "Add image"}
                                             >
                                                 {isUploadingProjectImages ? (
                                                     <Loader2 size={16} className="animate-spin text-white" />
                                                 ) : (
                                                     <>
                                                         <Plus size={16} />
-                                                        <span className="text-[9px] mt-0.5">+фото</span>
+                                                        <span className="text-[9px] mt-0.5">{isRu ? "+фото" : "+photo"}</span>
                                                     </>
                                                 )}
                                             </button>
@@ -1404,7 +1407,7 @@ export default function Profile() {
                                         {isUploadingProjectImages ? (
                                             <div className="flex flex-col items-center gap-2 text-zinc-400">
                                                 <Loader2 size={18} className="animate-spin text-white" />
-                                                <span className="text-xs">Загрузка изображений...</span>
+                                                <span className="text-xs">{isRu ? "Загрузка изображений..." : "Uploading images..."}</span>
                                             </div>
                                         ) : (
                                             <>
@@ -1412,9 +1415,9 @@ export default function Profile() {
                                                     <ImageIcon size={15} />
                                                 </div>
                                                 <span className="text-xs font-medium text-zinc-300 group-hover:text-white transition">
-                                                    Загрузить скриншоты или обложку
+                                                    {isRu ? "Загрузить скриншоты или обложку" : "Upload screenshots or cover"}
                                                 </span>
-                                                <span className="text-[10px] text-zinc-500">PNG, JPG, WebP — можно выбрать несколько файлов</span>
+                                                <span className="text-[10px] text-zinc-500">{isRu ? "PNG, JPG, WebP — можно выбрать несколько файлов" : "PNG, JPG, WebP — multiple files allowed"}</span>
                                             </>
                                         )}
                                     </button>
@@ -1422,7 +1425,7 @@ export default function Profile() {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Project Name *</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Название проекта *" : "Project Name *"}</label>
                                 <input
                                     type="text"
                                     value={projectName}
@@ -1434,11 +1437,11 @@ export default function Profile() {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Description</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Описание" : "Description"}</label>
                                 <textarea
                                     value={projectDesc}
                                     onChange={(e) => setProjectDesc(e.target.value)}
-                                    placeholder="Brief overview of the project, architecture and features..."
+                                    placeholder={isRu ? "Краткий обзор проекта, архитектуры и возможностей..." : "Brief overview of the project, architecture and features..."}
                                     rows={3}
                                     className="w-full px-3.5 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/10 focus:outline-none focus:border-white/25 resize-none"
                                 />
@@ -1446,7 +1449,7 @@ export default function Profile() {
 
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">GitHub Link</label>
+                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Ссылка на GitHub" : "GitHub Link"}</label>
                                     <input
                                         type="text"
                                         value={projectGithub}
@@ -1456,19 +1459,19 @@ export default function Profile() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Live / NPM Link</label>
+                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Ссылка на Demo / NPM" : "Live / NPM Link"}</label>
                                     <input
                                         type="text"
                                         value={projectLive}
                                         onChange={(e) => setProjectLive(e.target.value)}
-                                        placeholder="https://npm... or demo link"
+                                        placeholder={isRu ? "https://npm... или ссылка на демо" : "https://npm... or demo link"}
                                         className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1.5 pt-1">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Technologies Used</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Используемые технологии" : "Technologies Used"}</label>
                                 <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-zinc-950 border border-white/10 min-h-[36px]">
                                     {projectTechs.map((t, idx) => (
                                         <span key={`${t}-${idx}`} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-zinc-200">
@@ -1483,7 +1486,7 @@ export default function Profile() {
                                         </span>
                                     ))}
                                     {projectTechs.length === 0 && (
-                                        <span className="text-[11px] text-zinc-600">No tags added yet</span>
+                                        <span className="text-[11px] text-zinc-600">{isRu ? "Теги ещё не добавлены" : "No tags added yet"}</span>
                                     )}
                                 </div>
                                 <div className="flex gap-2">
@@ -1500,7 +1503,7 @@ export default function Profile() {
                                                 }
                                             }
                                         }}
-                                        placeholder="Add tag (e.g. Next.js, Redis) and press Enter"
+                                        placeholder={isRu ? "Добавьте тег (напр. Next.js, Redis) и нажмите Enter" : "Add tag (e.g. Next.js, Redis) and press Enter"}
                                         className="flex-1 px-3 py-1.5 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
                                     />
                                     <button
@@ -1513,7 +1516,7 @@ export default function Profile() {
                                         }}
                                         className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-zinc-200 transition"
                                     >
-                                        Add
+                                        {isRu ? "Добавить" : "Add"}
                                     </button>
                                 </div>
                             </div>
@@ -1523,7 +1526,7 @@ export default function Profile() {
                                 disabled={isSavingProject}
                                 className="w-full py-2.5 mt-4 rounded-xl bg-white text-zinc-950 text-xs font-bold hover:bg-zinc-200 active:scale-98 transition disabled:opacity-50 cursor-pointer"
                             >
-                                {isSavingProject ? "Saving..." : (editingProjectId ? "Update Project" : "Add Project")}
+                                {isSavingProject ? (isRu ? "Сохранение..." : "Saving...") : (editingProjectId ? (isRu ? "Обновить проект" : "Update Project") : t.profile.addProject)}
                             </button>
                         </form>
                     </div>
@@ -1537,9 +1540,9 @@ export default function Profile() {
                         <div className="flex justify-between items-center mb-5">
                             <div>
                                 <h3 className="text-base font-bold text-zinc-100">
-                                    {editingExpId ? "Edit Experience" : "Add Work Experience"}
+                                    {editingExpId ? (isRu ? "Редактировать опыт работы" : "Edit Experience") : (isRu ? "Добавить опыт работы" : "Add Work Experience")}
                                 </h3>
-                                <p className="text-xs text-zinc-400 mt-0.5">Share your previous engineering or design roles</p>
+                                <p className="text-xs text-zinc-400 mt-0.5">{isRu ? "Расскажите о предыдущих местах работы и ролях" : "Share your previous engineering or design roles"}</p>
                             </div>
                             <button 
                                 onClick={() => setIsExpModalOpen(false)}
@@ -1551,19 +1554,19 @@ export default function Profile() {
 
                         <form onSubmit={handleSaveExperience} className="space-y-3.5">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Company Name *</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Название компании *" : "Company Name *"}</label>
                                 <input
                                     type="text"
                                     value={expCompanyName}
                                     onChange={(e) => setExpCompanyName(e.target.value)}
-                                    placeholder="e.g. Yandex, Tinkoff, Acme Corp"
+                                    placeholder={isRu ? "напр. Яндекс, Т-Банк, Acme Corp" : "e.g. Yandex, Tinkoff, Acme Corp"}
                                     required
                                     className="w-full px-3.5 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
                                 />
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Position / Role *</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Должность / Роль *" : "Position / Role *"}</label>
                                 <input
                                     type="text"
                                     value={expPosition}
@@ -1576,26 +1579,26 @@ export default function Profile() {
 
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Mode</label>
+                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Формат" : "Mode"}</label>
                                     <select
                                         value={expMode}
                                         onChange={(e) => setExpMode(e.target.value)}
                                         className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
                                     >
-                                        <option value="Full-time">Full-time</option>
-                                        <option value="Remote">Remote</option>
-                                        <option value="Hybrid">Hybrid</option>
-                                        <option value="Part-time">Part-time</option>
-                                        <option value="Contract">Contract</option>
+                                        <option value="Full-time">{isRu ? "Полная занятость (Full-time)" : "Full-time"}</option>
+                                        <option value="Remote">{isRu ? "Удаленно (Remote)" : "Remote"}</option>
+                                        <option value="Hybrid">{isRu ? "Гибрид (Hybrid)" : "Hybrid"}</option>
+                                        <option value="Part-time">{isRu ? "Частичная (Part-time)" : "Part-time"}</option>
+                                        <option value="Contract">{isRu ? "Контракт (Contract)" : "Contract"}</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Period / Years *</label>
+                                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Период / Годы *" : "Period / Years *"}</label>
                                     <input
                                         type="text"
                                         value={expPeriod}
                                         onChange={(e) => setExpPeriod(e.target.value)}
-                                        placeholder="e.g. 2024 - Present"
+                                        placeholder={isRu ? "напр. 2024 - Наст. время" : "e.g. 2024 - Present"}
                                         required
                                         className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
                                     />
@@ -1603,11 +1606,11 @@ export default function Profile() {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Description</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Описание" : "Description"}</label>
                                 <textarea
                                     value={expDesc}
                                     onChange={(e) => setExpDesc(e.target.value)}
-                                    placeholder="What did you work on, key achievements, technologies..."
+                                    placeholder={isRu ? "Над чем вы работали, ключевые достижения, стек..." : "What did you work on, key achievements, technologies..."}
                                     rows={3}
                                     className="w-full px-3.5 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/10 focus:outline-none focus:border-white/25 resize-none"
                                 />
@@ -1618,7 +1621,7 @@ export default function Profile() {
                                 disabled={isSavingExp}
                                 className="w-full py-2.5 mt-4 rounded-xl bg-white text-zinc-950 text-xs font-bold hover:bg-zinc-200 active:scale-98 transition disabled:opacity-50 cursor-pointer"
                             >
-                                {isSavingExp ? "Saving..." : (editingExpId ? "Update Experience" : "Add Experience")}
+                                {isSavingExp ? (isRu ? "Сохранение..." : "Saving...") : (editingExpId ? (isRu ? "Обновить опыт" : "Update Experience") : t.profile.addExperience)}
                             </button>
                         </form>
                     </div>

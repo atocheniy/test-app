@@ -5,6 +5,7 @@ import PublicBlock from "@/components/public_block";
 import { PostSkeleton, ProfileSkeleton } from "@/components/skeletons";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { CommunityService } from "@/services/communityService";
 import { PostService } from "@/services/postService";
 import { formatPostTime, formatSalary } from "@/libs/format";
@@ -35,6 +36,8 @@ import { createPortal } from "react-dom";
 
 export default function Profile() {
     const { userData, connection, onlineUsers } = useApplication();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     const router = useRouter();
     const params = useParams();
     const slug = params.slug as string;
@@ -110,7 +113,7 @@ export default function Profile() {
 
     useEffect(() => {
         if (!slug) return;
-        document.title = 'Community';
+        document.title = isRu ? 'Сообщество' : 'Community';
 
         const load = async () => {
             setIsLoading(true);
@@ -124,7 +127,7 @@ export default function Profile() {
                 setCommunityPostsCursor(postsData.nextCursor || null);
                 setHasMoreCommunityPosts(postsData.hasMore || false);
                 setIsPostsLoading(false);
-                document.title = commData?.name || 'Community';
+                document.title = commData?.name || (isRu ? 'Сообщество' : 'Community');
 
                 if (isCompanyEntity(commData?.kind)) {
                     loadVacancies();
@@ -232,14 +235,14 @@ export default function Profile() {
             }));
         } catch (error: any) {
             console.error("Ошибка вступления:", error);
-            const msg = error?.response?.data?.message || "Не удалось изменить статус участия";
+            const msg = error?.response?.data?.message || (isRu ? "Не удалось изменить статус участия" : "Failed to update membership status");
             alert(msg);
         }
     };
 
     const handleToggleWatch = async () => {
         if (!isLoggedIn) {
-            alert("Пожалуйста, войдите в систему, чтобы отслеживать сообщество");
+            alert(isRu ? "Пожалуйста, войдите в систему, чтобы отслеживать сообщество" : "Please sign in to watch this community");
             return;
         }
         try {
@@ -251,14 +254,14 @@ export default function Profile() {
             }));
         } catch (error: any) {
             console.error("Ошибка изменения статуса отслеживания:", error);
-            const msg = error?.response?.data?.message || "Не удалось изменить статус отслеживания";
+            const msg = error?.response?.data?.message || (isRu ? "Не удалось изменить статус отслеживания" : "Failed to update watch status");
             alert(msg);
         }
     };
 
     const handleRequestEmployee = async () => {
         if (!isLoggedIn) {
-            alert("Войдите в аккаунт");
+            alert(isRu ? "Войдите в аккаунт" : "Please sign in");
             return;
         }
         try {
@@ -266,7 +269,7 @@ export default function Profile() {
             alert(res.message);
             setCommunity((prev: any) => ({ ...prev, myMemberStatus: 1 }));
         } catch (error: any) {
-            const msg = error?.response?.data?.message || "Не удалось отправить заявку";
+            const msg = error?.response?.data?.message || (isRu ? "Не удалось отправить заявку" : "Failed to submit request");
             alert(msg);
         }
     };
@@ -278,7 +281,7 @@ export default function Profile() {
             const updated = await CommunityService.getCommunity(slug);
             setCommunity(updated);
         } catch (error: any) {
-            alert(error?.response?.data?.message || "Ошибка подтверждения");
+            alert(error?.response?.data?.message || (isRu ? "Ошибка подтверждения" : "Failed to approve"));
         }
     };
 
@@ -287,7 +290,7 @@ export default function Profile() {
             await CommunityService.rejectEmployee(slug, userId);
             setPendingEmployees(prev => prev.filter(p => p.id !== userId));
         } catch (error: any) {
-            alert(error?.response?.data?.message || "Ошибка отклонения");
+            alert(error?.response?.data?.message || (isRu ? "Ошибка отклонения" : "Failed to reject"));
         }
     };
 
@@ -322,37 +325,37 @@ export default function Profile() {
             await loadVacancies();
         } catch (error) {
             console.error("Ошибка создания вакансии:", error);
-            alert("Не удалось создать вакансию");
+            alert(isRu ? "Не удалось создать вакансию" : "Failed to create vacancy");
         } finally {
             setIsSubmittingVacancy(false);
         }
     };
 
     const handleDeleteVacancy = async (vacancyId: string) => {
-        if (!confirm("Вы уверены, что хотите удалить эту вакансию?")) return;
+        if (!confirm(isRu ? "Вы уверены, что хотите удалить эту вакансию?" : "Are you sure you want to delete this vacancy?")) return;
         try {
             await VacancyService.deleteVacancy(vacancyId);
             setCompanyVacancies(prev => prev.filter(v => v.id !== vacancyId));
         } catch (error) {
             console.error("Ошибка удаления вакансии:", error);
-            alert("Не удалось удалить вакансию");
+            alert(isRu ? "Не удалось удалить вакансию" : "Failed to delete vacancy");
         }
     };
 
     const handleApplyVacancy = async (vacancyId: string) => {
         if (!isLoggedIn) {
-            alert("Войдите в аккаунт, чтобы откликнуться на вакансию");
+            alert(isRu ? "Войдите в аккаунт, чтобы откликнуться на вакансию" : "Please sign in to apply for this vacancy");
             return;
         }
 
         try {
             setIsApplyingVacancyId(vacancyId);
             const res = await VacancyService.apply(vacancyId);
-            alert(res.message || "Отклик отправлен! Переходим в диалог с рекрутером.");
+            alert(res.message || (isRu ? "Отклик отправлен! Переходим в диалог с рекрутером." : "Application sent! Redirecting to recruiter chat."));
             router.push('/messages');
         } catch (error: any) {
             console.error("Ошибка отклика:", error);
-            const msg = error?.response?.data?.message || "Не удалось отправить отклик";
+            const msg = error?.response?.data?.message || (isRu ? "Не удалось отправить отклик" : "Failed to submit application");
             alert(msg);
         } finally {
             setIsApplyingVacancyId(null);
@@ -401,7 +404,7 @@ export default function Profile() {
             setIsEditOpen(false);
         } catch (error) {
             console.error("Ошибка обновления сообщества:", error);
-            alert("Не удалось сохранить изменения");
+            alert(isRu ? "Не удалось сохранить изменения" : "Failed to save changes");
         } finally {
             setIsUploading(false);
         }
@@ -450,7 +453,7 @@ export default function Profile() {
     if (!community) {
         return (
             <div className="p-12 text-center text-zinc-500">
-                Сообщество не найдено
+                {isRu ? "Сообщество не найдено" : "Community not found"}
             </div>
         );
     }
@@ -477,17 +480,17 @@ export default function Profile() {
 
     const formatWorkTypeText = (fmt: any) => {
         switch (fmt) {
-            case 0: case '0': case 'Remote': return 'Удаленно';
-            case 1: case '1': case 'Hybrid': return 'Гибрид';
-            case 2: case '2': case 'Office': return 'Офис';
-            default: return typeof fmt === 'string' ? fmt : 'Удаленно';
+            case 0: case '0': case 'Remote': return t.vacancies.remote;
+            case 1: case '1': case 'Hybrid': return t.vacancies.hybrid;
+            case 2: case '2': case 'Office': return t.vacancies.office;
+            default: return typeof fmt === 'string' ? fmt : t.vacancies.remote;
         }
     };
 
     return (
         <div className="animate-fade-in">
             <div>
-                <Titlebar title={isCompany ? "Компания" : "Сообщество"} />
+                <Titlebar title={isCompany ? (isRu ? "Компания" : "Company") : (isRu ? "Сообщество" : "Community")} />
 
                 <div className="w-full bg-zinc-900 h-48 border-y border-white/5 rounded-b-xl relative overflow-hidden">
                     {community.banner && (
@@ -535,7 +538,7 @@ export default function Profile() {
                             <div className="flex items-center gap-2">
                                 <h2 className="text-2xl font-bold text-zinc-100 truncate">{community.name}</h2>
                                 {community.isVerified && (
-                                    <span title="Верифицировано" className="flex items-center">
+                                    <span title={isRu ? "Верифицировано" : "Verified"} className="flex items-center">
                                         <CheckCircle2 size={20} className="text-blue-400 shrink-0" />
                                     </span>
                                 )}
@@ -544,35 +547,35 @@ export default function Profile() {
                             <div className="flex flex-wrap items-center gap-2 mt-1">
                                 <p className="text-sm text-zinc-400 font-mono">c/{community.slug}</p>
                                 <span className="text-sm text-zinc-600">•</span>
-                                <p className="text-sm text-zinc-400">{community.watchersCount || 0} Watchers</p>
+                                <p className="text-sm text-zinc-400">{community.watchersCount || 0} {t.profile.watchers}</p>
                                 <span className="text-sm text-zinc-600">•</span>
                                 <p className="text-sm text-zinc-400">
-                                    {community.membersCount} {isCompany ? "Сотрудников" : "Members"}
+                                    {community.membersCount} {isCompany ? (isRu ? "Сотрудников" : "Employees") : (isRu ? "Участников" : "Members")}
                                 </p>
                                 <span className="text-sm text-zinc-600">•</span>
-                                <p className="text-sm text-zinc-400">{community.postsCount || 0} Posts</p>
+                                <p className="text-sm text-zinc-400">{community.postsCount || 0} {t.profile.postsTab}</p>
 
                                 {isCompany ? (
                                     <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                         <Building2 size={11} />
-                                        Компания
+                                        {isRu ? "Компания" : "Company"}
                                     </span>
                                 ) : (community.type === 1 || community.type === 'Restricted') ? (
                                     <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                                         <Lock size={10} />
-                                        Restricted
+                                        {isRu ? "Закрытое" : "Restricted"}
                                     </span>
                                 ) : (
                                     <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                         <Globe size={10} />
-                                        Public
+                                        {isRu ? "Публичное" : "Public"}
                                     </span>
                                 )}
 
                                 {isAdminsOnlyPolicy && (
                                     <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
                                         <ShieldAlert size={10} />
-                                        Admins only
+                                        {isRu ? "Только админы" : "Admins only"}
                                     </span>
                                 )}
                             </div>
@@ -596,7 +599,7 @@ export default function Profile() {
                                         setIsEditOpen(true);
                                     }}
                                 >
-                                    Edit
+                                    {t.post.edit}
                                 </button>
                             )}
 
@@ -608,24 +611,24 @@ export default function Profile() {
                                         : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white"
                                 }`}
                             >
-                                {community?.isWatching ? "Watching" : "Watch"}
+                                {community?.isWatching ? (isRu ? "Отслеживается" : "Watching") : t.profile.watchBtn}
                             </button>
 
                             {isCompany ? (
                                 community.myMemberStatus === 0 ? (
                                     <span className="px-4 py-2 text-xs font-semibold rounded-3xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                                        В штате
+                                        {isRu ? "В штате" : "Employee"}
                                     </span>
                                 ) : community.myMemberStatus === 1 ? (
                                     <span className="px-4 py-2 text-xs font-semibold rounded-3xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                                        Заявка на рассмотрении
+                                        {isRu ? "Заявка на рассмотрении" : "Request pending"}
                                     </span>
                                 ) : !isOwner && (
                                     <button
                                         onClick={handleRequestEmployee}
                                         className="px-4 py-2 text-xs font-semibold rounded-3xl bg-white/10 hover:bg-white text-zinc-200 hover:text-black transition"
                                     >
-                                        Работаю здесь
+                                        {isRu ? "Работаю здесь" : "I work here"}
                                     </button>
                                 )
                             ) : (
@@ -638,7 +641,7 @@ export default function Profile() {
                                                 : "bg-white text-black hover:bg-zinc-200"
                                         }`}
                                     >
-                                        {community?.isMember ? "Joined" : "Join"}
+                                        {community?.isMember ? (isRu ? "Вы вступили" : "Joined") : (isRu ? "Вступить" : "Join")}
                                     </button>
                                 )
                             )}
@@ -680,7 +683,7 @@ export default function Profile() {
                             {community.companySize && (
                                 <span className="flex items-center gap-1.5 text-zinc-400">
                                     <Users size={13} className="text-zinc-500" />
-                                    {community.companySize} сотрудников
+                                    {community.companySize} {isRu ? "сотрудников" : "employees"}
                                 </span>
                             )}
                         </div>
@@ -695,7 +698,7 @@ export default function Profile() {
                             activeTab === 'posts' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                     >
-                        Публикации
+                        {t.profile.postsTab}
                         {activeTab === 'posts' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />}
                     </button>
 
@@ -706,7 +709,7 @@ export default function Profile() {
                                 activeTab === 'vacancies' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                             }`}
                         >
-                            Вакансии
+                            {t.nav.vacancies}
                             {companyVacancies.length > 0 && (
                                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-mono">
                                     {companyVacancies.length}
@@ -722,7 +725,7 @@ export default function Profile() {
                             activeTab === 'about' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                     >
-                        {isCompany ? 'О компании' : 'О сообществе'}
+                        {isCompany ? (isRu ? 'О компании' : 'About Company') : (isRu ? 'О сообществе' : 'About Community')}
                         {activeTab === 'about' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />}
                     </button>
 
@@ -732,7 +735,7 @@ export default function Profile() {
                             activeTab === 'employees' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                     >
-                        {isCompany ? 'Сотрудники' : 'Участники'}
+                        {isCompany ? (isRu ? 'Сотрудники' : 'Employees') : (isRu ? 'Участники' : 'Members')}
                         <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-zinc-400 font-mono">
                             {community.membersCount}
                         </span>
@@ -748,7 +751,7 @@ export default function Profile() {
                                 Avatar={userData?.avatar}
                                 CommunityId={community?.id}
                                 onPostCreated={refreshCommunityPosts}
-                                placeholder={`Что нового в ${community.name}?`}
+                                placeholder={isRu ? `Что нового в ${community.name}?` : `What's new in ${community.name}?`}
                             />
                         ) : !isLoggedIn ? (
                             <div className="m-4 lg:mx-8 md:mx-11 p-5 rounded-2xl border border-white/5 bg-white/[0.02] flex items-center justify-between gap-4">
@@ -757,12 +760,12 @@ export default function Profile() {
                                         <Lock size={16} />
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-semibold text-zinc-200">Публикация записей</h4>
-                                        <p className="text-xs text-zinc-400">Войдите в аккаунт, чтобы писать в сообществе.</p>
+                                        <h4 className="text-sm font-semibold text-zinc-200">{isRu ? "Публикация записей" : "Posting"}</h4>
+                                        <p className="text-xs text-zinc-400">{isRu ? "Войдите в аккаунт, чтобы писать в сообществе." : "Sign in to post in this community."}</p>
                                     </div>
                                 </div>
                                 <Link href="/login" className="px-4 py-2 text-xs font-semibold rounded-xl bg-white text-black hover:bg-zinc-200 transition">
-                                    Войти
+                                    {isRu ? "Войти" : "Sign In"}
                                 </Link>
                             </div>
                         ) : !isMember ? (
@@ -773,12 +776,12 @@ export default function Profile() {
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-semibold text-zinc-200">
-                                            {isCompany ? "Публикации компании" : "Только для участников"}
+                                            {isCompany ? (isRu ? "Публикации компании" : "Company Posts") : (isRu ? "Только для участников" : "Members Only")}
                                         </h4>
                                         <p className="text-xs text-zinc-400">
                                             {isCompany
-                                                ? "Публиковать новости в профиле компании могут только сотрудники и руководство."
-                                                : "Вступите в сообщество, чтобы создавать публикации."}
+                                                ? (isRu ? "Публиковать новости в профиле компании могут только сотрудники и руководство." : "Only employees and management can publish news on the company profile.")
+                                                : (isRu ? "Вступите в сообщество, чтобы создавать публикации." : "Join the community to create posts.")}
                                         </p>
                                     </div>
                                 </div>
@@ -787,14 +790,14 @@ export default function Profile() {
                                         onClick={handleToggleJoin}
                                         className="px-5 py-2 text-xs font-semibold rounded-xl bg-white text-black hover:bg-zinc-200 transition shrink-0 cursor-pointer"
                                     >
-                                        Вступить в сообщество
+                                        {isRu ? "Вступить в сообщество" : "Join Community"}
                                     </button>
                                 )}
                             </div>
                         ) : (
                             <div className="m-4 lg:mx-8 md:mx-11 p-4 rounded-xl border border-white/5 bg-white/[0.01] flex items-center gap-3 text-zinc-400 text-xs">
                                 <ShieldAlert size={16} className="text-amber-400/80 shrink-0" />
-                                <span>Публикация записей в этом сообществе доступна только администраторам и модераторам.</span>
+                                <span>{isRu ? "Публикация записей в этом сообществе доступна только администраторам и модераторам." : "Posting in this community is restricted to administrators and moderators."}</span>
                             </div>
                         )}
 
@@ -805,7 +808,7 @@ export default function Profile() {
                                     <PostSkeleton />
                                 </>
                             ) : communityPosts.length === 0 ? (
-                                <p className="text-xs text-zinc-500 text-center py-8 select-none">No posts yet</p>
+                                <p className="text-xs text-zinc-500 text-center py-8 select-none">{isRu ? "Публикаций пока нет" : "No posts yet"}</p>
                             ) : (
                                 communityPosts.map((p) => (
                                     <div key={p.id} className="animate-fade-in">
@@ -842,7 +845,7 @@ export default function Profile() {
 
                             {!hasMoreCommunityPosts && communityPosts.length > 0 && (
                                 <div className="py-6 text-center text-xs text-zinc-600 select-none">
-                                    Вы просмотрели все публикации
+                                    {isRu ? "Вы просмотрели все публикации" : "You've viewed all posts"}
                                 </div>
                             )}
                         </div>
@@ -854,8 +857,8 @@ export default function Profile() {
                     <div className="p-6 md:p-8 space-y-4">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-base font-bold text-zinc-100">Открытые вакансии</h3>
-                                <p className="text-xs text-zinc-400">Карьерные возможности в {community.name}</p>
+                                <h3 className="text-base font-bold text-zinc-100">{isRu ? "Открытые вакансии" : "Open Vacancies"}</h3>
+                                <p className="text-xs text-zinc-400">{isRu ? `Карьерные возможности в ${community.name}` : `Career opportunities at ${community.name}`}</p>
                             </div>
                             {isCanEdit && (
                                 <button
@@ -863,18 +866,18 @@ export default function Profile() {
                                     className="px-4 py-2 rounded-2xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition flex items-center gap-1.5 cursor-pointer"
                                 >
                                     <Plus size={14} />
-                                    Опубликовать вакансию
+                                    {isRu ? "Опубликовать вакансию" : "Post a Vacancy"}
                                 </button>
                             )}
                         </div>
 
                         {isVacanciesLoading ? (
-                            <div className="p-8 text-center text-xs text-zinc-500">Загрузка вакансий...</div>
+                            <div className="p-8 text-center text-xs text-zinc-500">{isRu ? "Загрузка вакансий..." : "Loading vacancies..."}</div>
                         ) : companyVacancies.length === 0 ? (
                             <div className="p-10 text-center rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col items-center gap-2">
                                 <Briefcase size={24} className="text-zinc-600" />
-                                <p className="text-sm font-medium text-zinc-300">Сейчас нет открытых вакансий</p>
-                                <p className="text-xs text-zinc-500">Следите за обновлениями компании или подпишитесь на уведомления</p>
+                                <p className="text-sm font-medium text-zinc-300">{isRu ? "Сейчас нет открытых вакансий" : "No open vacancies right now"}</p>
+                                <p className="text-xs text-zinc-500">{isRu ? "Следите за обновлениями компании или подпишитесь на уведомления" : "Follow the company updates or subscribe to notifications"}</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 gap-4">
@@ -909,7 +912,7 @@ export default function Profile() {
                                                     <button
                                                         onClick={() => handleDeleteVacancy(v.id)}
                                                         className="p-2 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition"
-                                                        title="Удалить вакансию"
+                                                        title={isRu ? "Удалить вакансию" : "Delete vacancy"}
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
@@ -919,7 +922,7 @@ export default function Profile() {
                                                     disabled={isApplyingVacancyId === v.id}
                                                     className="px-4 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer"
                                                 >
-                                                    {isApplyingVacancyId === v.id ? "Отправка..." : "Откликнуться"}
+                                                    {isApplyingVacancyId === v.id ? (isRu ? "Отправка..." : "Sending...") : t.vacancies.apply}
                                                 </button>
                                             </div>
                                         </div>
@@ -953,10 +956,10 @@ export default function Profile() {
                         <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
                             <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                                 <FileText size={13} className="text-zinc-400" />
-                                {isCompany ? "Описание компании" : "О сообществе"}
+                                {isCompany ? (isRu ? "Описание компании" : "Company Description") : (isRu ? "О сообществе" : "About Community")}
                             </h4>
                             <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-line">
-                                {community.description || "Описание отсутствует"}
+                                {community.description || (isRu ? "Описание отсутствует" : "No description provided")}
                             </p>
                         </div>
 
@@ -964,7 +967,7 @@ export default function Profile() {
                             <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
                                 <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                                     <ShieldAlert size={13} className="text-amber-400" />
-                                    {isCompany ? "Культура и регламент" : "Правила сообщества"}
+                                    {isCompany ? (isRu ? "Культура и регламент" : "Culture & Guidelines") : (isRu ? "Правила сообщества" : "Community Rules")}
                                 </h4>
                                 <p className="text-xs text-zinc-300 whitespace-pre-line leading-relaxed">
                                     {community.rules}
@@ -974,28 +977,28 @@ export default function Profile() {
 
                         <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
                             <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                                Информация
+                                {isRu ? "Информация" : "Information"}
                             </h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                 <div>
-                                    <span className="text-zinc-500">Создатель: </span>
+                                    <span className="text-zinc-500">{isRu ? "Создатель: " : "Creator: "}</span>
                                     <Link href={`/profile/${community.creatorUsername}`} className="text-zinc-200 hover:underline font-medium">
                                         {community.creatorName || community.creatorUsername}
                                     </Link>
                                 </div>
                                 <div>
-                                    <span className="text-zinc-500">Дата основания: </span>
-                                    <span className="text-zinc-200">{new Date(community.created).toLocaleDateString()}</span>
+                                    <span className="text-zinc-500">{isRu ? "Дата основания: " : "Founded: "}</span>
+                                    <span className="text-zinc-200">{new Date(community.created).toLocaleDateString(isRu ? 'ru-RU' : 'en-US')}</span>
                                 </div>
                                 {community.location && (
                                     <div>
-                                        <span className="text-zinc-500">Локация: </span>
+                                        <span className="text-zinc-500">{isRu ? "Локация: " : "Location: "}</span>
                                         <span className="text-zinc-200">{community.location}</span>
                                     </div>
                                 )}
                                 {community.industry && (
                                     <div>
-                                        <span className="text-zinc-500">Сфера: </span>
+                                        <span className="text-zinc-500">{isRu ? "Сфера: " : "Industry: "}</span>
                                         <span className="text-zinc-200">{community.industry}</span>
                                     </div>
                                 )}
@@ -1013,7 +1016,7 @@ export default function Profile() {
                                 <div className="flex items-center justify-between">
                                     <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                                         <Users size={14} />
-                                        Заявки на подтверждение работы ({pendingEmployees.length})
+                                        {isRu ? `Заявки на подтверждение работы (${pendingEmployees.length})` : `Employment Verification Requests (${pendingEmployees.length})`}
                                     </h4>
                                 </div>
 
@@ -1043,14 +1046,14 @@ export default function Profile() {
                                                 <button
                                                     onClick={() => handleAcceptEmployee(cand.id)}
                                                     className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition text-xs font-semibold"
-                                                    title="Принять в штат"
+                                                    title={isRu ? "Принять в штат" : "Approve employee"}
                                                 >
                                                     <Check size={14} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleRejectEmployee(cand.id)}
                                                     className="p-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/30 transition text-xs font-semibold"
-                                                    title="Отклонить"
+                                                    title={isRu ? "Отклонить" : "Reject"}
                                                 >
                                                     <X size={14} />
                                                 </button>
@@ -1064,10 +1067,10 @@ export default function Profile() {
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                                    {isCompany ? "Команда и руководство" : "Участники сообщества"}
+                                    {isCompany ? (isRu ? "Команда и руководство" : "Team & Leadership") : (isRu ? "Участники сообщества" : "Community Members")}
                                 </h3>
                                 <span className="text-xs text-zinc-500 font-mono">
-                                    {community.membersCount} {isCompany ? "в штате" : "участников"}
+                                    {community.membersCount} {isCompany ? (isRu ? "в штате" : "employees") : (isRu ? "участников" : "members")}
                                 </span>
                             </div>
 
@@ -1104,7 +1107,7 @@ export default function Profile() {
                                                 {isOnline && (
                                                     <span
                                                         className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0a0a0a] rounded-full"
-                                                        title="Online"
+                                                        title={isRu ? "В сети" : "Online"}
                                                     />
                                                 )}
                                             </div>
@@ -1116,19 +1119,19 @@ export default function Profile() {
 
                                                 {isOwner ? (
                                                     <span className="text-[9px] text-purple-400 font-semibold uppercase tracking-wider">
-                                                        {isCompany ? "Основатель" : "Owner"}
+                                                        {isCompany ? (isRu ? "Основатель" : "Founder") : (isRu ? "Владелец" : "Owner")}
                                                     </span>
                                                 ) : isAdmin ? (
                                                     <span className="text-[9px] text-blue-400 font-semibold uppercase tracking-wider">
-                                                        {isCompany ? "Руководитель" : "Admin"}
+                                                        {isCompany ? (isRu ? "Руководитель" : "Executive") : (isRu ? "Админ" : "Admin")}
                                                     </span>
                                                 ) : isMod ? (
                                                     <span className="text-[9px] text-emerald-400 font-semibold uppercase tracking-wider">
-                                                        Модератор
+                                                        {isRu ? "Модератор" : "Moderator"}
                                                     </span>
                                                 ) : (
                                                     <span className="text-[10px] text-zinc-500 truncate">
-                                                        {isCompany ? "Сотрудник" : `@${m.username}`}
+                                                        {isCompany ? (isRu ? "Сотрудник" : "Employee") : `@${m.username}`}
                                                     </span>
                                                 )}
                                             </div>
@@ -1147,7 +1150,7 @@ export default function Profile() {
                     <div className="w-full max-w-[500px] max-h-[90vh] overflow-y-auto no-scrollbar bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl relative">
                         <div className="flex justify-between items-center mb-6">
                             <div>
-                                <h3 className="text-lg font-bold text-zinc-100">Создать вакансию</h3>
+                                <h3 className="text-lg font-bold text-zinc-100">{isRu ? "Создать вакансию" : "Create Vacancy"}</h3>
                                 <p className="text-xs text-zinc-400 mt-0.5">{community.name}</p>
                             </div>
                             <button
@@ -1161,7 +1164,7 @@ export default function Profile() {
                         <form onSubmit={handleCreateVacancy} className="space-y-4">
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    Название должности
+                                    {isRu ? "Название должности" : "Job Title"}
                                 </label>
                                 <input
                                     type="text"
@@ -1176,7 +1179,7 @@ export default function Profile() {
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                        Уровень
+                                        {isRu ? "Уровень" : "Level"}
                                     </label>
                                     <select
                                         value={vacancyLevel}
@@ -1192,16 +1195,16 @@ export default function Profile() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                        Формат работы
+                                        {isRu ? "Формат работы" : "Work Format"}
                                     </label>
                                     <select
                                         value={vacancyFormat}
                                         onChange={(e) => setVacancyFormat(parseInt(e.target.value))}
                                         className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
                                     >
-                                        <option value={0}>Удаленно (Remote)</option>
-                                        <option value={1}>Гибрид (Hybrid)</option>
-                                        <option value={2}>Офис (Office)</option>
+                                        <option value={0}>{isRu ? "Удаленно (Remote)" : "Remote"}</option>
+                                        <option value={1}>{isRu ? "Гибрид (Hybrid)" : "Hybrid"}</option>
+                                        <option value={2}>{isRu ? "Офис (Office)" : "Office"}</option>
                                     </select>
                                 </div>
                             </div>
@@ -1209,7 +1212,7 @@ export default function Profile() {
                             <div className="grid grid-cols-3 gap-2">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                        Зарплата от
+                                        {isRu ? "Зарплата от" : "Salary from"}
                                     </label>
                                     <input
                                         type="number"
@@ -1221,7 +1224,7 @@ export default function Profile() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                        до
+                                        {t.vacancies.salaryTo}
                                     </label>
                                     <input
                                         type="number"
@@ -1233,7 +1236,7 @@ export default function Profile() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                        Валюта
+                                        {isRu ? "Валюта" : "Currency"}
                                     </label>
                                     <select
                                         value={vacancyCurrency}
@@ -1249,7 +1252,7 @@ export default function Profile() {
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    Стек технологий (через запятую)
+                                    {isRu ? "Стек технологий (через запятую)" : "Tech Stack (comma-separated)"}
                                 </label>
                                 <input
                                     type="text"
@@ -1262,12 +1265,12 @@ export default function Profile() {
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    Описание вакансии и требования
+                                    {isRu ? "Описание вакансии и требования" : "Job Description & Requirements"}
                                 </label>
                                 <textarea
                                     value={vacancyDescription}
                                     onChange={(e) => setVacancyDescription(e.target.value)}
-                                    placeholder="Обязанности, стек, условия работы, стек технологий..."
+                                    placeholder={isRu ? "Обязанности, стек, условия работы, стек технологий..." : "Responsibilities, stack, working conditions, requirements..."}
                                     rows={5}
                                     required
                                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20 resize-none"
@@ -1279,7 +1282,7 @@ export default function Profile() {
                                 disabled={isSubmittingVacancy}
                                 className="w-full py-3 mt-4 rounded-xl bg-white text-zinc-950 text-sm font-semibold hover:bg-zinc-200 transition active:scale-98 disabled:opacity-50 cursor-pointer"
                             >
-                                {isSubmittingVacancy ? "Публикация..." : "Опубликовать вакансию"}
+                                {isSubmittingVacancy ? (isRu ? "Публикация..." : "Publishing...") : (isRu ? "Опубликовать вакансию" : "Publish Vacancy")}
                             </button>
                         </form>
                     </div>
@@ -1294,21 +1297,21 @@ export default function Profile() {
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h3 className="text-lg font-bold text-zinc-100">
-                                    {editKind === 1 ? "Редактировать компанию" : "Редактировать сообщество"}
+                                    {editKind === 1 ? (isRu ? "Редактировать компанию" : "Edit Company") : (isRu ? "Редактировать сообщество" : "Edit Community")}
                                 </h3>
-                                <p className="text-xs text-zinc-400 mt-0.5">Управление информацией и профилем</p>
+                                <p className="text-xs text-zinc-400 mt-0.5">{isRu ? "Управление информацией и профилем" : "Manage information and profile"}</p>
                             </div>
                             <button
                                 onClick={() => setIsEditOpen(false)}
                                 className="text-zinc-500 hover:text-zinc-300 text-xs transition cursor-pointer"
                             >
-                                Cancel
+                                {t.common.cancel}
                             </button>
                         </div>
 
                         <div className="flex gap-4 mb-6 pb-6 border-b border-white/5">
                             <div className="flex-1 space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Avatar</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Аватар" : "Avatar"}</label>
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -1321,7 +1324,7 @@ export default function Profile() {
 
                         <div className="flex gap-4 mb-6 pb-6 border-b border-white/5">
                             <div className="flex-1 space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Banner</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Баннер" : "Banner"}</label>
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -1334,7 +1337,7 @@ export default function Profile() {
 
                         <form onSubmit={handleSaveCommunity} className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Тип пространства</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Тип пространства" : "Space Type"}</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
                                         type="button"
@@ -1347,9 +1350,9 @@ export default function Profile() {
                                     >
                                         <div className="flex items-center gap-1.5 text-xs font-semibold">
                                             <Users size={14} />
-                                            Сообщество
+                                            {isRu ? "Сообщество" : "Community"}
                                         </div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Публикации, обсуждения</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Публикации, обсуждения" : "Posts, discussions"}</div>
                                     </button>
                                     <button
                                         type="button"
@@ -1362,16 +1365,16 @@ export default function Profile() {
                                     >
                                         <div className="flex items-center gap-1.5 text-xs font-semibold">
                                             <Building2 size={14} />
-                                            Компания
+                                            {isRu ? "Компания" : "Company"}
                                         </div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Вакансии и сотрудники</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Вакансии и сотрудники" : "Vacancies & employees"}</div>
                                     </button>
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
-                                    {editKind === 1 ? "Название компании" : "Название сообщества"}
+                                    {editKind === 1 ? (isRu ? "Название компании" : "Company Name") : (isRu ? "Название сообщества" : "Community Name")}
                                 </label>
                                 <input
                                     type="text"
@@ -1383,7 +1386,7 @@ export default function Profile() {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Description</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Описание" : "Description"}</label>
                                 <textarea
                                     value={editDescription}
                                     onChange={(e) => setEditDescription(e.target.value)}
@@ -1396,7 +1399,7 @@ export default function Profile() {
                                 <div className="space-y-3 pt-1 border-t border-white/5">
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Сайт</label>
+                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Сайт" : "Website"}</label>
                                             <input
                                                 type="url"
                                                 value={editWebsiteUrl}
@@ -1406,12 +1409,12 @@ export default function Profile() {
                                             />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Локация</label>
+                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Локация" : "Location"}</label>
                                             <input
                                                 type="text"
                                                 value={editLocation}
                                                 onChange={(e) => setEditLocation(e.target.value)}
-                                                placeholder="Москва / Remote"
+                                                placeholder={isRu ? "Москва / Remote" : "Moscow / Remote"}
                                                 className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10"
                                             />
                                         </div>
@@ -1419,28 +1422,28 @@ export default function Profile() {
 
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Сфера</label>
+                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Сфера" : "Industry"}</label>
                                             <input
                                                 type="text"
                                                 value={editIndustry}
                                                 onChange={(e) => setEditIndustry(e.target.value)}
-                                                placeholder="IT, Финтех"
+                                                placeholder={isRu ? "IT, Финтех" : "IT, Fintech"}
                                                 className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10"
                                             />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Размер</label>
+                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Размер" : "Size"}</label>
                                             <select
                                                 value={editCompanySize}
                                                 onChange={(e) => setEditCompanySize(e.target.value)}
                                                 className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10"
                                             >
-                                                <option value="">Не указано</option>
-                                                <option value="1-10">1-10 сотрудников</option>
-                                                <option value="11-50">11-50 сотрудников</option>
-                                                <option value="51-200">51-200 сотрудников</option>
-                                                <option value="201-1000">201-1000 сотрудников</option>
-                                                <option value="1000+">1000+ сотрудников</option>
+                                                <option value="">{isRu ? "Не указано" : "Not specified"}</option>
+                                                <option value="1-10">{isRu ? "1-10 сотрудников" : "1-10 employees"}</option>
+                                                <option value="11-50">{isRu ? "11-50 сотрудников" : "11-50 employees"}</option>
+                                                <option value="51-200">{isRu ? "51-200 сотрудников" : "51-200 employees"}</option>
+                                                <option value="201-1000">{isRu ? "201-1000 сотрудников" : "201-1000 employees"}</option>
+                                                <option value="1000+">{isRu ? "1000+ сотрудников" : "1000+ employees"}</option>
                                             </select>
                                         </div>
                                     </div>
@@ -1449,19 +1452,19 @@ export default function Profile() {
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
-                                    {editKind === 1 ? "Культура и правила" : "Rules / Правила"}
+                                    {editKind === 1 ? (isRu ? "Культура и правила" : "Culture & Rules") : (isRu ? "Правила" : "Rules")}
                                 </label>
                                 <textarea
                                     value={editRules}
                                     onChange={(e) => setEditRules(e.target.value)}
                                     rows={3}
-                                    placeholder="Правила сообщества, формат общения, требования..."
+                                    placeholder={isRu ? "Правила сообщества, формат общения, требования..." : "Community rules, communication format, guidelines..."}
                                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10 resize-none"
                                 />
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Кто может публиковать записи</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Кто может публиковать записи" : "Who can post"}</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
                                         type="button"
@@ -1472,8 +1475,8 @@ export default function Profile() {
                                                 : "border-white/5 bg-zinc-950/60 text-zinc-400 hover:border-white/10"
                                         }`}
                                     >
-                                        <div className="text-xs font-semibold">Все участники</div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Любой член сообщества</div>
+                                        <div className="text-xs font-semibold">{isRu ? "Все участники" : "All Members"}</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Любой член сообщества" : "Any community member"}</div>
                                     </button>
                                     <button
                                         type="button"
@@ -1484,14 +1487,14 @@ export default function Profile() {
                                                 : "border-white/5 bg-zinc-950/60 text-zinc-400 hover:border-white/10"
                                         }`}
                                     >
-                                        <div className="text-xs font-semibold">Только администрация</div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Админы и модераторы</div>
+                                        <div className="text-xs font-semibold">{isRu ? "Только администрация" : "Admins Only"}</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Админы и модераторы" : "Admins and moderators"}</div>
                                     </button>
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Тип сообщества</label>
+                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Тип сообщества" : "Community Type"}</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
                                         type="button"
@@ -1502,8 +1505,8 @@ export default function Profile() {
                                                 : "border-white/5 bg-zinc-950/60 text-zinc-400 hover:border-white/10"
                                         }`}
                                     >
-                                        <div className="text-xs font-semibold">Публичное</div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Вход свободный</div>
+                                        <div className="text-xs font-semibold">{isRu ? "Публичное" : "Public"}</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Вход свободный" : "Open to join"}</div>
                                     </button>
                                     <button
                                         type="button"
@@ -1514,8 +1517,8 @@ export default function Profile() {
                                                 : "border-white/5 bg-zinc-950/60 text-zinc-400 hover:border-white/10"
                                         }`}
                                     >
-                                        <div className="text-xs font-semibold">Ограниченное</div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Вход по заявкам</div>
+                                        <div className="text-xs font-semibold">{isRu ? "Ограниченное" : "Restricted"}</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Вход по заявкам" : "Join by request"}</div>
                                     </button>
                                 </div>
                             </div>
@@ -1525,7 +1528,7 @@ export default function Profile() {
                                 disabled={isSaving}
                                 className="w-full py-3 mt-4 rounded-xl bg-white text-zinc-950 text-sm font-semibold hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer"
                             >
-                                {isSaving ? "Saving..." : "Save Changes"}
+                                {isSaving ? (isRu ? "Сохранение..." : "Saving...") : (isRu ? "Сохранить изменения" : "Save Changes")}
                             </button>
                         </form>
                     </div>

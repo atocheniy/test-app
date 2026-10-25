@@ -1,11 +1,14 @@
 'use client';
 import { useApplication } from '@/context/ApplicationContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { AuthService } from '@/services/authService';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function Register() {
     const router = useRouter();
+    const { language, setLanguage, t } = useLanguage();
+    const isRu = language === 'ru';
 
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
@@ -20,11 +23,11 @@ export default function Register() {
         setError('');
 
         if (!email || !password || !fullName || !userName) {
-            setError('Заполните все поля');
+            setError(isRu ? 'Заполните все поля' : 'Please fill in all fields');
             return;
         }
         if (password !== confirmPass) {
-            setError('Пароли не совпадают');
+            setError(isRu ? 'Пароли не совпадают' : 'Passwords do not match');
             return;
         }
 
@@ -42,13 +45,19 @@ export default function Register() {
         catch (err: any) 
         {
             console.error(err);
-            setError(err.response?.data?.message || "Ошибка регистрации");
+            setError(err.response?.data?.message || (isRu ? "Ошибка регистрации" : "Registration error"));
         }
     };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 relative">
-        
+      <button
+        type="button"
+        onClick={() => setLanguage(isRu ? 'en' : 'ru')}
+        className="absolute top-6 right-6 z-20 px-3 py-1.5 rounded-xl border border-white/10 bg-zinc-900/80 text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+      >
+        {isRu ? 'RU / EN' : 'EN / RU'}
+      </button>
 
       <div className="w-full max-w-[400px] bg-[#0a0a0a] border border-white/5 rounded-[32px] p-8 md:p-10 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-white/[0.02] rounded-full blur-3xl pointer-events-none" />
@@ -64,8 +73,12 @@ export default function Register() {
               </g>
             </svg>
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-100">Create an account</h1>
-          <p className="text-xs text-zinc-500 mt-1.5">Enter your details to create your account</p>
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-100">
+            {isRu ? 'Создать аккаунт' : 'Create an account'}
+          </h1>
+          <p className="text-xs text-zinc-500 mt-1.5">
+            {isRu ? 'Введите данные для создания аккаунта' : 'Enter your details to create your account'}
+          </p>
         </div>
 
         <form className="space-y-4 relative z-10" onSubmit={(e) => {
@@ -73,17 +86,21 @@ export default function Register() {
             handleRegister();
         }}>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Name</label>
+            <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+              {isRu ? 'Имя' : 'Name'}
+            </label>
             <input
               type="text"
-              placeholder="Name"
+              placeholder={isRu ? 'Имя' : 'Name'}
               onChange={(e) => setFullName(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Username</label>
+            <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+              {isRu ? 'Имя пользователя' : 'Username'}
+            </label>
             <input
               type="text"
               placeholder="@username"
@@ -104,7 +121,9 @@ export default function Register() {
 
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Password</label>
+              <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+                {isRu ? 'Пароль' : 'Password'}
+              </label>
             </div>
             <input
               type="password"
@@ -116,7 +135,9 @@ export default function Register() {
 
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Confirm Password</label>
+              <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+                {isRu ? 'Подтвердите пароль' : 'Confirm Password'}
+              </label>
             </div>
             <input
               type="confirm-password"
@@ -130,7 +151,7 @@ export default function Register() {
             type="submit"
             className="w-full py-3 mt-2 rounded-xl bg-white text-zinc-950 text-sm font-medium hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200"
           >
-            Sign Up
+            {isRu ? 'Зарегистрироваться' : 'Sign Up'}
           </button>
 
           <div className="relative my-6 z-10 flex items-center justify-center">
@@ -142,7 +163,9 @@ export default function Register() {
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-white/5"></div>
           </div>
-          <span className="relative px-3 text-[10px] text-zinc-500 bg-[#0a0a0a] uppercase tracking-wider">or</span>
+          <span className="relative px-3 text-[10px] text-zinc-500 bg-[#0a0a0a] uppercase tracking-wider">
+            {isRu ? 'или' : 'or'}
+          </span>
         </div>
 
         <div className="grid grid-cols-2 gap-3 relative z-10">
@@ -161,9 +184,9 @@ export default function Register() {
         </div>
 
         <p className="text-center text-xs text-zinc-500 mt-8 relative z-10">
-          Already have an account?{' '}
+          {isRu ? 'Уже есть аккаунт?' : 'Already have an account?'}{' '}
           <a href="/login" className="text-zinc-300 hover:underline transition-all">
-            Sign in
+            {isRu ? 'Войти' : 'Sign in'}
           </a>
         </p>
 

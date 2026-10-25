@@ -1,3 +1,4 @@
+import { useLanguage } from '@/context/LanguageContext';
 import { Pencil, Trash2 } from 'lucide-react';
 
 interface ExperienceCardProps 
@@ -13,6 +14,8 @@ interface ExperienceCardProps
 }
 
 export default function ExperienceCard({ icon, name, post, mode, time, description, onEdit, onDelete }: ExperienceCardProps) {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     const displayIcon = icon || (name ? name[0].toUpperCase() : 'E');
 
     return (
@@ -42,7 +45,7 @@ export default function ExperienceCard({ icon, name, post, mode, time, descripti
                                             type="button"
                                             onClick={onEdit}
                                             className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition"
-                                            title="Редактировать место работы"
+                                            title={isRu ? "Редактировать место работы" : "Edit work experience"}
                                         >
                                             <Pencil size={12} />
                                         </button>
@@ -52,7 +55,7 @@ export default function ExperienceCard({ icon, name, post, mode, time, descripti
                                             type="button"
                                             onClick={onDelete}
                                             className="p-1 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition"
-                                            title="Удалить место работы"
+                                            title={isRu ? "Удалить место работы" : "Delete work experience"}
                                         >
                                             <Trash2 size={12} />
                                         </button>

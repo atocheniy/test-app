@@ -6,12 +6,13 @@ import Post from "@/components/post";
 import ProjectCard from "@/components/project_card";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { PostSkeleton, ProfileSkeleton } from "@/components/skeletons";
-import { ChatService } from "@/services/chatService";
 import { formatPostTime } from "@/libs/format";
+import { ChatService } from "@/services/chatService";
 import { UserService } from "@/services/userService";
 import {
     ArrowUpRight,
@@ -36,6 +37,8 @@ export default function Profile() {
     const router = useRouter();
     const { userData, UserNameNormalized, userPostsData , refreshUserPostsData} = useApplication();
     const { refreshOtherUserPostsData, refreshOtherUserData, otherUserPostsData, otherUserData, hasMoreOtherUserPosts, isLoadingMoreOtherUserPosts, loadMoreOtherUserPosts } = useApplication();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
 
     const params = useParams();
     const usernameFromUrl = params.username as string;
@@ -89,7 +92,7 @@ export default function Profile() {
 
     const handleToggleWatchUser = async () => {
         if (!userData?.userName || userData.userName === '...') {
-            alert("Пожалуйста, войдите в систему, чтобы отслеживать пользователя");
+            alert(isRu ? "Пожалуйста, войдите в систему, чтобы отслеживать пользователя" : "Please sign in to watch this user");
             return;
         }
         try {
@@ -98,7 +101,7 @@ export default function Profile() {
             setWatchersCount(res.watchersCount);
         } catch (e: any) {
             console.error("Ошибка изменения статуса отслеживания:", e);
-            const msg = e?.response?.data?.message || "Не удалось изменить статус отслеживания";
+            const msg = e?.response?.data?.message || (isRu ? "Не удалось изменить статус отслеживания" : "Failed to update watch status");
             alert(msg);
         }
     };
@@ -170,7 +173,7 @@ export default function Profile() {
     return (
         <div className="animate-fade-in">
             <div>
-                <Titlebar title="Profile"></Titlebar>
+                <Titlebar title={t.nav.profile}></Titlebar>
 
                 <div className="w-full bg-zinc-900 h-48 border-y border-white/5 rounded-b-xl relative overflow-hidden">
                     {otherUserData.banner && (
@@ -211,7 +214,7 @@ export default function Profile() {
                             {isAuthorOnline && (
                                 <span 
                                     className="absolute bottom-2 right-2 w-5 h-5 bg-white border-2 border-[#0a0a0a] rounded-full" 
-                                    title="Online"
+                                    title={isRu ? "В сети" : "Online"}
                                 />
                             )}
                         </div>
@@ -220,9 +223,9 @@ export default function Profile() {
                             <div className="flex flex-row items-center gap-2">
                                 <p className="text-sm text-zinc-400">@{otherUserData.userName}</p>
                                 <span className="text-sm text-zinc-400">•</span>
-                                <p className="text-sm text-zinc-400">{watchersCount} Watchers</p>
+                                <p className="text-sm text-zinc-400">{watchersCount} {t.profile.watchers}</p>
                                 <span className="text-sm text-zinc-400">•</span>
-                                <p className="text-sm text-zinc-400">{otherUserData.watchingCount ?? otherUserData.followings ?? 0} Watching</p>
+                                <p className="text-sm text-zinc-400">{otherUserData.watchingCount ?? otherUserData.followings ?? 0} {t.profile.watching}</p>
                             </div>
                         </div>
 
@@ -232,7 +235,7 @@ export default function Profile() {
                                     href="/profile"
                                     className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition"
                                 >
-                                    Edit Profile
+                                    {t.profile.editProfile}
                                 </Link>
                             ) : (
                                 <>
@@ -244,13 +247,13 @@ export default function Profile() {
                                                 : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white"
                                         }`}
                                     >
-                                        {isWatchingUser ? "Watching" : "Watch"}
+                                        {isWatchingUser ? (isRu ? "Отслеживается" : "Watching") : t.profile.watchBtn}
                                     </button>
                                     <button 
                                         className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition"
                                         onClick={handleWriteMessage}
                                     >
-                                        Write a message
+                                        {isRu ? "Написать сообщение" : "Write a message"}
                                     </button>
                                 </>
                             )}
@@ -269,7 +272,7 @@ export default function Profile() {
                     </div>
 
                     <div className="space-y-3 mt-6">
-                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Tech Stack</h3>
+                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{t.profile.techStack}</h3>
                         {otherUserData.technologies && otherUserData.technologies.length > 0 ? (
                             <div className="flex flex-wrap gap-1.5">
                                 {otherUserData.technologies.map((tech) => (
@@ -282,7 +285,7 @@ export default function Profile() {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-xs text-zinc-500 py-1">Навыки еще не указаны</p>
+                            <p className="text-xs text-zinc-500 py-1">{isRu ? "Навыки еще не указаны" : "No skills listed yet"}</p>
                         )}
                     </div>
 
@@ -297,7 +300,7 @@ export default function Profile() {
                             }`}
                         >
                             <Sparkles size={14} className={profileTab === 'details' ? 'text-blue-400' : 'text-zinc-500'} />
-                            <span>Details & Links</span>
+                            <span>{t.profile.detailsAndLinks}</span>
                         </button>
 
                         <button
@@ -310,7 +313,7 @@ export default function Profile() {
                             }`}
                         >
                             <Code2 size={14} className={profileTab === 'projects' ? 'text-emerald-400' : 'text-zinc-500'} />
-                            <span>Featured Projects</span>
+                            <span>{t.profile.featuredProjects}</span>
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
                                 profileTab === 'projects' ? 'bg-white/20 text-white' : 'bg-white/5 text-zinc-500'
                             }`}>
@@ -328,7 +331,7 @@ export default function Profile() {
                             }`}
                         >
                             <Briefcase size={14} className={profileTab === 'experience' ? 'text-purple-400' : 'text-zinc-500'} />
-                            <span>Experience</span>
+                            <span>{t.profile.experience}</span>
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
                                 profileTab === 'experience' ? 'bg-white/20 text-white' : 'bg-white/5 text-zinc-500'
                             }`}>
@@ -342,7 +345,7 @@ export default function Profile() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start animate-fade-in">
                                 <div className="flex flex-col justify-start p-5 border border-white/5 bg-zinc-950/20 hover:border-white/10 transition-colors duration-200 rounded-2xl">
                                     <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-4">
-                                        Details
+                                        {isRu ? "Детали" : "Details"}
                                     </h4>
                                     
                                     <div className="space-y-3.5">
@@ -351,9 +354,9 @@ export default function Profile() {
                                                 <MapPin size={14} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Location</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{t.profile.location}</span>
                                                 <span className="text-xs text-zinc-200 font-medium">
-                                                    {otherUserData.location || "Not specified"}
+                                                    {otherUserData.location || (isRu ? "Не указано" : "Not specified")}
                                                 </span>
                                             </div>
                                         </div>
@@ -363,13 +366,13 @@ export default function Profile() {
                                                 <Briefcase size={14} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Status</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{t.profile.workStatus}</span>
                                                 <span className="text-xs text-zinc-200 font-medium flex items-center gap-1.5">
                                                     <span className="relative flex h-1.5 w-1.5">
                                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                                                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
                                                     </span>
-                                                    {otherUserData.workStatus || "Open to opportunities"}
+                                                    {otherUserData.workStatus || (isRu ? "Открыт к предложениям" : "Open to opportunities")}
                                                 </span>
                                             </div>
                                         </div>
@@ -379,9 +382,9 @@ export default function Profile() {
                                                 <Sparkles size={14} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Focus</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{t.profile.focus}</span>
                                                 <span className="text-xs text-zinc-200 font-medium">
-                                                    {otherUserData.focus || "Not specified"}
+                                                    {otherUserData.focus || (isRu ? "Не указано" : "Not specified")}
                                                 </span>
                                             </div>
                                         </div>
@@ -405,13 +408,13 @@ export default function Profile() {
                                             },
                                             otherUserData.vkUrl && { 
                                                 label: 'VK', 
-                                                display: 'VK Profile', 
+                                                display: isRu ? 'Профиль VK' : 'VK Profile', 
                                                 url: otherUserData.vkUrl.startsWith('http') ? otherUserData.vkUrl : `https://${otherUserData.vkUrl}`, 
                                                 icon: Globe 
                                             },
                                             otherUserData.xUrl && { 
                                                 label: 'X (Twitter)', 
-                                                display: 'X Profile', 
+                                                display: isRu ? 'Профиль X' : 'X Profile', 
                                                 url: otherUserData.xUrl.startsWith('http') ? otherUserData.xUrl : `https://${otherUserData.xUrl}`, 
                                                 icon: Globe 
                                             },
@@ -422,7 +425,7 @@ export default function Profile() {
                                                 icon: Globe 
                                             },
                                             otherUserData.websiteUrl && { 
-                                                label: 'Portfolio', 
+                                                label: isRu ? 'Портфолио' : 'Portfolio', 
                                                 display: otherUserData.websiteUrl.replace(/^https?:\/\//, ''), 
                                                 url: otherUserData.websiteUrl.startsWith('http') ? otherUserData.websiteUrl : `https://${otherUserData.websiteUrl}`, 
                                                 icon: Globe 
@@ -441,7 +444,7 @@ export default function Profile() {
                                             <>
                                                 <div className="flex items-center justify-between mb-4">
                                                     <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
-                                                        Links & Contacts
+                                                        {isRu ? "Ссылки и контакты" : "Links & Contacts"}
                                                     </h4>
                                                     <span className="text-[10px] text-zinc-500 font-mono">
                                                         {userLinks.length}
@@ -451,7 +454,7 @@ export default function Profile() {
                                                 <div className="space-y-2">
                                                     {userLinks.length === 0 ? (
                                                         <p className="text-xs text-zinc-500 py-3 text-center">
-                                                            No links added yet
+                                                            {isRu ? "Ссылки ещё не добавлены" : "No links added yet"}
                                                         </p>
                                                     ) : (
                                                         visibleLinks.map((link, idx) => (
@@ -485,7 +488,7 @@ export default function Profile() {
                                                             onClick={() => setIsLinksExpanded(!isLinksExpanded)}
                                                             className="w-full mt-1.5 py-1.5 flex items-center justify-center gap-1.5 text-[11px] font-medium text-zinc-500 hover:text-zinc-300 hover:bg-white/5 rounded-xl transition cursor-pointer"
                                                         >
-                                                            <span>{isLinksExpanded ? "Show less" : `Show all (+${userLinks.length - 3})`}</span>
+                                                            <span>{isLinksExpanded ? (isRu ? "Свернуть" : "Show less") : (isRu ? `Показать все (+${userLinks.length - 3})` : `Show all (+${userLinks.length - 3})`)}</span>
                                                             <ChevronDown 
                                                                 size={12} 
                                                                 className={`transition-transform duration-200 ${isLinksExpanded ? "rotate-180" : ""}`} 
@@ -505,7 +508,7 @@ export default function Profile() {
                                 <div className="flex justify-between items-center gap-2 mb-4">
                                     <div className="flex items-center gap-2">
                                         <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                                            Featured Projects
+                                            {t.profile.featuredProjects}
                                         </h4>
                                         <span className="text-[11px] text-zinc-500 font-mono">
                                             {otherUserData.projects?.length || 0}
@@ -522,7 +525,7 @@ export default function Profile() {
                                                         onClick={() => handleScrollProjects('left')}
                                                         disabled={!canScrollProjectsLeft}
                                                         className="p-1 rounded-lg text-zinc-400 hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition cursor-pointer"
-                                                        title="Предыдущие проекты"
+                                                        title={isRu ? "Предыдущие проекты" : "Previous projects"}
                                                     >
                                                         <ChevronLeft size={14} />
                                                     </button>
@@ -531,7 +534,7 @@ export default function Profile() {
                                                         onClick={() => handleScrollProjects('right')}
                                                         disabled={!canScrollProjectsRight}
                                                         className="p-1 rounded-lg text-zinc-400 hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition cursor-pointer"
-                                                        title="Следующие проекты"
+                                                        title={isRu ? "Следующие проекты" : "Next projects"}
                                                     >
                                                         <ChevronRight size={14} />
                                                     </button>
@@ -548,7 +551,7 @@ export default function Profile() {
                                                             ? 'bg-white/15 text-white'
                                                             : 'text-zinc-400 hover:text-zinc-200'
                                                     }`}
-                                                    title="Режим карусели"
+                                                    title={isRu ? "Режим карусели" : "Carousel view"}
                                                 >
                                                     <SlidersHorizontal size={13} />
                                                 </button>
@@ -560,7 +563,7 @@ export default function Profile() {
                                                             ? 'bg-white/15 text-white'
                                                             : 'text-zinc-400 hover:text-zinc-200'
                                                     }`}
-                                                    title="Режим сетки"
+                                                    title={isRu ? "Режим сетки" : "Grid view"}
                                                 >
                                                     <LayoutGrid size={13} />
                                                 </button>
@@ -572,8 +575,8 @@ export default function Profile() {
                                 {!otherUserData.projects || otherUserData.projects.length === 0 ? (
                                     <div className="p-8 border border-white/5 rounded-2xl bg-zinc-950/20 text-center flex flex-col items-center justify-center gap-2">
                                         <Code2 size={24} className="text-zinc-600" />
-                                        <p className="text-xs text-zinc-400 font-medium">Проекты ещё не добавлены</p>
-                                        <p className="text-[11px] text-zinc-500">Пользователь пока не добавил ни одного проекта</p>
+                                        <p className="text-xs text-zinc-400 font-medium">{t.profile.noProjects}</p>
+                                        <p className="text-[11px] text-zinc-500">{isRu ? "Пользователь пока не добавил ни одного проекта" : "This user hasn't added any projects yet"}</p>
                                     </div>
                                 ) : projectsViewMode === 'carousel' ? (
                                     <div className="relative group/carousel">
@@ -643,7 +646,7 @@ export default function Profile() {
                             <div className="space-y-4 animate-fade-in">
                                 <div className="flex items-center gap-2 mb-4">
                                     <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                                        Work Experience
+                                        {t.profile.experience}
                                     </h4>
                                     <span className="text-[11px] text-zinc-500 font-mono">
                                         {otherUserData.experiences?.length || 0}
@@ -653,8 +656,8 @@ export default function Profile() {
                                 {!otherUserData.experiences || otherUserData.experiences.length === 0 ? (
                                     <div className="p-8 border border-white/5 rounded-2xl bg-zinc-950/20 text-center flex flex-col items-center justify-center gap-2">
                                         <Briefcase size={24} className="text-zinc-600" />
-                                        <p className="text-xs text-zinc-400 font-medium">Опыт работы ещё не указан</p>
-                                        <p className="text-[11px] text-zinc-500">Пользователь пока не указал опыт работы</p>
+                                        <p className="text-xs text-zinc-400 font-medium">{t.profile.noExperience}</p>
+                                        <p className="text-[11px] text-zinc-500">{isRu ? "Пользователь пока не указал опыт работы" : "This user hasn't listed any work experience yet"}</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
@@ -678,7 +681,7 @@ export default function Profile() {
             </div>
 
             <div>
-                <Titlebar title="Activity"></Titlebar>
+                <Titlebar title={isRu ? "Активность" : "Activity"}></Titlebar>
                 <div>
                                 
                     <div className="flex flex-col gap-4 p-6 max-sm:p-0 max-sm:py-6 max-sm:pb-[90px]">
@@ -688,7 +691,7 @@ export default function Profile() {
                                 <PostSkeleton />
                             </>
                         ) : otherUserPostsData.length === 0 ? (
-                            <p className="text-xs text-zinc-500 text-center py-8 select-none">No posts yet</p>
+                            <p className="text-xs text-zinc-500 text-center py-8 select-none">{isRu ? "Публикаций пока нет" : "No posts yet"}</p>
                         ) : (
                             otherUserPostsData.map((p) => (
                                 <div key={p.id} className="animate-fade-in">
@@ -713,7 +716,6 @@ export default function Profile() {
                             ))
                         )}
 
-                        {/* Progressive load sentinel & loading indicator */}
                         {hasMoreOtherUserPosts && (
                             <div ref={otherPostsSentinelRef} className="py-4 flex justify-center items-center">
                                 {isLoadingMoreOtherUserPosts && (
@@ -726,7 +728,7 @@ export default function Profile() {
 
                         {!hasMoreOtherUserPosts && otherUserPostsData.length > 0 && (
                             <div className="py-6 text-center text-xs text-zinc-600 select-none">
-                                Вы просмотрели все публикации
+                                {isRu ? "Вы просмотрели все публикации" : "You've viewed all posts"}
                             </div>
                         )}
                     </div>

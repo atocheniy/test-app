@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from "@/context/LanguageContext";
 import { Eraser, MoreVertical, Pin, PinOff, Trash2, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -34,6 +35,8 @@ export default function MessagePreview({
     onClearChat,
     onDeleteChat,
 }: MessagePreviewProps) {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -55,8 +58,8 @@ export default function MessagePreview({
     const previewText = Content?.trim()
         ? Content.replace(/[\r\n]+/g, " ")
         : Attachments && Attachments.length > 0
-        ? "📷 Фотография"
-        : "Нет сообщений";
+        ? (isRu ? "📷 Фотография" : "📷 Photo")
+        : (isRu ? "Нет сообщений" : "No messages");
 
     return (
         <div className="group relative flex flex-row gap-3.5 p-3 hover:bg-white/5 transition cursor-pointer border-b border-white/5">
@@ -75,7 +78,7 @@ export default function MessagePreview({
                 {isOnline && (
                     <span
                         className="absolute bottom-0 right-0 w-3 h-3 bg-white border-2 border-[#0a0a0a] rounded-full"
-                        title="Online"
+                        title={isRu ? "В сети" : "Online"}
                     />
                 )}
             </div>
@@ -102,7 +105,7 @@ export default function MessagePreview({
                                     setIsMenuOpen((prev) => !prev);
                                 }}
                                 className="p-1 -mr-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors opacity-70 group-hover:opacity-100"
-                                title="Действия"
+                                title={isRu ? "Действия" : "Actions"}
                             >
                                 <MoreVertical size={14} />
                             </button>
@@ -124,7 +127,7 @@ export default function MessagePreview({
                                             className="w-full flex items-center gap-2.5 px-3 py-2 text-zinc-300 hover:text-white hover:bg-white/5 transition-colors text-left"
                                         >
                                             <User size={14} className="text-zinc-400" />
-                                            <span>Открыть профиль</span>
+                                            <span>{isRu ? "Открыть профиль" : t.settings.viewProfile}</span>
                                         </button>
                                     )}
 
@@ -141,12 +144,12 @@ export default function MessagePreview({
                                             {isPinned ? (
                                                 <>
                                                     <PinOff size={14} className="text-zinc-400" />
-                                                    <span>Открепить чат</span>
+                                                    <span>{isRu ? "Открепить чат" : "Unpin chat"}</span>
                                                 </>
                                             ) : (
                                                 <>
                                                     <Pin size={14} className="text-zinc-400" />
-                                                    <span>Закрепить чат</span>
+                                                    <span>{isRu ? "Закрепить чат" : "Pin chat"}</span>
                                                 </>
                                             )}
                                         </button>
@@ -163,7 +166,7 @@ export default function MessagePreview({
                                             className="w-full flex items-center gap-2.5 px-3 py-2 text-zinc-300 hover:text-white hover:bg-white/5 transition-colors text-left"
                                         >
                                             <Eraser size={14} className="text-zinc-400" />
-                                            <span>Очистить переписку</span>
+                                            <span>{isRu ? "Очистить переписку" : "Clear chat"}</span>
                                         </button>
                                     )}
 
@@ -180,7 +183,7 @@ export default function MessagePreview({
                                                 className="w-full flex items-center gap-2.5 px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-left"
                                             >
                                                 <Trash2 size={14} className="text-red-400" />
-                                                <span>Удалить чат</span>
+                                                <span>{isRu ? "Удалить чат" : "Delete chat"}</span>
                                             </button>
                                         </>
                                     )}

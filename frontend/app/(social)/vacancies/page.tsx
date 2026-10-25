@@ -2,6 +2,7 @@
 
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { formatSalary } from "@/libs/format";
 import { VacancyService } from "@/services/vacancyService";
 import type { Vacancy } from "@/types/auth";
@@ -21,6 +22,8 @@ import { useEffect, useState } from "react";
 
 export default function VacanciesPage() {
     const { userData } = useApplication();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     const router = useRouter();
 
     const [vacancies, setVacancies] = useState<Vacancy[]>([]);
@@ -38,12 +41,12 @@ export default function VacanciesPage() {
     const popularStacks = [".NET", "C#", "React", "TypeScript", "Next.js", "Python", "Go", "PostgreSQL", "Docker"];
 
     useEffect(() => {
-        document.title = 'Вакансии';
+        document.title = t.nav.vacancies;
         const timer = setTimeout(() => {
             loadVacancies();
         }, 250);
         return () => clearTimeout(timer);
-    }, [search, selectedFormat, selectedLevel, selectedStack, selectedSort]);
+    }, [search, selectedFormat, selectedLevel, selectedStack, selectedSort, t.nav.vacancies]);
 
     const loadVacancies = async () => {
         setIsLoading(true);
@@ -65,18 +68,18 @@ export default function VacanciesPage() {
 
     const handleApply = async (vacancyId: string) => {
         if (!userData?.userName || userData.userName === '...') {
-            alert("Войдите в аккаунт, чтобы откликнуться на вакансию.");
+            alert(isRu ? "Войдите в аккаунт, чтобы откликнуться на вакансию." : "Please sign in to apply for this vacancy.");
             return;
         }
 
         try {
             setIsApplyingId(vacancyId);
             const res = await VacancyService.apply(vacancyId);
-            alert(res.message || "Отклик отправлен. Переходим в диалог.");
+            alert(res.message || (isRu ? "Отклик отправлен. Переходим в диалог." : "Application sent. Redirecting to chat."));
             router.push('/messages');
         } catch (error: any) {
             console.error("Ошибка отклика:", error);
-            const msg = error?.response?.data?.message || "Не удалось отправить отклик";
+            const msg = error?.response?.data?.message || (isRu ? "Не удалось отправить отклик" : "Failed to submit application");
             alert(msg);
         } finally {
             setIsApplyingId(null);
@@ -96,26 +99,26 @@ export default function VacanciesPage() {
 
     const formatWorkTypeText = (fmt: any) => {
         switch (fmt) {
-            case 0: case '0': case 'Remote': return 'Удаленно';
-            case 1: case '1': case 'Hybrid': return 'Гибрид';
-            case 2: case '2': case 'Office': return 'Офис';
-            default: return typeof fmt === 'string' ? fmt : 'Удаленно';
+            case 0: case '0': case 'Remote': return t.vacancies.remote;
+            case 1: case '1': case 'Hybrid': return t.vacancies.hybrid;
+            case 2: case '2': case 'Office': return t.vacancies.office;
+            default: return typeof fmt === 'string' ? fmt : t.vacancies.remote;
         }
     };
 
     return (
         <div className="flex flex-col min-h-full animate-fade-in">
-            <Titlebar title="Вакансии">
+            <Titlebar title={t.nav.vacancies}>
                 <div className="flex items-center gap-3">
                     <span className="text-xs text-zinc-500 font-mono hidden sm:inline">
-                        {vacancies.length} предложений
+                        {isRu ? `${vacancies.length} предложений` : `${vacancies.length} offers`}
                     </span>
                     <Link
                         href="/other"
                         className="px-3 py-1.5 rounded-xl bg-white text-black hover:bg-zinc-200 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"
                     >
                         <Building2 size={13} />
-                        Разместить вакансию
+                        {isRu ? "Разместить вакансию" : "Post a Vacancy"}
                     </Link>
                 </div>
             </Titlebar>
@@ -127,7 +130,7 @@ export default function VacanciesPage() {
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Поиск вакансий по должности, технологиям, компании..."
+                            placeholder={t.vacancies.searchPlaceholder}
                             className="w-full h-12 pl-4 pr-10 rounded-2xl bg-white/[0.03] border border-white/10 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-md transition-all text-sm shadow-inner"
                         />
                         {search && (
@@ -142,7 +145,7 @@ export default function VacanciesPage() {
 
                     <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
                         <div className="flex items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5">
-                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">Сортировка:</span>
+                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">{isRu ? "Сортировка:" : "Sort by:"}</span>
                             <button
                                 onClick={() => setSelectedSort('recommended')}
                                 className={`px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
@@ -152,7 +155,7 @@ export default function VacanciesPage() {
                                 }`}
                             >
                                 <Sparkles size={11} className={selectedSort === 'recommended' ? "text-amber-500" : "text-zinc-400"} />
-                                Для вас
+                                {t.sidebarRight.forYou}
                             </button>
                             <button
                                 onClick={() => setSelectedSort('created')}
@@ -162,7 +165,7 @@ export default function VacanciesPage() {
                                         : "text-zinc-400 hover:text-white"
                                 }`}
                             >
-                                Свежие
+                                {isRu ? "Свежие" : "Newest"}
                             </button>
                             <button
                                 onClick={() => setSelectedSort('salary')}
@@ -172,12 +175,12 @@ export default function VacanciesPage() {
                                         : "text-zinc-400 hover:text-white"
                                 }`}
                             >
-                                По зарплате
+                                {isRu ? "По зарплате" : "By Salary"}
                             </button>
                         </div>
 
                         <div className="flex items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5">
-                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">Формат:</span>
+                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">{isRu ? "Формат:" : "Format:"}</span>
                             <button
                                 onClick={() => setSelectedFormat(null)}
                                 className={`px-2.5 py-1 rounded-lg transition ${
@@ -186,7 +189,7 @@ export default function VacanciesPage() {
                                         : "text-zinc-400 hover:text-white"
                                 }`}
                             >
-                                Все
+                                {isRu ? "Все" : "All"}
                             </button>
                             <button
                                 onClick={() => setSelectedFormat(0)}
@@ -196,7 +199,7 @@ export default function VacanciesPage() {
                                         : "text-zinc-400 hover:text-white"
                                 }`}
                             >
-                                Удаленно
+                                {t.vacancies.remote}
                             </button>
                             <button
                                 onClick={() => setSelectedFormat(1)}
@@ -206,7 +209,7 @@ export default function VacanciesPage() {
                                         : "text-zinc-400 hover:text-white"
                                 }`}
                             >
-                                Гибрид
+                                {t.vacancies.hybrid}
                             </button>
                             <button
                                 onClick={() => setSelectedFormat(2)}
@@ -216,12 +219,12 @@ export default function VacanciesPage() {
                                         : "text-zinc-400 hover:text-white"
                                 }`}
                             >
-                                Офис
+                                {t.vacancies.office}
                             </button>
                         </div>
 
                         <div className="flex items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5">
-                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">Уровень:</span>
+                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">{isRu ? "Уровень:" : "Level:"}</span>
                             <button
                                 onClick={() => setSelectedLevel(null)}
                                 className={`px-2.5 py-1 rounded-lg transition ${
@@ -230,7 +233,7 @@ export default function VacanciesPage() {
                                         : "text-zinc-400 hover:text-white"
                                 }`}
                             >
-                                Все
+                                {isRu ? "Все" : "All"}
                             </button>
                             {[
                                 { val: 1, label: "Junior" },
@@ -254,7 +257,7 @@ export default function VacanciesPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        <span className="text-[11px] text-zinc-500 font-semibold uppercase tracking-wider mr-1">Стек:</span>
+                        <span className="text-[11px] text-zinc-500 font-semibold uppercase tracking-wider mr-1">{isRu ? "Стек:" : "Stack:"}</span>
                         {popularStacks.map((tech) => {
                             const isSelected = selectedStack.toLowerCase() === tech.toLowerCase();
                             return (
@@ -277,7 +280,7 @@ export default function VacanciesPage() {
                                 className="px-2 py-0.5 text-[11px] rounded-lg text-zinc-500 hover:text-red-400 transition flex items-center gap-1"
                             >
                                 <X size={12} />
-                                Сбросить
+                                {isRu ? "Сбросить" : "Reset"}
                             </button>
                         )}
                     </div>
@@ -295,9 +298,9 @@ export default function VacanciesPage() {
                             <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-500">
                                 <Briefcase size={22} />
                             </div>
-                            <h3 className="text-sm font-semibold text-zinc-200">Вакансий не найдено</h3>
+                            <h3 className="text-sm font-semibold text-zinc-200">{t.vacancies.noVacancies}</h3>
                             <p className="text-xs text-zinc-500 max-w-sm">
-                                Попробуйте изменить параметры поиска или фильтры по уровню и технологиям.
+                                {isRu ? "Попробуйте изменить параметры поиска или фильтры по уровню и технологиям." : "Try adjusting your search query or filters by level and technologies."}
                             </p>
                         </div>
                     ) : (
@@ -355,7 +358,7 @@ export default function VacanciesPage() {
                                                     {v.matchPercent && (
                                                         <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                                                             <Sparkles size={11} className="text-emerald-400" />
-                                                            {v.matchPercent}% совпадение
+                                                            {v.matchPercent}% {isRu ? "совпадение" : "match"}
                                                         </span>
                                                     )}
                                                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -389,7 +392,7 @@ export default function VacanciesPage() {
                                                 disabled={isApplyingId === v.id}
                                                 className="px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-lg shadow-white/5"
                                             >
-                                                {isApplyingId === v.id ? "Отправка..." : "Откликнуться"}
+                                                {isApplyingId === v.id ? (isRu ? "Отправка..." : "Sending...") : t.vacancies.apply}
                                             </button>
                                         </div>
                                     </div>
@@ -404,9 +407,9 @@ export default function VacanciesPage() {
                                                 className="mt-1 text-[11px] text-zinc-500 hover:text-zinc-300 flex items-center gap-1 transition"
                                             >
                                                 {isExpanded ? (
-                                                    <>Свернуть <ChevronUp size={12} /></>
+                                                    <>{isRu ? "Свернуть" : "Collapse"} <ChevronUp size={12} /></>
                                                 ) : (
-                                                    <>Развернуть описание <ChevronDown size={12} /></>
+                                                    <>{isRu ? "Развернуть описание" : "Expand description"} <ChevronDown size={12} /></>
                                                 )}
                                             </button>
                                         )}
@@ -426,7 +429,7 @@ export default function VacanciesPage() {
                                         </div>
 
                                         <span className="text-[11px] text-zinc-500 font-mono shrink-0 pl-2">
-                                            {new Date(v.created).toLocaleDateString()}
+                                            {new Date(v.created).toLocaleDateString(isRu ? 'ru-RU' : 'en-US')}
                                         </span>
                                     </div>
                                 </div>

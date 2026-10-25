@@ -4,9 +4,12 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Cookies from 'js-cookie';
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Login() {
     const router = useRouter();
+    const { language, setLanguage, t } = useLanguage();
+    const isRu = language === 'ru';
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -29,13 +32,21 @@ export default function Login() {
         catch (err: any) 
         {
             console.error(err);
-            setError("Неверный логин или пароль");
+            setError(isRu ? "Неверный логин или пароль" : "Invalid username or password");
         }
     };
     
 
   return (
    <div className="min-h-screen flex items-center justify-center p-4 relative">
+      <button
+        type="button"
+        onClick={() => setLanguage(isRu ? 'en' : 'ru')}
+        className="absolute top-6 right-6 z-20 px-3 py-1.5 rounded-xl border border-white/10 bg-zinc-900/80 text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+      >
+        {isRu ? 'RU / EN' : 'EN / RU'}
+      </button>
+
       <div className="w-full max-w-[400px] bg-[#0a0a0a] border border-white/5 rounded-[32px] p-8 md:p-10 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-white/[0.02] rounded-full blur-3xl pointer-events-none" />
 
@@ -50,8 +61,12 @@ export default function Login() {
               </g>
             </svg>
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-100">Welcome back</h1>
-          <p className="text-xs text-zinc-500 mt-1.5">Enter your details to sign in to your account</p>
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-100">
+            {isRu ? 'С возвращением' : 'Welcome back'}
+          </h1>
+          <p className="text-xs text-zinc-500 mt-1.5">
+            {isRu ? 'Введите данные для входа в аккаунт' : 'Enter your details to sign in to your account'}
+          </p>
         </div>
 
         <form className="space-y-4 relative z-10" onSubmit={(e) => {
@@ -59,7 +74,9 @@ export default function Login() {
             handleLogin();
         }}>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Username or Email</label>
+            <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+              {isRu ? 'Имя пользователя или Email' : 'Username or Email'}
+            </label>
             <input
               type="text"
               placeholder="name@example.com"
@@ -70,9 +87,11 @@ export default function Login() {
 
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Password</label>
+              <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+                {isRu ? 'Пароль' : 'Password'}
+              </label>
               <a href="#" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-                Forgot?
+                {isRu ? 'Забыли?' : 'Forgot?'}
               </a>
             </div>
             <input
@@ -87,7 +106,7 @@ export default function Login() {
             type="submit"
             className="w-full py-3 mt-2 rounded-xl bg-white text-zinc-950 text-sm font-medium hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200"
           >
-            Sign In
+            {isRu ? 'Войти' : 'Sign In'}
           </button>
 
           <div className="relative my-6 z-10 flex items-center justify-center">
@@ -99,7 +118,9 @@ export default function Login() {
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-white/5"></div>
           </div>
-          <span className="relative px-3 text-[10px] text-zinc-500 bg-[#0a0a0a] uppercase tracking-wider">or</span>
+          <span className="relative px-3 text-[10px] text-zinc-500 bg-[#0a0a0a] uppercase tracking-wider">
+            {isRu ? 'или' : 'or'}
+          </span>
         </div>
 
         <div className="grid grid-cols-2 gap-3 relative z-10">
@@ -118,9 +139,9 @@ export default function Login() {
         </div>
 
         <p className="text-center text-xs text-zinc-500 mt-8 relative z-10">
-          Don&apos;t have an account?{' '}
+          {isRu ? 'Нет аккаунта?' : "Don't have an account?"}{' '}
           <a href="/register" className="text-zinc-300 hover:underline transition-all">
-            Sign up
+            {isRu ? 'Зарегистрироваться' : 'Sign up'}
           </a>
         </p>
 

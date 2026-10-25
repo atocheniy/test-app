@@ -1,11 +1,14 @@
 "use client"
 
+import { useLanguage } from "@/context/LanguageContext";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LinearBlur } from "progressive-blur";
 
 export default function Titlebar({ title }: { title: string }) {
     const router = useRouter();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
 
   return (
     <div className="sticky top-0 shrink-0 z-1000 relative">
@@ -29,7 +32,7 @@ export default function Titlebar({ title }: { title: string }) {
                 type="button"
                 onClick={() => router.back()}
                 className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition duration-150 cursor-pointer shrink-0"
-                title="Назад"
+                title={isRu ? "Назад" : t.common.back}
             >
             <ArrowLeft size={18} />
         </button>

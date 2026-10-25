@@ -6,6 +6,7 @@ import PublicBlock from "@/components/public_block";
 import { PostSkeleton, ProfileSkeleton } from "@/components/skeletons";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { ProjectService } from "@/services/projectService";
 import type { Post as PostType, ProjectDetails, ProjectStatus } from "@/types/auth";
 import { upload } from "@vercel/blob/client";
@@ -38,6 +39,8 @@ export default function ProjectPage() {
     const router = useRouter();
     const id = params.id as string;
     const { userData, connection } = useApplication();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
 
     const [mounted, setMounted] = useState(false);
     const [project, setProject] = useState<ProjectDetails | null>(null);
@@ -86,7 +89,7 @@ export default function ProjectPage() {
             setProject(data);
             setIsStarred(data.isStarredByMe);
             setStarsCount(data.starsCount ?? 0);
-            document.title = `${data.name} — Проект`;
+            document.title = `${data.name} — ${isRu ? 'Проект' : 'Project'}`;
         } catch (err) {
             console.error("Ошибка загрузки проекта:", err);
         } finally {
@@ -215,7 +218,7 @@ export default function ProjectPage() {
             setEditBannerUrl(blob.url);
         } catch (err) {
             console.error("Ошибка загрузки баннера:", err);
-            alert("Не удалось загрузить баннер");
+            alert(isRu ? "Не удалось загрузить баннер" : "Failed to upload banner");
         } finally {
             setIsUploadingBanner(false);
             if (bannerInputRef.current) bannerInputRef.current.value = '';
@@ -238,7 +241,7 @@ export default function ProjectPage() {
             setEditImages(prev => [...prev, ...newUrls]);
         } catch (err) {
             console.error("Ошибка загрузки изображений:", err);
-            alert("Не удалось загрузить изображения");
+            alert(isRu ? "Не удалось загрузить изображения" : "Failed to upload images");
         } finally {
             setIsUploadingImages(false);
             if (imagesInputRef.current) imagesInputRef.current.value = '';
@@ -260,7 +263,7 @@ export default function ProjectPage() {
     const handleSaveProject = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editName.trim()) {
-            alert("Введите название проекта");
+            alert(isRu ? "Введите название проекта" : "Please enter a project name");
             return;
         }
 
@@ -294,7 +297,7 @@ export default function ProjectPage() {
             setIsEditOpen(false);
         } catch (err) {
             console.error("Ошибка сохранения проекта:", err);
-            alert("Не удалось сохранить проект");
+            alert(isRu ? "Не удалось сохранить проект" : "Failed to save project");
         } finally {
             setIsSaving(false);
         }
@@ -304,9 +307,20 @@ export default function ProjectPage() {
         ? project.images
         : (project?.imageUrl ? [project.imageUrl] : []);
 
-    const statusInfo = typeof project?.status === 'number' && PROJECT_STATUS_MAP[project.status]
-        ? PROJECT_STATUS_MAP[project.status]
-        : PROJECT_STATUS_MAP[0];
+    const statusNumber = typeof project?.status === 'number' && PROJECT_STATUS_MAP[project.status]
+        ? project.status
+        : 0;
+    const statusInfo = PROJECT_STATUS_MAP[statusNumber];
+
+    const getStatusLabel = (statusVal: number) => {
+        switch (statusVal) {
+            case 0: return isRu ? "В разработке" : "In Progress";
+            case 1: return isRu ? "Бета" : "Beta";
+            case 2: return isRu ? "Релиз" : "Released";
+            case 3: return isRu ? "Архив" : "Archived";
+            default: return statusInfo?.label || (isRu ? "В разработке" : "In Progress");
+        }
+    };
 
     const isOwner = Boolean(project?.isMyProject);
 
@@ -316,11 +330,11 @@ export default function ProjectPage() {
 
     return (
         <div className="flex flex-col min-h-full pb-16 animate-fade-in">
-            <Titlebar title={project?.name || "Проект"}>
+            <Titlebar title={project?.name || (isRu ? "Проект" : "Project")}>
                 <button
                     onClick={() => router.back()}
                     className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition"
-                    title="Назад"
+                    title={t.common.back}
                 >
                     <ArrowLeft size={18} />
                 </button>
@@ -329,13 +343,13 @@ export default function ProjectPage() {
             {!project ? (
                 <div className="p-12 text-center flex flex-col items-center justify-center animate-fade-in">
                     <FolderKanban className="w-12 h-12 text-zinc-600 mb-3" />
-                    <h3 className="text-lg font-semibold text-zinc-200">Проект не найден</h3>
-                    <p className="text-sm text-zinc-400 mt-1">Возможно, он был удалён или ссылка некорректна.</p>
+                    <h3 className="text-lg font-semibold text-zinc-200">{isRu ? "Проект не найден" : "Project not found"}</h3>
+                    <p className="text-sm text-zinc-400 mt-1">{isRu ? "Возможно, он был удалён или ссылка некорректна." : "It may have been deleted or the link is invalid."}</p>
                     <button
                         onClick={() => router.back()}
                         className="mt-4 px-4 py-2 bg-white text-black text-sm font-medium rounded-xl hover:bg-zinc-200 transition"
                     >
-                        Вернуться назад
+                        {isRu ? "Вернуться назад" : "Go back"}
                     </button>
                 </div>
             ) : (
@@ -382,13 +396,13 @@ export default function ProjectPage() {
                                             {statusInfo && (
                                                 <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full border ${statusInfo.badgeClass} shrink-0`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotClass}`} />
-                                                    {statusInfo.label}
+                                                    {getStatusLabel(statusNumber)}
                                                 </span>
                                             )}
                                         </div>
 
                                         <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                                            <span>Создатель:</span>
+                                            <span>{isRu ? "Создатель:" : "Creator:"}</span>
                                             <Link
                                                 href={isOwner ? '/profile' : `/profile/${project.authorUsername}`}
                                                 className="inline-flex items-center gap-1.5 text-zinc-200 hover:text-white font-medium hover:underline transition-colors"
@@ -423,7 +437,7 @@ export default function ProjectPage() {
                                             size={14}
                                             className={isStarred ? "fill-amber-400 text-amber-400" : "text-zinc-400"}
                                         />
-                                        <span>{isStarred ? "В избранном" : "В избранное"}</span>
+                                        <span>{isStarred ? (isRu ? "В избранном" : "Starred") : (isRu ? "В избранное" : "Star")}</span>
                                         <span className="ml-1 px-1.5 py-0.2 rounded-md bg-white/10 text-[11px] font-mono">
                                             {starsCount}
                                         </span>
@@ -462,7 +476,7 @@ export default function ProjectPage() {
                                             className="inline-flex items-center gap-1.5 text-xs font-semibold h-9 px-4 rounded-xl bg-white text-black hover:bg-zinc-200 transition cursor-pointer shadow-sm"
                                         >
                                             <Pencil size={12} />
-                                            <span>Редактировать</span>
+                                            <span>{t.post.edit}</span>
                                         </button>
                                     )}
                                 </div>
@@ -494,7 +508,7 @@ export default function ProjectPage() {
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Layers size={16} className="text-zinc-400" />
-                                    <h3 className="text-sm font-semibold text-zinc-200">Галерея проекта</h3>
+                                    <h3 className="text-sm font-semibold text-zinc-200">{isRu ? "Галерея проекта" : "Project Gallery"}</h3>
                                     <span className="text-xs text-zinc-500">({allImages.length})</span>
                                 </div>
                                 <button
@@ -503,7 +517,7 @@ export default function ProjectPage() {
                                     className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-white transition"
                                 >
                                     <Maximize2 size={13} />
-                                    <span>Увеличить</span>
+                                    <span>{isRu ? "Увеличить" : "Expand"}</span>
                                 </button>
                             </div>
 
@@ -575,7 +589,7 @@ export default function ProjectPage() {
                             <div className="flex items-center gap-2">
                                 <BookOpen size={18} className="text-zinc-400" />
                                 <h3 className="text-base font-semibold text-zinc-100">
-                                    Лента разработки
+                                    {isRu ? "Лента разработки" : "Devlog Feed"}
                                 </h3>
                                 <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-400 font-mono">
                                     {posts.length}
@@ -587,9 +601,9 @@ export default function ProjectPage() {
                             <PublicBlock
                                 ProjectId={id}
                                 Avatar={userData?.avatar}
-                                title="Новая запись"
-                                subtitle="Поделитесь новостью, обновлением или релизом проекта"
-                                placeholder="Опубликуйте обновление для этого проекта..."
+                                title={isRu ? "Новая запись" : "New Entry"}
+                                subtitle={isRu ? "Поделитесь новостью, обновлением или релизом проекта" : "Share a news update, devlog, or project release"}
+                                placeholder={isRu ? "Опубликуйте обновление для этого проекта..." : "Publish an update for this project..."}
                                 className="m-0 border border-white/5 rounded-2xl bg-zinc-950/40"
                                 onPostCreated={loadPosts}
                             />
@@ -603,11 +617,11 @@ export default function ProjectPage() {
                         ) : posts.length === 0 ? (
                             <div className="p-10 border border-white/5 rounded-2xl bg-zinc-950/20 text-center flex flex-col items-center justify-center">
                                 <BookOpen className="w-10 h-10 text-zinc-600 mb-2.5" />
-                                <h4 className="text-sm font-semibold text-zinc-300">В ленте пока нет записей</h4>
+                                <h4 className="text-sm font-semibold text-zinc-300">{isRu ? "В ленте пока нет записей" : "No entries in the feed yet"}</h4>
                                 <p className="text-xs text-zinc-500 mt-1 max-w-sm">
                                     {isOwner
-                                        ? "Напишите первую заметку о ходе разработки, релизах или планах проекта выше!"
-                                        : "Создатель проекта скоро опубликует первые новости и обновления."}
+                                        ? (isRu ? "Напишите первую заметку о ходе разработки, релизах или планах проекта выше!" : "Write your first note about development progress, releases, or project plans above!")
+                                        : (isRu ? "Создатель проекта скоро опубликует первые новости и обновления." : "The project creator will publish the first news and updates soon.")}
                                 </p>
                             </div>
                         ) : (
@@ -619,7 +633,7 @@ export default function ProjectPage() {
                                             Name={p.authorName}
                                             UserName={p.authorUsername}
                                             Content={p.content}
-                                            Time={p.created ? new Date(p.created).toLocaleDateString() : ""}
+                                            Time={p.created ? new Date(p.created).toLocaleDateString(isRu ? 'ru-RU' : 'en-US') : ""}
                                             Avatar={p.authorAvatar}
                                             Likes={p.likesCount}
                                             isLikedByMe={p.isLikedByMe}
@@ -705,7 +719,7 @@ export default function ProjectPage() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-                            <h3 className="text-base font-semibold text-white">Редактирование проекта</h3>
+                            <h3 className="text-base font-semibold text-white">{isRu ? "Редактирование проекта" : "Edit Project"}</h3>
                             <button
                                 type="button"
                                 onClick={() => setIsEditOpen(false)}
@@ -718,28 +732,28 @@ export default function ProjectPage() {
                         <form onSubmit={handleSaveProject} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    Название проекта *
+                                    {isRu ? "Название проекта *" : "Project Name *"}
                                 </label>
                                 <input
                                     type="text"
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
                                     className="w-full px-3 py-2 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30"
-                                    placeholder="Мой крутой проект"
+                                    placeholder={isRu ? "Мой крутой проект" : "My awesome project"}
                                     required
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    Статус проекта
+                                    {isRu ? "Статус проекта" : "Project Status"}
                                 </label>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {[
-                                        { val: 0, label: "В разработке" },
-                                        { val: 1, label: "Бета" },
-                                        { val: 2, label: "Релиз" },
-                                        { val: 3, label: "Архив" }
+                                        { val: 0, label: isRu ? "В разработке" : "In Progress" },
+                                        { val: 1, label: isRu ? "Бета" : "Beta" },
+                                        { val: 2, label: isRu ? "Релиз" : "Released" },
+                                        { val: 3, label: isRu ? "Архив" : "Archived" }
                                     ].map((s) => (
                                         <button
                                             key={s.val}
@@ -759,20 +773,20 @@ export default function ProjectPage() {
 
                             <div>
                                 <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    Описание
+                                    {isRu ? "Описание" : "Description"}
                                 </label>
                                 <textarea
                                     value={editDesc}
                                     onChange={(e) => setEditDesc(e.target.value)}
                                     rows={3}
                                     className="w-full px-3 py-2 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 custom-scrollbar resize-none"
-                                    placeholder="О чем этот проект? Какую проблему решает?"
+                                    placeholder={isRu ? "О чем этот проект? Какую проблему решает?" : "What is this project about? What problem does it solve?"}
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    Баннер (обложка)
+                                    {isRu ? "Баннер (обложка)" : "Banner (Cover)"}
                                 </label>
                                 <div className="flex items-center gap-2">
                                     <input
@@ -789,14 +803,14 @@ export default function ProjectPage() {
                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-xl text-xs font-medium text-zinc-300 transition cursor-pointer disabled:opacity-50"
                                     >
                                         {isUploadingBanner ? <Loader2 size={13} className="animate-spin" /> : <Camera size={13} />}
-                                        <span>{editBannerUrl ? "Заменить баннер" : "Загрузить баннер"}</span>
+                                        <span>{editBannerUrl ? (isRu ? "Заменить баннер" : "Replace banner") : (isRu ? "Загрузить баннер" : "Upload banner")}</span>
                                     </button>
                                     {editBannerUrl && (
                                         <button
                                             type="button"
                                             onClick={() => setEditBannerUrl('')}
                                             className="p-1.5 text-zinc-400 hover:text-red-400 rounded-lg transition"
-                                            title="Удалить баннер"
+                                            title={isRu ? "Удалить баннер" : "Remove banner"}
                                         >
                                             <Trash2 size={14} />
                                         </button>
@@ -811,7 +825,7 @@ export default function ProjectPage() {
 
                             <div>
                                 <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    Скриншоты и медиа
+                                    {isRu ? "Скриншоты и медиа" : "Screenshots & Media"}
                                 </label>
                                 <div className="flex items-center gap-2 mb-2">
                                     <input
@@ -829,7 +843,7 @@ export default function ProjectPage() {
                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-xl text-xs font-medium text-zinc-300 transition cursor-pointer disabled:opacity-50"
                                     >
                                         {isUploadingImages ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
-                                        <span>Добавить скриншоты</span>
+                                        <span>{isRu ? "Добавить скриншоты" : "Add screenshots"}</span>
                                     </button>
                                 </div>
                                 {editImages.length > 0 && (
@@ -879,7 +893,7 @@ export default function ProjectPage() {
 
                             <div>
                                 <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    Стек технологий
+                                    {isRu ? "Стек технологий" : "Tech Stack"}
                                 </label>
                                 <div className="flex gap-2 mb-2">
                                     <input
@@ -900,7 +914,7 @@ export default function ProjectPage() {
                                         onClick={handleAddTech}
                                         className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-medium text-zinc-200 transition"
                                     >
-                                        Добавить
+                                        {isRu ? "Добавить" : "Add"}
                                     </button>
                                 </div>
                                 {editTechs.length > 0 && (
@@ -930,7 +944,7 @@ export default function ProjectPage() {
                                     onClick={() => setIsEditOpen(false)}
                                     className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white rounded-xl hover:bg-white/5 transition"
                                 >
-                                    Отмена
+                                    {t.common.cancel}
                                 </button>
                                 <button
                                     type="submit"
@@ -938,7 +952,7 @@ export default function ProjectPage() {
                                     className="px-5 py-2 text-xs font-semibold bg-white text-black hover:bg-zinc-200 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50"
                                 >
                                     {isSaving && <Loader2 size={13} className="animate-spin" />}
-                                    <span>Сохранить</span>
+                                    <span>{t.common.save}</span>
                                 </button>
                             </div>
                         </form>

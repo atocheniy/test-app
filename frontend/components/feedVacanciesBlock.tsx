@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from "@/context/LanguageContext";
 import { formatSalary } from "@/libs/format";
 import type { Vacancy } from "@/types/auth";
 import {
@@ -22,6 +23,8 @@ interface FeedVacanciesBlockProps {
 }
 
 export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, isRefreshing }: FeedVacanciesBlockProps) {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
@@ -62,10 +65,10 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
 
     const formatWorkTypeText = (fmt: any) => {
         switch (fmt) {
-            case 0: case '0': case 'Remote': return 'Удаленно';
-            case 1: case '1': case 'Hybrid': return 'Гибрид';
-            case 2: case '2': case 'Office': return 'Офис';
-            default: return typeof fmt === 'string' ? fmt : 'Удаленно';
+            case 0: case '0': case 'Remote': return isRu ? 'Удаленно' : t.vacancies.remote;
+            case 1: case '1': case 'Hybrid': return isRu ? 'Гибрид' : t.vacancies.hybrid;
+            case 2: case '2': case 'Office': return isRu ? 'Офис' : t.vacancies.office;
+            default: return typeof fmt === 'string' ? fmt : (isRu ? 'Удаленно' : t.vacancies.remote);
         }
     };
 
@@ -75,7 +78,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                 <div className="flex items-center gap-2">
                     <Briefcase size={15} className="text-zinc-400" />
                     <span className="font-semibold text-sm text-zinc-200">
-                        Рекомендуемые вакансии
+                        {isRu ? 'Рекомендуемые вакансии' : 'Recommended vacancies'}
                     </span>
                     <span className="text-[11px] text-zinc-500 font-mono">
                         · {vacancies.length}
@@ -88,7 +91,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                             type="button"
                             onClick={onRefresh}
                             className="p-1 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition cursor-pointer"
-                            title="Обновить рекомендации"
+                            title={isRu ? "Обновить рекомендации" : "Refresh recommendations"}
                         >
                             <RotateCcw size={13} className={isRefreshing ? "animate-spin text-emerald-400" : ""} />
                         </button>
@@ -98,7 +101,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                         href="/vacancies"
                         className="text-xs text-zinc-500 hover:text-zinc-300 transition"
                     >
-                        Все вакансии →
+                        {isRu ? 'Все вакансии →' : 'All vacancies →'}
                     </Link>
 
                     {vacancies.length > 2 && (
@@ -108,7 +111,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                                 disabled={!canScrollLeft}
                                 onClick={() => scroll('left')}
                                 className="p-1 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
-                                title="Назад"
+                                title={isRu ? "Назад" : "Previous"}
                             >
                                 <ChevronLeft size={15} />
                             </button>
@@ -117,7 +120,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                                 disabled={!canScrollRight}
                                 onClick={() => scroll('right')}
                                 className="p-1 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
-                                title="Вперед"
+                                title={isRu ? "Вперед" : "Next"}
                             >
                                 <ChevronRight size={15} />
                             </button>
@@ -129,7 +132,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                             type="button"
                             onClick={onDismiss}
                             className="p-1 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-300 transition cursor-pointer"
-                            title="Скрыть блок"
+                            title={isRu ? "Скрыть блок" : "Dismiss"}
                         >
                             <X size={14} />
                         </button>
@@ -223,7 +226,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                                         </span>
                                     ) : (
                                         <span className="text-xs text-zinc-500">
-                                            Зарплата не указана
+                                            {isRu ? 'Зарплата не указана' : 'Salary not specified'}
                                         </span>
                                     )}
                                 </div>
@@ -261,7 +264,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                                     href={`/vacancies?search=${encodeURIComponent(v.title)}`}
                                     className="w-full py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white font-medium text-xs text-center transition block"
                                 >
-                                    Смотреть вакансию
+                                    {isRu ? 'Смотреть вакансию' : 'View vacancy'}
                                 </Link>
                             </div>
                         </div>

@@ -1,3 +1,8 @@
+import { useLanguage } from "@/context/LanguageContext";
+import { X } from "lucide-react";
+import Link from "next/link";
+import { LinearBlur } from "progressive-blur";
+
 interface TitlebarMessageProps {
     Id: string;
     Name: string;
@@ -9,12 +14,11 @@ interface TitlebarMessageProps {
     onClose?: () => void;
 }
 
-import { X } from "lucide-react";
-import Link from "next/link";
-import { LinearBlur } from "progressive-blur";
-
 export default function TitlebarMessage({ Id, Name, UserName, Info, Avatar, isOnline, isTyping, onClose }: TitlebarMessageProps) 
 {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
+
     return (
         <div className="sticky top-0 shrink-0 z-50 flex items-center h-14 px-3 bg-transparent relative">
             <LinearBlur
@@ -39,6 +43,7 @@ export default function TitlebarMessage({ Id, Name, UserName, Info, Avatar, isOn
                     <button 
                         onClick={onClose}
                         className="sm:hidden p-2 rounded-full border border-white/5 hover:bg-white/5 transition cursor-pointer text-zinc-400 hover:text-white"
+                        title={isRu ? "Закрыть" : t.common.close}
                     >
                         <X size={18} />
                     </button>
@@ -46,15 +51,13 @@ export default function TitlebarMessage({ Id, Name, UserName, Info, Avatar, isOn
                 <div className="relative w-10 h-10 shrink-0 rounded-full">
                     <Link href={`/profile/${UserName.replace('@', '')}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
                         {Avatar && (
-                            <img src={Avatar} className="w-full h-full object-cover" alt="Avatar" />
+                            <img src={Avatar} className="w-full h-full object-cover" alt={isRu ? "Аватар" : "Avatar"} />
                         )}
-
-                        
                     </Link>
                     {isOnline && (
                         <span 
                             className="absolute bottom-0 right-0 w-3 h-3 bg-white border-2 border-[#0a0a0a] rounded-full" 
-                            title="Online"
+                            title={isRu ? "В сети" : "Online"}
                         />
                     )}
                 </div>
@@ -63,7 +66,7 @@ export default function TitlebarMessage({ Id, Name, UserName, Info, Avatar, isOn
                     
                     {isTyping ? (
                         <div className="flex items-center gap-1.5 text-xs text-white-400 font-medium animate-pulse">
-                            <span>печатает</span>
+                            <span>{isRu ? "печатает" : "typing"}</span>
                             <span className="flex gap-0.5 items-center mt-1">
                                 <span className="w-1 h-1 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.3s]"></span>
                                 <span className="w-1 h-1 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.15s]"></span>
@@ -78,5 +81,5 @@ export default function TitlebarMessage({ Id, Name, UserName, Info, Avatar, isOn
                 </div>
             </div>
         </div>
-    )
+    );
 }

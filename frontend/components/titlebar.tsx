@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from "@/context/LanguageContext";
 import { LinearBlur } from "progressive-blur";
 
 export default function Titlebar({ 
@@ -9,6 +10,9 @@ export default function Titlebar({
     title: string; 
     children?: React.ReactNode; 
 }) {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
+
     return (
         <div className="sticky top-0 shrink-0 z-50 flex items-center h-14 px-6 relative">
             <LinearBlur
@@ -27,7 +31,7 @@ export default function Titlebar({
             />
 
             <div className="flex items-center gap-6 relative z-10 w-full">
-                <h1 className="text-lg font-bold text-zinc-100 shrink-0">{title}</h1>
+                <h1 className="text-lg font-bold text-zinc-100 shrink-0">{title || (isRu ? 'Лента' : t.feed.title)}</h1>
                 {children}
             </div>
         </div>

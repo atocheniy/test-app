@@ -17,6 +17,7 @@ export default function Feed() {
 
     const { userData, postsData, refreshPostsData, hasMorePosts, isLoadingMorePosts, loadMorePosts } = useApplication();
     const { t, language } = useLanguage();
+    const isRu = language === 'ru';
     const [feedTab, setFeedTab] = useState<'all' | 'watching'>('all');
     const [isLoading, setIsLoading] = useState(postsData.length === 0);
     const [recommendedVacancies, setRecommendedVacancies] = useState<Vacancy[]>([]);
@@ -41,7 +42,7 @@ export default function Feed() {
     };
 
     useEffect(() => {
-        document.title = 'Feed';
+        document.title = isRu ? 'Лента' : 'Feed';
         const load = async () => {
             if (postsData.length === 0) setIsLoading(true);
             await refreshPostsData();
@@ -98,7 +99,7 @@ export default function Feed() {
                             feedTab === 'all' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                     >
-                        {language === 'ru' ? 'Все' : 'All'}
+                        {isRu ? 'Все' : 'All'}
                         {feedTab === 'all' && (
                             <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full" />
                         )}
@@ -109,7 +110,7 @@ export default function Feed() {
                             feedTab === 'watching' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                     >
-                        {language === 'ru' ? 'Подписки' : 'Watching'}
+                        {isRu ? 'Подписки' : 'Watching'}
                         {feedTab === 'watching' && (
                             <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full" />
                         )}
@@ -130,10 +131,10 @@ export default function Feed() {
                     feedTab === 'watching' ? (
                         <div className="p-12 text-center flex flex-col items-center justify-center gap-3">
                             <p className="text-zinc-400 font-medium">
-                                {language === 'ru' ? 'Ваша лента отслеживания пуста' : 'Your watching feed is empty'}
+                                {isRu ? 'Ваша лента отслеживания пуста' : 'Your watching feed is empty'}
                             </p>
                             <p className="text-xs text-zinc-500 max-w-sm">
-                                {language === 'ru' 
+                                {isRu 
                                     ? 'Вы пока никого не читаете. Нажмите «Читать» в профиле интересных разработчиков, чтобы видеть их публикации здесь.'
                                     : 'You are not following anyone yet. Click "Watch" on profiles of developers you like to see their posts here.'}
                             </p>
@@ -141,7 +142,7 @@ export default function Feed() {
                                 href="/search" 
                                 className="mt-2 px-4 py-2 text-xs font-semibold rounded-2xl bg-white/10 hover:bg-white/15 text-white transition"
                             >
-                                {language === 'ru' ? 'Найти разработчиков' : 'Discover developers'}
+                                {isRu ? 'Найти разработчиков' : 'Discover developers'}
                             </Link>
                         </div>
                     ) : (
@@ -203,7 +204,7 @@ export default function Feed() {
 
                 {!hasMorePosts && postsData.length > 0 && (
                     <div className="py-8 text-center text-xs text-zinc-600 select-none">
-                        Вы просмотрели все публикации
+                        {isRu ? 'Вы просмотрели все публикации' : 'You have viewed all posts'}
                     </div>
                 )}
             </div>

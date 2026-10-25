@@ -93,20 +93,19 @@ export default function PublicBlock({
     const videoInputRef = useRef<HTMLInputElement>(null);
     const { userData, refreshUserData, refreshPostsData, repostTarget, setRepostTarget } = useApplication();
     const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     const activePlaceholder = placeholder || t.feed.whatsOnYourMind;
 
     const handleCreatePost = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (uploadingMedia) {
-            if (language == 'ru') alert("Пожалуйста, дождитесь окончания загрузки медиа");
-            else alert("Please wait until the media is loaded.");
+            alert(isRu ? "Пожалуйста, дождитесь окончания загрузки медиа" : "Please wait until media upload finishes");
             return;
         }
 
         if (!newContent.trim() && attachments.length === 0 && !repostTarget) {
-            if (language == 'ru') alert("Пост не может быть пустым");
-            else alert("The post cannot be empty.");
+            alert(isRu ? "Пост не может быть пустым" : "Post cannot be empty");
             return;
         }
 
@@ -135,7 +134,7 @@ export default function PublicBlock({
         } catch (error: any) {
             console.error("Ошибка создания поста:", error);
             const errorMsg = error?.response?.data?.message || (typeof error?.response?.data === 'string' ? error.response.data : null);
-            alert(errorMsg || "Не удалось создать пост");
+            alert(errorMsg || (isRu ? "Не удалось создать пост" : "Failed to create post"));
         } finally {
             setIsUploading(false);
         }
@@ -146,7 +145,7 @@ export default function PublicBlock({
         if (!file) return;
 
         if (attachments.some(isVideoUrl)) {
-            alert("Нельзя прикреплять изображения к посту, где уже есть видео.");
+            alert(isRu ? "Нельзя прикреплять изображения к посту, где уже есть видео." : "Cannot attach images to a post that already has a video.");
             if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
@@ -160,7 +159,7 @@ export default function PublicBlock({
             setAttachments((prev) => [...prev, newBlob.url]);
         } catch (error: any) {
             console.error("Ошибка загрузки изображения:", error);
-            alert(error?.message || "Не удалось загрузить изображение");
+            alert(error?.message || (isRu ? "Не удалось загрузить изображение" : "Failed to upload image"));
         } finally {
             setUploadingMedia(null);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -173,19 +172,25 @@ export default function PublicBlock({
 
         const MAX_SIZE_MB = 60;
         if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-            alert(`Размер видео превышает ${MAX_SIZE_MB} МБ (${(file.size / (1024 * 1024)).toFixed(1)} МБ). Пожалуйста, выберите файл поменьше.`);
+            alert(isRu
+                ? `Размер видео превышает ${MAX_SIZE_MB} МБ (${(file.size / (1024 * 1024)).toFixed(1)} МБ). Пожалуйста, выберите файл поменьше.`
+                : `Video size exceeds ${MAX_SIZE_MB} MB (${(file.size / (1024 * 1024)).toFixed(1)} MB). Please choose a smaller file.`
+            );
             if (videoInputRef.current) videoInputRef.current.value = '';
             return;
         }
 
         if (attachments.some(isVideoUrl)) {
-            alert("К посту можно прикрепить только одно видео.");
+            alert(isRu ? "К посту можно прикрепить только одно видео." : "Only one video can be attached to a post.");
             if (videoInputRef.current) videoInputRef.current.value = '';
             return;
         }
 
         if (attachments.length > 0) {
-            const replace = confirm("Видео нельзя комбинировать с изображениями. Заменить прикрепленные изображения на видео?");
+            const replace = confirm(isRu
+                ? "Видео нельзя комбинировать с изображениями. Заменить прикрепленные изображения на видео?"
+                : "Videos cannot be combined with images. Replace attached images with the video?"
+            );
             if (!replace) {
                 if (videoInputRef.current) videoInputRef.current.value = '';
                 return;
@@ -205,7 +210,7 @@ export default function PublicBlock({
             setAttachments([newBlob.url]);
         } catch (error: any) {
             console.error("Ошибка загрузки видео:", error);
-            alert(error?.message || "Не удалось загрузить видео");
+            alert(error?.message || (isRu ? "Не удалось загрузить видео" : "Failed to upload video"));
         } finally {
             setUploadingMedia(null);
             if (videoInputRef.current) videoInputRef.current.value = '';
@@ -231,7 +236,7 @@ export default function PublicBlock({
 
     const handleInsertCode = () => {
         if (!codeSnippet.trim()) {
-            alert("Введите фрагмент кода для вставки.");
+            alert(isRu ? "Введите фрагмент кода для вставки." : "Enter a code snippet to insert.");
             return;
         }
 
@@ -258,7 +263,10 @@ export default function PublicBlock({
 
     const handleCancelCode = () => {
         if (codeSnippet.trim()) {
-            const discard = confirm("Закрыть редактор кода? Введенный фрагмент не будет сохранен.");
+            const discard = confirm(isRu
+                ? "Закрыть редактор кода? Введенный фрагмент не будет сохранен."
+                : "Close code editor? The entered snippet will not be saved."
+            );
             if (!discard) return;
         }
         setCodeSnippet('');
@@ -268,18 +276,20 @@ export default function PublicBlock({
 
     const previewCodeMarkdown = codeSnippet.trim()
         ? `\`\`\`${selectedLanguage}\n${codeFileName.trim() ? (['python', 'bash', 'yaml', 'dockerfile'].includes(selectedLanguage) ? `# ${codeFileName.trim()}\n` : `// ${codeFileName.trim()}\n`) : ''}${codeSnippet}\n\`\`\``
-        : `\`\`\`${selectedLanguage}\n// Превью фрагмента кода отобразится здесь в реальном времени...\nfunction example() {\n  return "Привет, мир!";\n}\n\`\`\``;
+        : isRu
+            ? `\`\`\`${selectedLanguage}\n// Превью фрагмента кода отобразится здесь в реальном времени...\nfunction example() {\n  return "Привет, мир!";\n}\n\`\`\``
+            : `\`\`\`${selectedLanguage}\n// Live code snippet preview will appear here...\nfunction example() {\n  return "Hello, world!";\n}\n\`\`\``;
 
     const displayAvatar = Avatar || userData?.avatar;
-    const defaultTitle = ProjectId ? "Новая запись в девлог" : "What's New";
-    const defaultSubtitle = ProjectId ? "Обновление появится в ленте проекта" : "Public posts from people you follow";
+    const defaultTitle = ProjectId ? (isRu ? "Новая запись в девлог" : "New devlog entry") : (isRu ? "Что нового" : "What's New");
+    const defaultSubtitle = ProjectId ? (isRu ? "Обновление появится в ленте проекта" : "Update will appear in the project feed") : (isRu ? "Публикации от людей, на которых вы подписаны" : "Public posts from people you follow");
 
     return (
         <div className={className || "m-4 lg:mx-8 md:mx-11 border border-white/5 rounded-xl bg-white/[0.02]"}>
             <div className="flex flex-row items-center gap-3.5 p-4 pb-2 px-4">
                 <div className="w-10 h-10 bg-zinc-800 border border-white/10 rounded-full shrink-0 overflow-hidden flex items-center justify-center text-zinc-300 font-semibold text-sm">
                     {displayAvatar ? (
-                        <img src={displayAvatar} className="w-full h-full object-cover" alt="Avatar" />
+                        <img src={displayAvatar} className="w-full h-full object-cover" alt={isRu ? "Аватар" : "Avatar"} />
                     ) : (
                         <span>{userData?.fullName?.[0]?.toUpperCase() || "U"}</span>
                     )}
@@ -299,7 +309,7 @@ export default function PublicBlock({
                                     <FileCode2 size={16} />
                                 </div>
                                 <span className="font-semibold text-sm text-zinc-100">
-                                    Вставка фрагмента кода
+                                    {isRu ? "Вставка фрагмента кода" : "Insert code snippet"}
                                 </span>
                             </div>
 
@@ -314,7 +324,7 @@ export default function PublicBlock({
                                                 : 'text-zinc-400 hover:text-white'
                                         }`}
                                     >
-                                        Код
+                                        {isRu ? "Код" : t.feed.codeSnippet}
                                     </button>
                                     <button
                                         type="button"
@@ -326,7 +336,7 @@ export default function PublicBlock({
                                         }`}
                                     >
                                         <Eye size={12} />
-                                        Превью
+                                        {isRu ? "Превью" : t.feed.markdownPreview}
                                     </button>
                                 </div>
 
@@ -334,7 +344,7 @@ export default function PublicBlock({
                                     type="button"
                                     onClick={handleCancelCode}
                                     className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
-                                    title="Закрыть режим кода"
+                                    title={isRu ? "Закрыть режим кода" : "Close code mode"}
                                 >
                                     <X size={16} />
                                 </button>
@@ -343,9 +353,10 @@ export default function PublicBlock({
 
                         <div className="flex flex-col gap-2">
                             <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider mr-1">Язык:</span>
+                                <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider mr-1">{isRu ? "Язык:" : "Language:"}</span>
                                 {POPULAR_LANGUAGES.slice(0, 10).map((lang) => {
                                     const isSelected = selectedLanguage === lang.id;
+                                    const langLabel = lang.id === 'plaintext' ? (isRu ? 'Текст' : 'Plain Text') : lang.label;
                                     return (
                                         <button
                                             key={lang.id}
@@ -357,7 +368,7 @@ export default function PublicBlock({
                                                     : 'bg-white/[0.03] text-zinc-400 border-white/5 hover:border-white/20 hover:text-zinc-200'
                                             }`}
                                         >
-                                            {lang.label}
+                                            {langLabel}
                                         </button>
                                     );
                                 })}
@@ -367,11 +378,14 @@ export default function PublicBlock({
                                     onChange={(e) => setSelectedLanguage(e.target.value)}
                                     className="px-2 py-0.5 rounded-md text-xs font-mono bg-zinc-900 border border-white/10 text-zinc-300 hover:text-white focus:outline-none focus:border-white/30 cursor-pointer"
                                 >
-                                    {POPULAR_LANGUAGES.map((lang) => (
-                                        <option key={lang.id} value={lang.id}>
-                                            {lang.label} ({lang.ext})
-                                        </option>
-                                    ))}
+                                    {POPULAR_LANGUAGES.map((lang) => {
+                                        const langLabel = lang.id === 'plaintext' ? (isRu ? 'Текст' : 'Plain Text') : lang.label;
+                                        return (
+                                            <option key={lang.id} value={lang.id}>
+                                                {langLabel} ({lang.ext})
+                                            </option>
+                                        );
+                                    })}
                                 </select>
                             </div>
 
@@ -380,7 +394,7 @@ export default function PublicBlock({
                                     type="text"
                                     value={codeFileName}
                                     onChange={(e) => setCodeFileName(e.target.value)}
-                                    placeholder="Имя файла (напр. index.ts, Program.cs) — необязательно"
+                                    placeholder={isRu ? "Имя файла (напр. index.ts, Program.cs) — необязательно" : "File name (e.g. index.ts, Program.cs) — optional"}
                                     className="w-full text-xs font-mono px-3 py-1.5 rounded-lg bg-black border border-white/10 text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition"
                                 />
                             </div>
@@ -390,14 +404,14 @@ export default function PublicBlock({
                             {codeViewMode === 'edit' ? (
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 font-mono">
-                                        <span>Код ({selectedLanguage})</span>
-                                        <span>Tab = 2 пробела</span>
+                                        <span>{isRu ? "Код" : "Code"} ({selectedLanguage})</span>
+                                        <span>{isRu ? "Tab = 2 пробела" : "Tab = 2 spaces"}</span>
                                     </div>
                                     <textarea
                                         value={codeSnippet}
                                         onChange={(e) => setCodeSnippet(e.target.value)}
                                         onKeyDown={handleCodeKeyDown}
-                                        placeholder={`// Вставьте ваш ${selectedLanguage} код сюда...\nfunction example() {\n  return "Привет!";\n}`}
+                                        placeholder={isRu ? `// Вставьте ваш ${selectedLanguage} код сюда...\nfunction example() {\n  return "Привет!";\n}` : `// Paste your ${selectedLanguage} code here...\nfunction example() {\n  return "Hello!";\n}`}
                                         className="w-full h-64 p-3.5 text-xs sm:text-sm font-mono leading-relaxed text-zinc-100 bg-black border border-white/10 rounded-xl focus:outline-none focus:border-white/30 resize-y custom-scrollbar"
                                         spellCheck={false}
                                         autoCapitalize="off"
@@ -409,9 +423,9 @@ export default function PublicBlock({
                                     <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 font-mono">
                                         <span className="flex items-center gap-1 text-zinc-300">
                                             <Sparkles size={11} className="text-zinc-400" />
-                                            Превью Markdown
+                                            {isRu ? "Превью Markdown" : "Markdown Preview"}
                                         </span>
-                                        <span className="text-[10px] text-zinc-500">Подсветка синтаксиса</span>
+                                        <span className="text-[10px] text-zinc-500">{isRu ? "Подсветка синтаксиса" : "Syntax highlighting"}</span>
                                     </div>
                                     <div className="w-full h-64 p-3.5 rounded-xl border border-white/10 bg-black overflow-y-auto overflow-x-auto custom-scrollbar">
                                         <MarkdownPreview
@@ -435,7 +449,7 @@ export default function PublicBlock({
 
                         <div className="flex items-center justify-between pt-2 border-t border-white/10">
                             <span className="text-xs text-zinc-500 font-mono">
-                                {codeSnippet.split('\n').filter(Boolean).length} строк · {codeSnippet.length} симв.
+                                {codeSnippet.split('\n').filter(Boolean).length} {isRu ? "строк" : "lines"} · {codeSnippet.length} {isRu ? "симв." : "chars"}
                             </span>
 
                             <div className="flex items-center gap-2">
@@ -444,7 +458,7 @@ export default function PublicBlock({
                                     onClick={handleCancelCode}
                                     className="px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition cursor-pointer"
                                 >
-                                    Отмена
+                                    {isRu ? "Отмена" : t.common.cancel}
                                 </button>
                                 <button
                                     type="button"
@@ -453,7 +467,7 @@ export default function PublicBlock({
                                     className="px-4 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95"
                                 >
                                     <Check size={13} />
-                                    Вставить в пост
+                                    {isRu ? "Вставить в пост" : "Insert into post"}
                                 </button>
                             </div>
                         </div>
@@ -468,7 +482,7 @@ export default function PublicBlock({
                                     className="text-[11px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 border border-white/5 flex items-center gap-1 transition cursor-pointer"
                                 >
                                     <Eye size={11} />
-                                    {isMainPreview ? "Редактировать" : "Превью поста"}
+                                    {isMainPreview ? (isRu ? "Редактировать" : t.post.edit) : (isRu ? "Превью поста" : "Post preview")}
                                 </button>
                             </div>
                         )}
@@ -507,7 +521,7 @@ export default function PublicBlock({
                             type="button"
                             onClick={() => setRepostTarget(null)}
                             className="absolute top-2.5 right-2.5 p-1 rounded-full bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition"
-                            title="Отменить репост"
+                            title={isRu ? "Отменить репост" : "Cancel repost"}
                         >
                             <X className="w-3.5 h-3.5" />
                         </button>
@@ -522,7 +536,7 @@ export default function PublicBlock({
                             <span className="text-xs text-zinc-500">@{repostTarget.authorUsername}</span>
                         </div>
                         <p className="text-xs text-zinc-400 line-clamp-2 pl-5 font-normal">
-                            {repostTarget.content || "(вложение)"}
+                            {repostTarget.content || (isRu ? "(вложение)" : "(attachment)")}
                         </p>
                     </div>
                 )}
@@ -543,13 +557,13 @@ export default function PublicBlock({
                                             </div>
                                         </>
                                     ) : (
-                                        <img src={url} className="w-full h-full object-cover" alt="Attachment" />
+                                        <img src={url} className="w-full h-full object-cover" alt={isRu ? "Вложение" : "Attachment"} />
                                     )}
                                     <button
                                         type="button"
                                         onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== index))}
                                         className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black/95 transition text-xs cursor-pointer z-10"
-                                        title="Удалить"
+                                        title={isRu ? "Удалить" : t.post.delete}
                                     >
                                         <X className="w-3 h-3" />
                                     </button>
@@ -563,7 +577,7 @@ export default function PublicBlock({
                                     <>
                                         <Video className="w-5 h-5 text-zinc-300 animate-pulse mb-1" />
                                         <span className="text-[10px] text-zinc-300 font-medium truncate w-full">
-                                            Загрузка... {uploadingMedia.progress ?? 0}%
+                                            {isRu ? "Загрузка..." : "Uploading..."} {uploadingMedia.progress ?? 0}%
                                         </span>
                                         <div className="w-full bg-white/10 h-1 rounded-full mt-1.5 overflow-hidden">
                                             <div 
@@ -575,7 +589,7 @@ export default function PublicBlock({
                                 ) : (
                                     <>
                                         <Loader2 className="w-5 h-5 text-zinc-400 animate-spin mb-1" />
-                                        <span className="text-[10px] text-zinc-400">Загрузка...</span>
+                                        <span className="text-[10px] text-zinc-400">{isRu ? "Загрузка..." : "Uploading..."}</span>
                                     </>
                                 )}
                             </div>
@@ -606,7 +620,7 @@ export default function PublicBlock({
                             disabled={isSaving || Boolean(uploadingMedia)} 
                             onClick={() => fileInputRef.current?.click()} 
                             className="p-2 w-10 h-10 text-zinc-400 hover:text-white border-white/5 rounded-xl hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40"
-                            title="Прикрепить изображение"
+                            title={isRu ? "Прикрепить изображение" : "Attach image"}
                         >
                             <ImageIcon className="w-5 h-5"/>
                         </button>
@@ -615,7 +629,7 @@ export default function PublicBlock({
                             disabled={isSaving || Boolean(uploadingMedia)} 
                             onClick={() => videoInputRef.current?.click()} 
                             className="p-2 w-10 h-10 text-zinc-400 hover:text-white border-white/5 rounded-xl hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40"
-                            title="Прикрепить видео (до 60 МБ)"
+                            title={isRu ? "Прикрепить видео (до 60 МБ)" : "Attach video (up to 60 MB)"}
                         >
                             <Video className="w-5 h-5"/>
                         </button>
@@ -631,7 +645,7 @@ export default function PublicBlock({
                                     ? 'bg-white text-black border-white shadow-sm' 
                                     : 'text-zinc-400 hover:text-white border-white/5 hover:bg-white/10'
                             }`}
-                            title="Вставить фрагмент кода (с выбором языка и превью)"
+                            title={isRu ? "Вставить фрагмент кода (с выбором языка и превью)" : "Insert code snippet (with language selection and preview)"}
                         >
                             <Code className="w-5 h-5"/>
                         </button>

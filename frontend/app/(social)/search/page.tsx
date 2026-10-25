@@ -3,6 +3,7 @@
 import Post1 from "@/components/post";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { CommunityService } from "@/services/communityService";
 import { PostService } from "@/services/postService";
 import { UserService } from "@/services/userService";
@@ -49,19 +50,21 @@ function SearchContent() {
     const [loadingRecommendedUsers, setLoadingRecommendedUsers] = useState(true);
 
     const { onlineUsers, userData } = useApplication();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     
     const tabs = [
-        { id: 'all', label: 'All' },
-        { id: 'communities', label: 'Communities' },
-        { id: 'people', label: 'People' },
-        { id: 'posts', label: 'Posts & Code' },
+        { id: 'all', label: isRu ? 'Все' : 'All' },
+        { id: 'communities', label: isRu ? 'Сообщества' : 'Communities' },
+        { id: 'people', label: isRu ? 'Люди' : 'People' },
+        { id: 'posts', label: isRu ? 'Публикации и код' : 'Posts & Code' },
     ];
 
     const fallbackTrends = [
-        { tag: '#dotnet9', displayTag: '#dotnet9', category: 'Backend Architecture', count: '8.4k posts' },
-        { tag: '#nextjs15', displayTag: '#Next.js 15', category: 'Web Development', count: '12.1k posts' },
-        { tag: '#remotejobs', displayTag: '#remotejobs', category: 'Careers & Hiring', count: '5.6k posts' },
-        { tag: '#signalr', displayTag: '#signalr', category: 'Realtime Web', count: '3.1k posts' },
+        { tag: '#dotnet9', displayTag: '#dotnet9', category: isRu ? 'Бэкенд-архитектура' : 'Backend Architecture', count: isRu ? '8.4k постов' : '8.4k posts' },
+        { tag: '#nextjs15', displayTag: '#Next.js 15', category: isRu ? 'Веб-разработка' : 'Web Development', count: isRu ? '12.1k постов' : '12.1k posts' },
+        { tag: '#remotejobs', displayTag: '#remotejobs', category: isRu ? 'Карьера и найм' : 'Careers & Hiring', count: isRu ? '5.6k постов' : '5.6k posts' },
+        { tag: '#signalr', displayTag: '#signalr', category: isRu ? 'Реальное время' : 'Realtime Web', count: isRu ? '3.1k постов' : '3.1k posts' },
     ];
 
     const displayTrends = trendingTopics.length > 0 ? trendingTopics : fallbackTrends;
@@ -167,7 +170,7 @@ function SearchContent() {
 
     return (
         <div className="flex flex-col min-h-full pb-12 animate-fade-in">
-            <Titlebar title="Search" />
+            <Titlebar title={isRu ? 'Поиск' : 'Search'} />
 
             <div className="p-4 sm:p-6 space-y-6">
                 
@@ -176,7 +179,7 @@ function SearchContent() {
                         type="text" 
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Search people, code snippets, tags, jobs..."
+                        placeholder={isRu ? 'Поиск людей, кода, тегов, вакансий...' : 'Search people, code snippets, tags, jobs...'}
                         className="w-full h-13 pl-4 pr-10 rounded-2xl bg-white/[0.03] border border-white/10 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-md transition-all text-sm sm:text-base shadow-inner"
                     />
                     {query && (
@@ -209,19 +212,19 @@ function SearchContent() {
                     <div className="space-y-8">
                         <div className="flex items-center justify-between">
                             <span className="text-xs text-zinc-400 font-medium">
-                                Results for <span className="text-white font-bold">"{query}"</span>
+                                {isRu ? 'Результаты для' : 'Results for'} <span className="text-white font-bold">"{query}"</span>
                             </span>
                         </div>
 
                         {(activeTab === 'all' || activeTab === 'communities') && (
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Communities</h3>
+                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{isRu ? 'Сообщества' : 'Communities'}</h3>
 
                                 {isLoading && communities.length === 0 ? (
-                                    <div className="p-4 text-center text-xs text-zinc-500">Searching communities...</div>
+                                    <div className="p-4 text-center text-xs text-zinc-500">{isRu ? 'Поиск сообществ...' : 'Searching communities...'}</div>
                                 ) : communities.length === 0 ? (
                                     <div className="p-4 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01]">
-                                        No communities found
+                                        {isRu ? 'Сообщества не найдены' : 'No communities found'}
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -247,7 +250,7 @@ function SearchContent() {
                                                             {comm.name}
                                                         </span>
                                                         <span className="text-xs text-zinc-500 truncate font-mono">
-                                                            c/{comm.slug} · <span className="text-zinc-400 font-sans">{comm.membersCount} members</span>
+                                                            c/{comm.slug} · <span className="text-zinc-400 font-sans">{comm.membersCount} {isRu ? 'участников' : 'members'}</span>
                                                         </span>
                                                         {comm.description && (
                                                             <span className="text-[11px] text-zinc-400 truncate mt-0.5">
@@ -269,13 +272,13 @@ function SearchContent() {
 
                         {(activeTab === 'all' || activeTab === 'people') && (
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">People</h3>
+                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{isRu ? 'Люди' : 'People'}</h3>
 
                                 {isLoading && users.length === 0 ? (
-                                    <div className="p-4 text-center text-xs text-zinc-500">Searching people...</div>
+                                    <div className="p-4 text-center text-xs text-zinc-500">{isRu ? 'Поиск людей...' : 'Searching people...'}</div>
                                 ) : users.length === 0 ? (
                                     <div className="p-4 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01]">
-                                        No users found
+                                        {isRu ? 'Пользователи не найдены' : 'No users found'}
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -312,7 +315,7 @@ function SearchContent() {
                                                                 </span>
                                                             </div>
                                                             <span className="text-xs text-zinc-500 truncate">
-                                                                @{cleanUser} {user.followers ? `· ${user.followers} followers` : ''}
+                                                                @{cleanUser} {user.followers ? `· ${user.followers} ${isRu ? 'подписчиков' : 'followers'}` : ''}
                                                             </span>
                                                             {user.bio_FirstLine && (
                                                                 <span className="text-[11px] text-zinc-400 truncate mt-0.5">
@@ -335,13 +338,13 @@ function SearchContent() {
 
                         {(activeTab === 'all' || activeTab === 'posts') && (
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Posts & Code</h3>
+                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{isRu ? 'Публикации и код' : 'Posts & Code'}</h3>
 
                                 {isLoading && posts.length === 0 ? (
-                                    <div className="p-4 text-center text-xs text-zinc-500">Searching posts...</div>
+                                    <div className="p-4 text-center text-xs text-zinc-500">{isRu ? 'Поиск публикаций...' : 'Searching posts...'}</div>
                                 ) : posts.length === 0 ? (
                                     <div className="p-4 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01]">
-                                        No posts found
+                                        {isRu ? 'Публикации не найдены' : 'No posts found'}
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
@@ -377,7 +380,7 @@ function SearchContent() {
                                 <div className="flex items-center gap-2 mb-4">
                                     <TrendingUp size={18} className="text-blue-400" />
                                     <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
-                                        Trending Topics & Discussions
+                                        {isRu ? 'Актуальные темы и обсуждения' : 'Trending Topics & Discussions'}
                                     </h2>
                                 </div>
 
@@ -394,7 +397,7 @@ function SearchContent() {
                                                     {item.displayTag || item.tag}
                                                 </span>
                                                 <span className="text-xs text-zinc-500 mt-1">
-                                                    {item.postsFormatted || item.count || `${item.postCount || 0} posts`}
+                                                    {item.postsFormatted || item.count || `${item.postCount || 0} ${isRu ? 'постов' : 'posts'}`}
                                                 </span>
                                             </div>
                                             <div className="p-2 rounded-full text-zinc-600 group-hover:text-white transition">
@@ -411,12 +414,15 @@ function SearchContent() {
                                 <div className="flex items-center gap-2 mb-4">
                                     <Sparkles size={18} className="text-amber-400" />
                                     <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
-                                        Explore by Ecosystem
+                                        {isRu ? 'Обзор по направлениям' : 'Explore by Ecosystem'}
                                     </h2>
                                 </div>
 
                                 <div className="flex flex-wrap gap-2">
-                                    {['Fullstack Development', 'AI & Machine Learning', 'UI/UX Design', '.NET & C#', 'Next.js & React', 'PostgreSQL', 'Startups & Founders', 'Remote Work'].map((category, idx) => (
+                                    {(isRu
+                                        ? ['Fullstack-разработка', 'ИИ и машинное обучение', 'UI/UX Дизайн', '.NET и C#', 'Next.js и React', 'PostgreSQL', 'Стартапы и основатели', 'Удаленная работа']
+                                        : ['Fullstack Development', 'AI & Machine Learning', 'UI/UX Design', '.NET & C#', 'Next.js & React', 'PostgreSQL', 'Startups & Founders', 'Remote Work']
+                                    ).map((category, idx) => (
                                         <button
                                             key={idx}
                                             onClick={() => setQuery(category)}
@@ -435,11 +441,11 @@ function SearchContent() {
                                     <div className="flex items-center gap-2">
                                         <Users size={18} className="text-violet-400" />
                                         <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
-                                            Recommended Developers
+                                            {isRu ? 'Рекомендуемые разработчики' : 'Recommended Developers'}
                                         </h2>
                                     </div>
                                     <span className="text-xs text-zinc-500 font-medium hidden sm:inline">
-                                        Based on your tech stack & activity
+                                        {isRu ? 'На основе вашего стека и активности' : 'Based on your tech stack & activity'}
                                     </span>
                                 </div>
 
@@ -466,7 +472,7 @@ function SearchContent() {
                                         ))
                                     ) : recommendedUsers.length === 0 ? (
                                         <div className="col-span-full p-6 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01]">
-                                            Нет доступных рекомендаций разработчиков
+                                            {isRu ? 'Нет доступных рекомендаций разработчиков' : 'No recommended developers available'}
                                         </div>
                                     ) : (
                                         recommendedUsers.map((user) => {
@@ -499,7 +505,7 @@ function SearchContent() {
                                                                 {isOnline && (
                                                                     <span 
                                                                         className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0a0a0a] rounded-full" 
-                                                                        title="Online"
+                                                                        title={isRu ? 'В сети' : 'Online'}
                                                                     />
                                                                 )}
                                                             </div>
@@ -523,7 +529,9 @@ function SearchContent() {
                                                                     : 'bg-white text-black hover:bg-zinc-200'
                                                             }`}
                                                         >
-                                                            {user.isWatching ? 'Watching' : 'Watch'}
+                                                            {user.isWatching
+                                                                ? (isRu ? 'Читаю' : 'Watching')
+                                                                : (isRu ? 'Читать' : 'Watch')}
                                                         </button>
                                                     </div>
 
@@ -546,22 +554,22 @@ function SearchContent() {
                                                                 ))
                                                             ) : (
                                                                 <span className="text-[11px] text-zinc-500 font-sans">
-                                                                    {user.followers || 0} followers
+                                                                    {user.followers || 0} {isRu ? 'подписчиков' : 'followers'}
                                                                 </span>
                                                             )}
                                                         </div>
 
                                                         {user.sharedTechCount && user.sharedTechCount > 0 ? (
                                                             <span className="text-[10px] font-medium text-emerald-400 shrink-0">
-                                                                ✨ {user.sharedTechCount} shared tech
+                                                                ✨ {user.sharedTechCount} {isRu ? 'общ. тех.' : 'shared tech'}
                                                             </span>
                                                         ) : user.mutualCount && user.mutualCount > 0 ? (
                                                             <span className="text-[10px] font-medium text-blue-400 shrink-0">
-                                                                🤝 {user.mutualCount} mutual
+                                                                🤝 {user.mutualCount} {isRu ? 'общ.' : 'mutual'}
                                                             </span>
                                                         ) : (
                                                             <span className="text-[10px] text-zinc-500 shrink-0">
-                                                                {user.followers || 0} followers
+                                                                {user.followers || 0} {isRu ? 'подписчиков' : 'followers'}
                                                             </span>
                                                         )}
                                                     </div>
@@ -581,11 +589,14 @@ function SearchContent() {
 }
 
 export default function Search() {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
+
     return (
         <Suspense fallback={
             <div className="flex flex-col min-h-full pb-12 animate-fade-in">
-                <Titlebar title="Search" />
-                <div className="p-6 text-zinc-500 text-sm">Loading search...</div>
+                <Titlebar title={isRu ? 'Поиск' : 'Search'} />
+                <div className="p-6 text-zinc-500 text-sm">{isRu ? 'Загрузка поиска...' : 'Loading search...'}</div>
             </div>
         }>
             <SearchContent />

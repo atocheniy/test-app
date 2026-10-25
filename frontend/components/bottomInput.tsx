@@ -1,3 +1,4 @@
+import { useLanguage } from '@/context/LanguageContext';
 import { upload } from '@vercel/blob/client';
 import { Loader2, Paperclip, SendHorizontal, X } from 'lucide-react';
 import { LinearBlur } from 'progressive-blur';
@@ -12,7 +13,11 @@ interface BottomInputProps {
     placeholder?: string;
 }
 
-export default function BottomInput({value, onChange, onSend, onKeyDown, disabled = false, placeholder = "Type a message..." }: BottomInputProps) {
+export default function BottomInput({ value, onChange, onSend, onKeyDown, disabled = false, placeholder }: BottomInputProps) {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
+    const activePlaceholder = placeholder ?? (isRu ? "Напишите сообщение..." : "Type a message...");
+
     const [attachments, setAttachments] = useState<string[]>([]);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,7 +74,7 @@ export default function BottomInput({value, onChange, onSend, onKeyDown, disable
         }
     };
 
-     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey && canSend) {
             e.preventDefault();
             handleSend();
@@ -96,15 +101,16 @@ export default function BottomInput({value, onChange, onSend, onKeyDown, disable
                 }}
             />
             
-             {attachments.length > 0 && (
+            {attachments.length > 0 && (
                 <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-thin">
                     {attachments.map((url, index) => (
                         <div key={index} className="relative group w-14 h-14 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-zinc-900">
-                            <img src={url} alt="Attachment preview" className="w-full h-full object-cover" />
+                            <img src={url} alt={isRu ? "Предпросмотр вложения" : "Attachment preview"} className="w-full h-full object-cover" />
                             <button
                                 type="button"
                                 onClick={() => handleRemoveAttachment(index)}
                                 className="absolute top-1 right-1 p-0.5 rounded-full bg-black/70 hover:bg-red-500 text-white transition-colors"
+                                title={isRu ? "Удалить" : t.post.delete}
                             >
                                 <X size={12} />
                             </button>
@@ -128,7 +134,7 @@ export default function BottomInput({value, onChange, onSend, onKeyDown, disable
                     onClick={() => fileInputRef.current?.click()}
                     disabled={disabled || isUploading}
                     className="p-2.5 rounded-full text-zinc-400 hover:text-zinc-100 hover:bg-white/5 transition-colors disabled:opacity-50"
-                    title="Attach image"
+                    title={isRu ? "Прикрепить изображение" : "Attach image"}
                 >
                     {isUploading ? (
                         <Loader2 size={20} className="animate-spin text-sky-400" />
@@ -144,7 +150,7 @@ export default function BottomInput({value, onChange, onSend, onKeyDown, disable
                     onChange={onChange}
                     onKeyDown={handleKeyDown}
                     disabled={disabled}
-                    placeholder={isUploading ? "Uploading image..." : placeholder} 
+                    placeholder={isUploading ? (isRu ? "Загрузка изображения..." : "Uploading image...") : activePlaceholder} 
                     className="flex-1 min-h-[40px] max-h-[140px] py-2.5 px-4 resize-none transition rounded-2xl bg-white/5 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-sky-500 border border-transparent focus:border-sky-500 text-sm leading-relaxed overflow-y-auto no-scrollbar"
                 />
 
@@ -152,7 +158,12 @@ export default function BottomInput({value, onChange, onSend, onKeyDown, disable
                     type="button"
                     onClick={handleSend}
                     disabled={!canSend}
-                    className={`p-2.5 rounded-full transition-all duration-200 flex items-center justify-center ${ canSend ? 'bg-white hover:bg-zinc-200 text-black active:scale-95 cursor-pointer shadow-md' : 'bg-white/5 text-zinc-600 cursor-not-allowed' }`} title="Send" > <SendHorizontal size={18} className="translate-x-[1px]" /> </button> </div>
+                    className={`p-2.5 rounded-full transition-all duration-200 flex items-center justify-center ${ canSend ? 'bg-white hover:bg-zinc-200 text-black active:scale-95 cursor-pointer shadow-md' : 'bg-white/5 text-zinc-600 cursor-not-allowed' }`}
+                    title={isRu ? "Отправить" : t.post.send}
+                >
+                    <SendHorizontal size={18} className="translate-x-[1px]" />
+                </button>
+            </div>
         </div>
-    )
+    );
 }

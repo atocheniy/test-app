@@ -121,6 +121,7 @@ export default function Post({
 
   const { onlineUsers, setRepostTarget, userData, refreshPostsData, refreshUserPostsData, refreshCurrentPost } = useApplication();
   const { t, language } = useLanguage();
+  const isRu = language === 'ru';
   const cleanUsername = UserName.replace("@", "");
 
   const isMyPost = userData?.userName && userData.userName.toLowerCase() === cleanUsername.toLowerCase();
@@ -206,7 +207,7 @@ export default function Post({
 
   const handleDeletePost = async () => {
     setIsMenuOpen(false);
-    if (!confirm("Вы уверены, что хотите удалить этот пост?")) return;
+    if (!confirm(isRu ? "Вы уверены, что хотите удалить этот пост?" : "Are you sure you want to delete this post?")) return;
 
     try {
       await PostService.deletePost(Id);
@@ -214,13 +215,13 @@ export default function Post({
       if (refreshUserPostsData) await refreshUserPostsData();
     } catch (err) {
       console.error("Ошибка удаления поста:", err);
-      alert("Не удалось удалить пост");
+      alert(isRu ? "Не удалось удалить пост" : "Failed to delete post");
     }
   };
 
   const handleSaveEdit = async () => {
     if (!editContent.trim()) {
-      alert("Пост не может быть пустым");
+      alert(isRu ? "Пост не может быть пустым" : "Post cannot be empty");
       return;
     }
 
@@ -234,7 +235,7 @@ export default function Post({
       await refreshPostsData();
     } catch (err) {
       console.error("Ошибка обновления поста:", err);
-      alert("Не удалось обновить пост");
+      alert(isRu ? "Не удалось обновить пост" : "Failed to update post");
     } finally {
       setIsSavingEdit(false);
     }
@@ -281,14 +282,14 @@ export default function Post({
 
   const handleDeleteComment = async (commentId: string) => {
     setActiveMenuCommentId(null);
-    if (!confirm("Удалить этот комментарий?")) return;
+    if (!confirm(isRu ? "Удалить этот комментарий?" : "Delete this comment?")) return;
     try {
         await CommentsService.deleteComment(commentId);
         await refreshCurrentPost(Id);
         await refreshPostsData();
     } catch (err) {
         console.error(err);
-        alert("Не удалось удалить комментарий");
+        alert(isRu ? "Не удалось удалить комментарий" : "Failed to delete comment");
     }
   };
 
@@ -301,7 +302,7 @@ export default function Post({
           await refreshPostsData(); 
       } catch (err) {
           console.error(err);
-          alert("Не удалось обновить комментарий");
+          alert(isRu ? "Не удалось обновить комментарий" : "Failed to update comment");
       }
   };
 
@@ -315,7 +316,7 @@ export default function Post({
       ) : project ? (
         <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400 mb-2 pl-0.5">
           <Code2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-          <span className="text-zinc-500">Из проекта</span>
+          <span className="text-zinc-500">{isRu ? "Из проекта" : "From project"}</span>
           <Link
             href={`/project/${project.id}`}
             className="text-zinc-200 hover:text-white font-medium hover:underline transition-colors truncate max-w-xs"
@@ -331,12 +332,12 @@ export default function Post({
             href={isMyPost ? '/profile' : `/profile/${cleanUsername}`}
             className="block w-full h-full rounded-full overflow-hidden cursor-pointer"
           >
-            {Avatar && <img src={Avatar} className="w-full h-full object-cover" alt="Avatar" />}
+            {Avatar && <img src={Avatar} className="w-full h-full object-cover" alt={isRu ? "Аватар" : "Avatar"} />}
           </Link>
           {isAuthorOnline && (
             <span
               className="absolute bottom-0 right-0 w-3 h-3 bg-white border-2 border-[#0a0a0a] rounded-full"
-              title="Online"
+              title={isRu ? "В сети" : "Online"}
             />
           )}
         </div>
@@ -353,7 +354,7 @@ export default function Post({
 
           {community && (
             <>
-              <span className="text-zinc-600 text-xs">{language === 'ru' ? 'в' : 'in'}</span>
+              <span className="text-zinc-600 text-xs">{isRu ? 'в' : 'in'}</span>
               <Link 
                 href={`/c/${community.slug}`}
                 className="font-medium text-xs text-sky-400 hover:underline font-mono bg-sky-500/10 px-1.5 py-0.5 rounded"
@@ -365,7 +366,7 @@ export default function Post({
 
           {project && (
             <>
-              <span className="text-zinc-600 text-xs">{language === 'ru' ? 'в' : 'in'}</span>
+              <span className="text-zinc-600 text-xs">{isRu ? 'в' : 'in'}</span>
               <Link 
                 href={`/project/${project.id}`}
                 className="inline-flex items-center gap-1.5 font-medium text-xs text-zinc-200 hover:text-white hover:underline bg-white/5 hover:bg-white/10 border border-white/10 px-2 py-0.5 rounded-md transition-colors"
@@ -388,7 +389,7 @@ export default function Post({
           <button
             onClick={() => setIsMenuOpen((prev) => !prev)}
             className="p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-full transition duration-150"
-            title="Опции"
+            title={isRu ? "Опции" : "Options"}
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
@@ -556,7 +557,7 @@ export default function Post({
                 <img
                   src={Attachments[0]}
                   className="relative w-full h-full object-contain z-10"
-                  alt="Post attachment"
+                  alt={isRu ? "Вложение к посту" : "Post attachment"}
                 />
               </div>
             )}
@@ -622,12 +623,12 @@ export default function Post({
                       <img
                         src={repostOfPost.attachments[0]}
                         className="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 scale-110 pointer-events-none select-none"
-                        alt="Quote attachment"
+                        alt={isRu ? "Вложение цитаты" : "Quote attachment"}
                       />
                       <img
                         src={repostOfPost.attachments[0]}
                         className="relative w-full h-full object-contain z-10"
-                        alt="Post attachment"
+                        alt={isRu ? "Вложение к посту" : "Post attachment"}
                       />
                     </div>
                   )}
@@ -639,7 +640,7 @@ export default function Post({
 
         <div className="flex items-center gap-10 max-w-[280px] mt-4 text-zinc-500">
           <Link href={`/post/${Id}`}>
-            <button className="flex items-center gap-2 hover:text-sky-500 transition-colors group">
+            <button className="flex items-center gap-2 hover:text-sky-500 transition-colors group" title={t.post.comment}>
               <MessageCircle className="w-4 h-4 stroke-[1.8]" />
               <span className="text-xs">{Comments}</span>
             </button>
@@ -657,6 +658,7 @@ export default function Post({
             className={`flex items-center gap-2 transition-all duration-150 active:scale-90 group ${
               isLiked ? "text-pink-500" : "hover:text-pink-500"
             }`}
+            title={t.post.like}
           >
             <Heart
               className={`w-4 h-4 stroke-[1.8] transition-all duration-200 ${
@@ -682,11 +684,11 @@ export default function Post({
                 <div className="relative w-8 h-8 shrink-0">
                     <Link href={isMyComment ? '/profile' : `/profile/${cleanCommentUser}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
                         {comment.authorAvatar && (
-                            <img src={comment.authorAvatar} className="w-full h-full object-cover" alt="Avatar" />
+                            <img src={comment.authorAvatar} className="w-full h-full object-cover" alt={isRu ? "Аватар" : "Avatar"} />
                         )}
                     </Link>
                     {isCommenterOnline && (
-                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-white border-2 border-[#0a0a0a] rounded-full" title="Online" />
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-white border-2 border-[#0a0a0a] rounded-full" title={isRu ? "В сети" : "Online"} />
                     )}
                 </div>
 
@@ -708,6 +710,7 @@ export default function Post({
                                 type="button"
                                 onClick={() => setActiveMenuCommentId(activeMenuCommentId === comment.id ? null : comment.id)}
                                 className="p-1 text-zinc-500 hover:text-zinc-200 hover:bg-white/5 rounded-full transition"
+                                title={isRu ? "Опции" : "Options"}
                             >
                                 <MoreHorizontal size={14} />
                             </button>
@@ -719,7 +722,7 @@ export default function Post({
                                         className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
                                     >
                                         {copiedCommentId === comment.id ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                                        <span>{copiedCommentId === comment.id ? "Скопировано" : "Копировать"}</span>
+                                        <span>{copiedCommentId === comment.id ? (isRu ? "Скопировано" : "Copied") : (isRu ? "Копировать" : "Copy")}</span>
                                     </button>
 
                                     {isMyComment && (
@@ -733,7 +736,7 @@ export default function Post({
                                                 className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
                                             >
                                                 <Pencil size={12} />
-                                                <span>Редактировать</span>
+                                                <span>{isRu ? "Редактировать" : t.post.edit}</span>
                                             </button>
                                             <div className="h-[1px] bg-white/5 my-1" />
                                             <button
@@ -741,7 +744,7 @@ export default function Post({
                                                 className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition"
                                             >
                                                 <Trash2 size={12} />
-                                                <span>Удалить</span>
+                                                <span>{isRu ? "Удалить" : t.post.delete}</span>
                                             </button>
                                         </>
                                     )}
@@ -764,14 +767,14 @@ export default function Post({
                                     onClick={() => setEditingCommentId(null)}
                                     className="px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200 transition"
                                 >
-                                    Отмена
+                                    {isRu ? "Отмена" : t.common.cancel}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handleSaveEditComment(comment.id)}
                                     className="px-3 py-1 text-xs font-medium bg-white text-black rounded-lg hover:bg-zinc-200 transition"
                                 >
-                                    Сохранить
+                                    {isRu ? "Сохранить" : t.common.save}
                                 </button>
                             </div>
                         </div>

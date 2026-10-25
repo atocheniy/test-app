@@ -1,3 +1,4 @@
+import { useLanguage } from "@/context/LanguageContext";
 import { isVideoUrl } from "@/libs/format";
 import type { ReplyInfo } from "@/types/auth";
 import { Check, CheckCheck, Copy, Edit, MoreVertical, Reply, Trash2 } from "lucide-react";
@@ -17,7 +18,11 @@ interface Message {
 }
 
 
-export default function sentMessage ({ Id, Content, Time, IsRead = false, Attachments, ReplyTo,  AuthorName = "You", onDelete, onEdit, onReply }: Message) {
+export default function sentMessage ({ Id, Content, Time, IsRead = false, Attachments, ReplyTo, AuthorName, onDelete, onEdit, onReply }: Message) {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
+    const resolvedAuthorName = AuthorName || (isRu ? "Вы" : "You");
+
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [menuPlacement, setMenuPlacement] = useState<'top' | 'bottom'>('top');
     const [copied, setCopied] = useState(false);
@@ -69,7 +74,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                             {ReplyTo.authorName}
                         </span>
                         <span className="text-zinc-400 text-[11px] truncate">
-                            {ReplyTo.content || (ReplyTo.attachments?.length ? "📷 Вложение" : "Сообщение")}
+                            {ReplyTo.content || (ReplyTo.attachments?.length ? (isRu ? "📷 Вложение" : "📷 Attachment") : (isRu ? "Сообщение" : "Message"))}
                         </span>
                     </div>
                 )}
@@ -89,7 +94,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                 <img 
                                     key={index} 
                                     src={url} 
-                                    alt="Attachment" 
+                                    alt={isRu ? "Вложение" : "Attachment"} 
                                     className="rounded-xl max-h-60 w-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
                                     onClick={() => window.open(url, '_blank')}
                                 />
@@ -124,7 +129,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                             className={`p-0.5 rounded hover:bg-white/10 text-zinc-400 hover:text-zinc-100 transition-all ${
                                 isMenuOpen ? 'opacity-100 bg-white/10 text-zinc-100' : 'opacity-0 group-hover:opacity-100'
                             }`}
-                            title="Actions"
+                            title={isRu ? "Действия" : "Actions"}
                         >
                             <MoreVertical size={13} />
                         </button>
@@ -139,12 +144,12 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                         type="button"
                                         onClick={() => {
                                             setIsMenuOpen(false);
-                                            onReply({ id: Id, content: Content || "", authorName: AuthorName });
+                                            onReply({ id: Id, content: Content || "", authorName: resolvedAuthorName });
                                         }}
                                         className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100 transition-colors text-left w-full"
                                     >
                                         <Reply size={13} />
-                                        <span>Reply</span>
+                                        <span>{isRu ? "Ответить" : "Reply"}</span>
                                     </button>
                                 )}
 
@@ -155,7 +160,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                         className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100 transition-colors text-left w-full"
                                     >
                                         {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                                        <span>{copied ? "Copied!" : "Copy"}</span>
+                                        <span>{copied ? (isRu ? "Скопировано!" : "Copied!") : (isRu ? "Копировать" : "Copy")}</span>
                                     </button>
                                 )}
 
@@ -169,7 +174,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                         className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100 transition-colors text-left w-full"
                                     >
                                         <Edit size={13} />
-                                        <span>Edit</span>
+                                        <span>{isRu ? "Редактировать" : t.post.edit}</span>
                                     </button>
                                 )}
 
@@ -183,7 +188,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                         className="flex items-center gap-2 px-3 py-1.5 hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors text-left w-full"
                                     >
                                         <Trash2 size={13} />
-                                        <span>Delete</span>
+                                        <span>{isRu ? "Удалить" : t.post.delete}</span>
                                     </button>
                                 )}
                             </div>
@@ -194,5 +199,5 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
 
             </div>
         </div>
-    )
+    );
 }

@@ -1,3 +1,4 @@
+import { useLanguage } from "@/context/LanguageContext";
 import { isVideoUrl } from "@/libs/format";
 import type { ReplyInfo } from "@/types/auth";
 import { Check, Copy, MoreVertical, Reply } from "lucide-react";
@@ -14,7 +15,10 @@ interface Message {
 }
 
 
-export default function receivedMessage ({ Id, Content, Time, Attachments, ReplyTo, AuthorName = "User", onReply }: Message) {
+export default function receivedMessage ({ Id, Content, Time, Attachments, ReplyTo, AuthorName, onReply }: Message) {
+    const { language } = useLanguage();
+    const isRu = language === 'ru';
+    const resolvedAuthorName = AuthorName || (isRu ? "Пользователь" : "User");
 
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [menuPlacement, setMenuPlacement] = useState<'top' | 'bottom'>('top');
@@ -62,7 +66,7 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                             {ReplyTo.authorName}
                         </span>
                         <span className="text-zinc-400 text-[11px] truncate">
-                            {ReplyTo.content || (ReplyTo.attachments?.length ? "📷 Вложение" : "Сообщение")}
+                            {ReplyTo.content || (ReplyTo.attachments?.length ? (isRu ? "📷 Вложение" : "📷 Attachment") : (isRu ? "Сообщение" : "Message"))}
                         </span>
                     </div>
                 )}
@@ -82,7 +86,7 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                                 <img 
                                     key={index} 
                                     src={url} 
-                                    alt="Attachment" 
+                                    alt={isRu ? "Вложение" : "Attachment"} 
                                     className="rounded-xl max-h-60 w-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
                                     onClick={() => window.open(url, '_blank')}
                                 />
@@ -109,7 +113,7 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                             className={`p-0.5 rounded hover:bg-white/10 text-zinc-400 hover:text-zinc-100 transition-all ${
                                 isMenuOpen ? 'opacity-100 bg-white/10 text-zinc-100' : 'opacity-0 group-hover:opacity-100'
                             }`}
-                            title="Actions"
+                            title={isRu ? "Действия" : "Actions"}
                         >
                             <MoreVertical size={13} />
                         </button>
@@ -124,12 +128,12 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                                         type="button"
                                         onClick={() => {
                                             setIsMenuOpen(false);
-                                            onReply({ id: Id, content: Content || "", authorName: AuthorName });
+                                            onReply({ id: Id, content: Content || "", authorName: resolvedAuthorName });
                                         }}
                                         className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100 transition-colors text-left w-full"
                                     >
                                         <Reply size={13} />
-                                        <span>Reply</span>
+                                        <span>{isRu ? "Ответить" : "Reply"}</span>
                                     </button>
                                 )}
 
@@ -140,7 +144,7 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                                         className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100 transition-colors text-left w-full"
                                     >
                                         {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                                        <span>{copied ? "Copied!" : "Copy"}</span>
+                                        <span>{copied ? (isRu ? "Скопировано!" : "Copied!") : (isRu ? "Копировать" : "Copy")}</span>
                                     </button>
                                 )}
                             </div>
@@ -150,5 +154,5 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
 
             </div>
         </div>
-    )
+    );
 }

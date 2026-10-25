@@ -5,6 +5,7 @@ import { PostSkeleton } from "@/components/skeletons";
 import Titlebar from "@/components/titlebar";
 import TitlebarBack from "@/components/titlebarBack";
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { formatPostTime } from "@/libs/format";
 import { CommentsService } from "@/services/commentService";
 import { Check, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
@@ -16,6 +17,8 @@ import { useEffect, useState } from "react";
 export default function PagePost() {
 
     const { currentPost, refreshCurrentPost, userData } = useApplication();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     
     const router = useRouter();
     const params = useParams();
@@ -43,13 +46,13 @@ export default function PagePost() {
 
     const handleDeleteComment = async (commentId: string) => {
         setActiveMenuCommentId(null);
-        if (!confirm("Удалить этот комментарий?")) return;
+        if (!confirm(isRu ? "Удалить этот комментарий?" : "Delete this comment?")) return;
         try {
             await CommentsService.deleteComment(commentId);
             await refreshCurrentPost(idFromUrl);
         } catch (err) {
             console.error(err);
-            alert("Не удалось удалить комментарий");
+            alert(isRu ? "Не удалось удалить комментарий" : "Failed to delete comment");
         }
     };
 
@@ -61,7 +64,7 @@ export default function PagePost() {
             await refreshCurrentPost(idFromUrl);
         } catch (err) {
             console.error(err);
-            alert("Не удалось обновить комментарий");
+            alert(isRu ? "Не удалось обновить комментарий" : "Failed to update comment");
         }
     };
 
@@ -87,7 +90,7 @@ export default function PagePost() {
             await refreshCurrentPost(idFromUrl);
         } catch (error) {
             console.error("Ошибка отправки комментария:", error);
-            alert("Не удалось отправить комментарий");
+            alert(isRu ? "Не удалось отправить комментарий" : "Failed to send comment");
         } finally {
             setIsSubmitting(false);
         }
@@ -98,14 +101,14 @@ export default function PagePost() {
     if (isPostLoading) {
         return (
             <div className="flex flex-col min-h-full">
-                <TitlebarBack title="Post" />
+                <TitlebarBack title={isRu ? "Публикация" : "Post"} />
                 
                 <div className="flex flex-col lg:p-6 md:p-6 py-6">
                     <PostSkeleton />
                 </div>
 
                 <div className="w-full border-t border-white/5" />
-                <Titlebar title="Comments" />
+                <Titlebar title={isRu ? "Комментарии" : "Comments"} />
 
                 <div className="flex flex-col gap-4 p-6 lg:px-11 md:px-11">
                     {[1, 2].map((i) => (
@@ -126,7 +129,7 @@ export default function PagePost() {
         <div className="flex flex-col min-h-full justify-between animate-fade-in">
             <div className="flex-1 flex flex-col">
                 <div>
-                    <TitlebarBack title={`Post from ${currentPost.authorName}`} />
+                    <TitlebarBack title={isRu ? `Публикация от ${currentPost.authorName}` : `Post from ${currentPost.authorName}`} />
                         
                     <div className="flex flex-col lg:p-6 md:p-6 py-6">
                         <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={formatPostTime(currentPost.created)} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount} repostsCount={currentPost.repostsCount} repostOfPost={currentPost.repostOfPost} community={currentPost.community} project={currentPost.project}></Post>
@@ -135,7 +138,7 @@ export default function PagePost() {
                     <div className="w-full border-t border-white/5"></div>
                 </div>
                 <div>
-                    <Titlebar title={`Comments`}></Titlebar>
+                    <Titlebar title={isRu ? "Комментарии" : "Comments"}></Titlebar>
 
                     <div className="flex flex-col max-sm:mb-[60px] min-h-full gap-4 p-6 lg:px-11 md:px-11 overflow-y-auto  custom-scrollbar">
                         {currentPost.commentsList && currentPost.commentsList.length > 0 ? (
@@ -157,7 +160,7 @@ export default function PagePost() {
                                             )}
                                         </Link>
                                         {isCommenterOnline && (
-                                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-white border-2 border-[#0a0a0a] rounded-full" title="Online" />
+                                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-white border-2 border-[#0a0a0a] rounded-full" title={isRu ? "В сети" : "Online"} />
                                         )}
                                     </div>
 
@@ -190,7 +193,7 @@ export default function PagePost() {
                                                             className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
                                                         >
                                                             {copiedCommentId === comment.id ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                                                            <span>{copiedCommentId === comment.id ? "Скопировано" : "Копировать"}</span>
+                                                            <span>{copiedCommentId === comment.id ? (isRu ? "Скопировано" : "Copied") : (isRu ? "Копировать" : "Copy")}</span>
                                                         </button>
 
                                                         {isMyComment && (
@@ -204,7 +207,7 @@ export default function PagePost() {
                                                                     className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
                                                                 >
                                                                     <Pencil size={12} />
-                                                                    <span>Редактировать</span>
+                                                                    <span>{isRu ? "Редактировать" : "Edit"}</span>
                                                                 </button>
                                                                 <div className="h-[1px] bg-white/5 my-1" />
                                                                 <button
@@ -212,7 +215,7 @@ export default function PagePost() {
                                                                     className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition"
                                                                 >
                                                                     <Trash2 size={12} />
-                                                                    <span>Удалить</span>
+                                                                    <span>{isRu ? "Удалить" : "Delete"}</span>
                                                                 </button>
                                                             </>
                                                         )}
@@ -235,14 +238,14 @@ export default function PagePost() {
                                                         onClick={() => setEditingCommentId(null)}
                                                         className="px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200 transition"
                                                     >
-                                                        Отмена
+                                                        {isRu ? "Отмена" : "Cancel"}
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleSaveEditComment(comment.id)}
                                                         className="px-3 py-1 text-xs font-medium bg-white text-black rounded-lg hover:bg-zinc-200 transition"
                                                     >
-                                                        Сохранить
+                                                        {isRu ? "Сохранить" : "Save"}
                                                     </button>
                                                 </div>
                                             </div>
@@ -255,7 +258,7 @@ export default function PagePost() {
                         })
                         ) : (
                             <p className="text-xs text-zinc-500 text-center py-6 select-none">
-                                No comments yet
+                                {isRu ? "Комментариев пока нет" : "No comments yet"}
                             </p>
                         )}
                     </div>
@@ -290,7 +293,7 @@ export default function PagePost() {
                         rows={1}
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
-                        placeholder="Write a comment..."
+                        placeholder={isRu ? "Написать комментарий..." : "Write a comment..."}
                         className="flex-1 p-2.5 px-4 text-sm text-zinc-100 bg-white/[0.02] border border-white/10 rounded-2xl focus:outline-none transition focus:ring-1 focus:ring-white/20 resize-none [field-sizing:content] min-h-[38px] max-h-[120px]"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
@@ -304,7 +307,7 @@ export default function PagePost() {
                         disabled={isSubmitting || !commentText.trim()}
                         className="px-4 py-2 text-xs font-semibold bg-white text-stone-950 rounded-2xl hover:bg-stone-300 disabled:opacity-30 transition shrink-0"
                     >
-                        {isSubmitting ? "..." : "Reply"}
+                        {isSubmitting ? "..." : (isRu ? "Ответить" : "Reply")}
                     </button>
                 </form>
             </div>

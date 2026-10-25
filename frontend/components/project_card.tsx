@@ -1,14 +1,15 @@
 'use client';
 
+import { useLanguage } from '@/context/LanguageContext';
 import { BookOpen, ChevronLeft, ChevronRight, Code2, ExternalLink, Pencil, Star, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-export const PROJECT_STATUS_MAP: Record<number, { label: string; badgeClass: string; dotClass: string }> = {
-    0: { label: 'В разработке', badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20', dotClass: 'bg-amber-400' },
-    1: { label: 'Бета', badgeClass: 'bg-blue-500/10 text-blue-400 border-blue-500/20', dotClass: 'bg-blue-400' },
-    2: { label: 'Релиз', badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dotClass: 'bg-emerald-400' },
-    3: { label: 'Архив', badgeClass: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20', dotClass: 'bg-zinc-400' },
+export const PROJECT_STATUS_MAP: Record<number, { label: string; labelEn: string; badgeClass: string; dotClass: string }> = {
+    0: { label: 'В разработке', labelEn: 'In Development', badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20', dotClass: 'bg-amber-400' },
+    1: { label: 'Бета', labelEn: 'Beta', badgeClass: 'bg-blue-500/10 text-blue-400 border-blue-500/20', dotClass: 'bg-blue-400' },
+    2: { label: 'Релиз', labelEn: 'Release', badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dotClass: 'bg-emerald-400' },
+    3: { label: 'Архив', labelEn: 'Archived', badgeClass: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20', dotClass: 'bg-zinc-400' },
 };
 
 interface LinkItem {
@@ -46,6 +47,8 @@ export default function ProjectCard({
     onDelete,
 }: ProjectCardProps) {
     const router = useRouter();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     const allImages = (images && images.length > 0) ? images : (imageUrl ? [imageUrl] : []);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -86,7 +89,7 @@ export default function ProjectCard({
                             {statusInfo && (
                                 <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${statusInfo.badgeClass}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotClass}`} />
-                                    {statusInfo.label}
+                                    {isRu ? statusInfo.label : statusInfo.labelEn}
                                 </span>
                             )}
                         </div>
@@ -102,7 +105,7 @@ export default function ProjectCard({
                                 {postsCount > 0 && (
                                     <span className="inline-flex items-center gap-1 text-zinc-400">
                                         <BookOpen size={11} />
-                                        {postsCount} {postsCount === 1 ? 'девлог' : postsCount < 5 ? 'девлога' : 'девлогов'}
+                                        {postsCount} {isRu ? (postsCount === 1 ? 'девлог' : postsCount < 5 ? 'девлога' : 'девлогов') : (postsCount === 1 ? 'devlog' : 'devlogs')}
                                     </span>
                                 )}
                             </div>
@@ -141,7 +144,7 @@ export default function ProjectCard({
                                             onEdit();
                                         }}
                                         className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition"
-                                        title="Редактировать проект"
+                                        title={isRu ? "Редактировать проект" : "Edit project"}
                                     >
                                         <Pencil size={12} />
                                     </button>
@@ -154,7 +157,7 @@ export default function ProjectCard({
                                             onDelete();
                                         }}
                                         className="p-1 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition"
-                                        title="Удалить проект"
+                                        title={isRu ? "Удалить проект" : "Delete project"}
                                     >
                                         <Trash2 size={12} />
                                     </button>
@@ -183,7 +186,7 @@ export default function ProjectCard({
                                         type="button"
                                         onClick={handlePrev}
                                         className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-all duration-200 backdrop-blur-sm cursor-pointer hover:scale-105 active:scale-95 z-10"
-                                        aria-label="Previous image"
+                                        aria-label={isRu ? "Предыдущее изображение" : "Previous image"}
                                     >
                                         <ChevronLeft size={14} />
                                     </button>
@@ -191,7 +194,7 @@ export default function ProjectCard({
                                         type="button"
                                         onClick={handleNext}
                                         className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 border border-white/10 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-all duration-200 backdrop-blur-sm cursor-pointer hover:scale-105 active:scale-95 z-10"
-                                        aria-label="Next image"
+                                        aria-label={isRu ? "Следующее изображение" : "Next image"}
                                     >
                                         <ChevronRight size={14} />
                                     </button>

@@ -21,6 +21,7 @@ import { createPortal } from "react-dom";
 export default function Settings() {
     const { userData, logout } = useApplication();
     const { language, setLanguage, t } = useLanguage();
+    const isRu = language === 'ru';
 
     const [mounted, setMounted] = useState(false);
     const [showOnlineStatus, setShowOnlineStatus] = useState(true);
@@ -50,14 +51,14 @@ export default function Settings() {
         if (!oldPassword || !newPassword) return;
 
         if (newPassword.length < 6) {
-            setPasswordError("Пароль должен содержать минимум 6 символов");
+            setPasswordError(isRu ? "Пароль должен содержать минимум 6 символов" : "Password must be at least 6 characters long");
             return;
         }
 
         setIsChangingPassword(true);
         try {
             await UserService.changePassword({ oldPassword, newPassword });
-            setPasswordSuccess("Пароль успешно обновлен!");
+            setPasswordSuccess(isRu ? "Пароль успешно обновлен!" : "Password updated successfully!");
             setOldPassword("");
             setNewPassword("");
             setTimeout(() => {
@@ -69,7 +70,7 @@ export default function Settings() {
             const errDetail = err?.response?.data?.[0]?.description 
                 || (typeof err?.response?.data === 'string' ? err?.response?.data : null)
                 || err?.response?.data?.message 
-                || "Неверный текущий пароль или ошибка сервера";
+                || (isRu ? "Неверный текущий пароль или ошибка сервера" : "Invalid current password or server error");
             setPasswordError(errDetail);
         } finally {
             setIsChangingPassword(false);
@@ -83,7 +84,7 @@ export default function Settings() {
             logout();
         } catch (error) {
             console.error("Ошибка при удалении аккаунта:", error);
-            alert("Не удалось удалить аккаунт");
+            alert(isRu ? "Не удалось удалить аккаунт" : "Failed to delete account");
             setIsDeleting(false);
         }
     };

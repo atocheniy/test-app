@@ -35,7 +35,8 @@ interface TrendingTopic {
 
 export default function RightSidebar() {
     const { onlineUsers } = useApplication();
-    const { t } = useLanguage();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     const [liveVacancies, setLiveVacancies] = useState<Vacancy[]>([]);
     const [loadingVacancies, setLoadingVacancies] = useState<boolean>(true);
     const [vacancySkip, setVacancySkip] = useState<number>(0);
@@ -114,10 +115,10 @@ export default function RightSidebar() {
     };
 
     const fallbackTrends: TrendingTopic[] = [
-        { tag: '#nextjs15', displayTag: '#Next.js 15', postsFormatted: '2.4k posts', category: 'Frontend', postCount: 2400 },
-        { tag: '#dotnet9', displayTag: '#dotnet9', postsFormatted: '1.8k posts', category: 'Backend', postCount: 1800 },
-        { tag: '#postgresql', displayTag: '#postgresql', postsFormatted: '940 posts', category: 'Database', postCount: 940 },
-        { tag: '#signalr', displayTag: '#signalr', postsFormatted: '512 posts', category: 'Realtime', postCount: 512 },
+        { tag: '#nextjs15', displayTag: '#Next.js 15', postsFormatted: isRu ? '2.4k публ.' : '2.4k posts', category: 'Frontend', postCount: 2400 },
+        { tag: '#dotnet9', displayTag: '#dotnet9', postsFormatted: isRu ? '1.8k публ.' : '1.8k posts', category: 'Backend', postCount: 1800 },
+        { tag: '#postgresql', displayTag: '#postgresql', postsFormatted: isRu ? '940 публ.' : '940 posts', category: 'Database', postCount: 940 },
+        { tag: '#signalr', displayTag: '#signalr', postsFormatted: isRu ? '512 публ.' : '512 posts', category: 'Realtime', postCount: 512 },
     ];
 
     const displayTrends = trends.length > 0 ? trends : fallbackTrends;
@@ -207,7 +208,7 @@ export default function RightSidebar() {
                                 const isOnline = onlineUsers?.includes(user.userName);
                                 const displayName = user.fullName || user.userName;
                                 const userInitial = (displayName || 'U')[0]?.toUpperCase();
-                                const subtitle = user.bio_FirstLine || (user.technologies && user.technologies.length > 0 ? user.technologies.slice(0, 2).join(', ') : 'Developer');
+                                const subtitle = user.bio_FirstLine || (user.technologies && user.technologies.length > 0 ? user.technologies.slice(0, 2).join(', ') : (isRu ? 'Разработчик' : 'Developer'));
 
                                 return (
                                     <div key={user.id} className="flex items-center justify-between gap-2 group">
@@ -227,7 +228,7 @@ export default function RightSidebar() {
                                                 {isOnline && (
                                                     <span 
                                                         className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0e0e0e] rounded-full" 
-                                                        title="Online"
+                                                        title={isRu ? 'В сети' : 'Online'}
                                                     />
                                                 )}
                                             </div>
@@ -308,13 +309,13 @@ export default function RightSidebar() {
                             </div>
                         ) : displayVacancies.length === 0 ? (
                             <div className="text-xs text-zinc-500 py-2 text-center">
-                                No vacancies yet
+                                {isRu ? 'Вакансий пока нет' : 'No vacancies yet'}
                             </div>
                         ) : (
                             displayVacancies.map((job: any, idx: number) => {
                                 const salaryText = formatSalary(job.salaryFrom, job.salaryTo, job.currency, job.salary);
                                 const companyName = job.companyName || job.company;
-                                const formatName = job.format === 0 ? 'Office' : job.format === 1 ? 'Hybrid' : job.format === 2 ? 'Remote' : undefined;
+                                const formatName = job.format === 0 ? t.vacancies.office : job.format === 1 ? t.vacancies.hybrid : job.format === 2 ? t.vacancies.remote : undefined;
 
                                 return (
                                     <Link 
@@ -371,9 +372,9 @@ export default function RightSidebar() {
                 </div>
 
                 <div className="px-2 text-[11px] text-zinc-600 flex flex-wrap gap-x-3 gap-y-1">
-                    <Link href="/terms" className="hover:underline">Terms</Link>
-                    <Link href="/privacy" className="hover:underline">Privacy</Link>
-                    <Link href="/about" className="hover:underline">About</Link>
+                    <Link href="/terms" className="hover:underline">{isRu ? 'Условия' : 'Terms'}</Link>
+                    <Link href="/privacy" className="hover:underline">{isRu ? 'Конфиденциальность' : 'Privacy'}</Link>
+                    <Link href="/about" className="hover:underline">{isRu ? 'О проекте' : 'About'}</Link>
                     <span>© 2026 Compile</span>
                 </div>
 

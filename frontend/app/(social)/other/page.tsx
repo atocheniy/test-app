@@ -1,6 +1,7 @@
 'use client';
 
 import Titlebar from "@/components/titlebar";
+import { useLanguage } from "@/context/LanguageContext";
 import { CommunityService } from "@/services/communityService";
 import { isCompanyEntity } from "@/types/auth";
 import {
@@ -28,6 +29,9 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 export default function OtherPage() {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
+
     const [mounted, setMounted] = useState(false);
     const [isCreateCommunityOpen, setIsCreateCommunityOpen] = useState(false);
     const [communityName, setCommunityName] = useState("");
@@ -80,12 +84,12 @@ export default function OtherPage() {
         setFormError(null);
 
         if (!communityName.trim()) {
-            setFormError("Укажите название");
+            setFormError(isRu ? "Укажите название" : "Please enter a name");
             return;
         }
 
         if (!communitySlug.trim()) {
-            setFormError("Укажите URL (slug)");
+            setFormError(isRu ? "Укажите URL (slug)" : "Please enter a URL (slug)");
             return;
         }
 
@@ -121,7 +125,7 @@ export default function OtherPage() {
         } catch (error: any) {
             console.error("Ошибка создания сообщества:", error);
             const msg = error.response?.data?.message || (typeof error?.response?.data === 'string' ? error.response.data : null);
-            setFormError(msg || "Не удалось создать. Возможно, этот URL уже занят.");
+            setFormError(msg || (isRu ? "Не удалось создать. Возможно, этот URL уже занят." : "Failed to create. Perhaps this URL is already taken."));
         } finally {
             setIsCreating(false);
         }
@@ -129,36 +133,36 @@ export default function OtherPage() {
 
     const hubServices = [
         {
-            title: "Saved Bookmarks",
-            desc: "Access your saved code snippets, architectural posts, and discussions",
+            title: isRu ? "Сохранённые закладки" : "Saved Bookmarks",
+            desc: isRu ? "Доступ к вашим сохранённым сниппетам кода, архитектурным постам и обсуждениям" : "Access your saved code snippets, architectural posts, and discussions",
             icon: Bookmark,
             color: "from-amber-500/20 to-orange-500/10 text-amber-400 border-amber-500/20",
             href: "/bookmarks",
-            btnText: "Open Saved"
+            btnText: isRu ? "Открыть сохранённое" : "Open Saved"
         },
         {
-            title: "Hackathons & Events",
-            desc: "Participate in weekend coding jams, online meetups, and live talks",
+            title: isRu ? "Хакатоны и события" : "Hackathons & Events",
+            desc: isRu ? "Участвуйте в кодинг-джемах выходного дня, онлайн-митапах и лайв-докладах" : "Participate in weekend coding jams, online meetups, and live talks",
             icon: Calendar,
             color: "from-blue-500/20 to-cyan-500/10 text-blue-400 border-blue-500/20",
             href: "/events",
-            btnText: "Explore Events"
+            btnText: isRu ? "Смотреть события" : "Explore Events"
         },
         {
-            title: "Developer API & Webhooks",
-            desc: "Build custom bots, integrate SignalR feeds, and automate your workflow",
+            title: isRu ? "API разработчика и вебхуки" : "Developer API & Webhooks",
+            desc: isRu ? "Создавайте собственных ботов, интегрируйте ленты SignalR и автоматизируйте рабочий процесс" : "Build custom bots, integrate SignalR feeds, and automate your workflow",
             icon: Terminal,
             color: "from-purple-500/20 to-pink-500/10 text-purple-400 border-purple-500/20",
             href: "/docs/api",
-            btnText: "View Documentation"
+            btnText: isRu ? "Открыть документацию" : "View Documentation"
         },
         {
-            title: "Feature Requests & Ideas",
-            desc: "Vote on upcoming platform features and suggest your improvements",
+            title: isRu ? "Идеи и предложения" : "Feature Requests & Ideas",
+            desc: isRu ? "Голосуйте за будущие функции платформы и предлагайте свои улучшения" : "Vote on upcoming platform features and suggest your improvements",
             icon: MessageSquareHeart,
             color: "from-emerald-500/20 to-teal-500/10 text-emerald-400 border-emerald-500/20",
             href: "/feedback",
-            btnText: "Suggest Feature"
+            btnText: isRu ? "Предложить идею" : "Suggest Feature"
         }
     ];
 
@@ -167,8 +171,8 @@ export default function OtherPage() {
             id: 'dotnet-architects',
             name: ".NET Architecture & Highload",
             tag: "csharp",
-            members: "1.4k members",
-            desc: "Deep-dives into C# 13, ASP.NET Core, EF Core tuning, and distributed systems.",
+            members: isRu ? "1.4k участников" : "1.4k members",
+            desc: isRu ? "Глубокое погружение в C# 13, ASP.NET Core, тюнинг EF Core и распределённые системы." : "Deep-dives into C# 13, ASP.NET Core, EF Core tuning, and distributed systems.",
             bannerColor: "from-purple-600/30 via-indigo-600/20 to-transparent",
             icon: Layers
         },
@@ -176,8 +180,8 @@ export default function OtherPage() {
             id: 'react-next-wizards',
             name: "Next.js & Frontend Lab",
             tag: "frontend",
-            members: "2.1k members",
-            desc: "Server Components, Turbopack, Tailwind CSS styling, and client-side performance.",
+            members: isRu ? "2.1k участников" : "2.1k members",
+            desc: isRu ? "Server Components, Turbopack, стилизация Tailwind CSS и клиентская производительность." : "Server Components, Turbopack, Tailwind CSS styling, and client-side performance.",
             bannerColor: "from-sky-600/30 via-cyan-600/20 to-transparent",
             icon: Compass
         },
@@ -185,8 +189,8 @@ export default function OtherPage() {
             id: 'opensource-contributors',
             name: "Open Source Builders",
             tag: "opensource",
-            members: "850 members",
-            desc: "Collaborate on pet projects, find co-founders, and review pull requests.",
+            members: isRu ? "850 участников" : "850 members",
+            desc: isRu ? "Совместная работа над pet-проектами, поиск кофаундеров и ревью пулл-реквестов." : "Collaborate on pet projects, find co-founders, and review pull requests.",
             bannerColor: "from-emerald-600/30 via-teal-600/20 to-transparent",
             icon: Users
         }
@@ -194,7 +198,7 @@ export default function OtherPage() {
 
     return (
         <div className="flex flex-col min-h-full pb-14 animate-fade-in">
-            <Titlebar title="Explore Hub" />
+            <Titlebar title={t.explore.title} />
 
             <div className="p-4 sm:p-6 max-w-5xl space-y-8">
                 
@@ -203,13 +207,13 @@ export default function OtherPage() {
                         <div className="space-y-2">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium">
                                 <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                                Community Ecosystem
+                                {isRu ? "Экосистема сообществ" : "Community Ecosystem"}
                             </div>
                             <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
-                                Guilds, Communities & Resources
+                                {isRu ? "Гильдии, сообщества и ресурсы" : "Guilds, Communities & Resources"}
                             </h1>
                             <p className="text-sm text-zinc-400 max-w-lg leading-relaxed">
-                                Join specialized developer circles, save important snippets, participate in hackathons, or launch your own community.
+                                {isRu ? "Присоединяйтесь к профильным кругам разработчиков, сохраняйте важные сниппеты, участвуйте в хакатонах или создайте своё сообщество." : "Join specialized developer circles, save important snippets, participate in hackathons, or launch your own community."}
                             </p>
                         </div>
 
@@ -219,7 +223,7 @@ export default function OtherPage() {
                                 className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition active:scale-95 shadow-lg shadow-white/5 cursor-pointer"
                             >
                                 <Plus size={16} />
-                                Create Community
+                                {isRu ? "Создать сообщество" : "Create Community"}
                             </button>
                         </div>
                     </div>
@@ -232,19 +236,19 @@ export default function OtherPage() {
                         <div className="flex items-center gap-2">
                             <Users size={16} className="text-zinc-400" />
                             <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
-                                Featured Communities
+                                {isRu ? "Избранные сообщества" : "Featured Communities"}
                             </h2>
                         </div>
                         <span className="text-xs text-zinc-500 font-mono">
-                            {communities.length} total
+                            {isRu ? `${communities.length} всего` : `${communities.length} total`}
                         </span>
                     </div>
 
                     {isLoadingCommunities ? (
-                        <div className="p-8 text-center text-xs text-zinc-500">Загрузка сообществ...</div>
+                        <div className="p-8 text-center text-xs text-zinc-500">{isRu ? "Загрузка сообществ..." : "Loading communities..."}</div>
                     ) : communities.length === 0 ? (
                         <div className="p-8 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01]">
-                            Сообществ пока нет. Создай первое прямо сейчас!
+                            {isRu ? "Сообществ пока нет. Создай первое прямо сейчас!" : "No communities yet. Create the first one right now!"}
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -269,11 +273,11 @@ export default function OtherPage() {
                                                 {isCompanyEntity(club.kind) && (
                                                     <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                                         <Building2 size={10} />
-                                                        Компания
+                                                        {isRu ? "Компания" : "Company"}
                                                     </span>
                                                 )}
                                                 <span className="text-[11px] font-mono text-zinc-500">
-                                                    {club.membersCount} {isCompanyEntity(club.kind) ? 'сотрудников' : 'участников'}
+                                                    {club.membersCount} {isCompanyEntity(club.kind) ? (isRu ? 'сотрудников' : 'employees') : (isRu ? 'участников' : 'members')}
                                                 </span>
                                             </div>
                                         </div>
@@ -290,14 +294,14 @@ export default function OtherPage() {
                                             <p className="text-[11px] text-zinc-500 mt-0.5">{club.location}</p>
                                         )}
                                         <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed line-clamp-2">
-                                            {club.description || "No description provided"}
+                                            {club.description || (isRu ? "Описание отсутствует" : "No description provided")}
                                         </p>
                                     </div>
 
                                     <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between">
                                         <span className="text-[11px] font-mono text-zinc-500">c/{club.slug}</span>
                                         <span className="px-3 py-1 text-xs font-semibold rounded-lg bg-white/5 group-hover:bg-white text-zinc-300 group-hover:text-black transition">
-                                            Open
+                                            {isRu ? "Открыть" : "Open"}
                                         </span>
                                     </div>
                                 </Link>
@@ -308,7 +312,7 @@ export default function OtherPage() {
 
                 <div className="space-y-4 pt-2">
                     <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider px-1">
-                        Ecosystem Tools & Shortcuts
+                        {isRu ? "Инструменты и быстрые переходы" : "Ecosystem Tools & Shortcuts"}
                     </h2>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -355,8 +359,8 @@ export default function OtherPage() {
                     <div className="w-full max-w-[480px] max-h-[90vh] overflow-y-auto no-scrollbar bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl relative">
                         <div className="flex justify-between items-center mb-6">
                             <div>
-                                <h3 className="text-lg font-bold text-zinc-100">Create Community</h3>
-                                <p className="text-xs text-zinc-400 mt-0.5">Start a space for your tech stack or guild</p>
+                                <h3 className="text-lg font-bold text-zinc-100">{isRu ? "Создать сообщество" : "Create Community"}</h3>
+                                <p className="text-xs text-zinc-400 mt-0.5">{isRu ? "Создайте пространство для вашего стека технологий или гильдии" : "Start a space for your tech stack or guild"}</p>
                             </div>
                             <button 
                                 onClick={() => {
@@ -379,7 +383,7 @@ export default function OtherPage() {
                         <form onSubmit={handleCreateCommunitySubmit} className="space-y-4">
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    Тип пространства
+                                    {isRu ? "Тип пространства" : "Space Type"}
                                 </label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
@@ -393,9 +397,9 @@ export default function OtherPage() {
                                     >
                                         <div className="text-xs font-semibold flex items-center gap-1.5">
                                             <Users size={14} className="text-blue-400" />
-                                            Сообщество
+                                            {isRu ? "Сообщество" : "Community"}
                                         </div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Клуб, гильдия, хаб по интересам</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Клуб, гильдия, хаб по интересам" : "Club, guild, interest hub"}</div>
                                     </button>
                                     <button
                                         type="button"
@@ -408,16 +412,16 @@ export default function OtherPage() {
                                     >
                                         <div className="text-xs font-semibold flex items-center gap-1.5">
                                             <Building2 size={14} className="text-emerald-400" />
-                                            Компания
+                                            {isRu ? "Компания" : "Company"}
                                         </div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Работодатель, вакансии, команда</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Работодатель, вакансии, команда" : "Employer, vacancies, team"}</div>
                                     </button>
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    {createKind === 1 ? "Название компании" : "Название сообщества"}
+                                    {createKind === 1 ? (isRu ? "Название компании" : "Company Name") : (isRu ? "Название сообщества" : "Community Name")}
                                 </label>
                                 <input
                                     type="text"
@@ -448,12 +452,12 @@ export default function OtherPage() {
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    {createKind === 1 ? "О компании" : "Описание и темы"}
+                                    {createKind === 1 ? (isRu ? "О компании" : "About Company") : (isRu ? "Описание и темы" : "Description & Topics")}
                                 </label>
                                 <textarea
                                     value={communityDesc}
                                     onChange={(e) => setCommunityDesc(e.target.value)}
-                                    placeholder={createKind === 1 ? "Чем занимается компания, какие проекты разрабатывает..." : "О чем сообщество? Кому будет интересно?"}
+                                    placeholder={createKind === 1 ? (isRu ? "Чем занимается компания, какие проекты разрабатывает..." : "What does the company do, what projects does it build...") : (isRu ? "О чем сообщество? Кому будет интересно?" : "What is the community about? Who is it for?")}
                                     rows={3}
                                     required
                                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20 resize-none"
@@ -465,7 +469,7 @@ export default function OtherPage() {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                                Сайт компании
+                                                {isRu ? "Сайт компании" : "Company Website"}
                                             </label>
                                             <input
                                                 type="url"
@@ -477,13 +481,13 @@ export default function OtherPage() {
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                                Локация / Штаб-квартира
+                                                {isRu ? "Локация / Штаб-квартира" : "Location / HQ"}
                                             </label>
                                             <input
                                                 type="text"
                                                 value={companyLocation}
                                                 onChange={(e) => setCompanyLocation(e.target.value)}
-                                                placeholder="Москва / Remote"
+                                                placeholder={isRu ? "Москва / Remote" : "Moscow / Remote"}
                                                 className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
                                             />
                                         </div>
@@ -492,31 +496,31 @@ export default function OtherPage() {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                                Сфера / Индустрия
+                                                {isRu ? "Сфера / Индустрия" : "Industry"}
                                             </label>
                                             <input
                                                 type="text"
                                                 value={companyIndustry}
                                                 onChange={(e) => setCompanyIndustry(e.target.value)}
-                                                placeholder="IT, Финтех, AI"
+                                                placeholder={isRu ? "IT, Финтех, AI" : "IT, Fintech, AI"}
                                                 className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
                                             />
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                                Размер компании
+                                                {isRu ? "Размер компании" : "Company Size"}
                                             </label>
                                             <select
                                                 value={companySize}
                                                 onChange={(e) => setCompanySize(e.target.value)}
                                                 className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
                                             >
-                                                <option value="">Не указано</option>
-                                                <option value="1-10">1-10 сотрудников</option>
-                                                <option value="11-50">11-50 сотрудников</option>
-                                                <option value="51-200">51-200 сотрудников</option>
-                                                <option value="201-1000">201-1000 сотрудников</option>
-                                                <option value="1000+">1000+ сотрудников</option>
+                                                <option value="">{isRu ? "Не указано" : "Not specified"}</option>
+                                                <option value="1-10">{isRu ? "1-10 сотрудников" : "1-10 employees"}</option>
+                                                <option value="11-50">{isRu ? "11-50 сотрудников" : "11-50 employees"}</option>
+                                                <option value="51-200">{isRu ? "51-200 сотрудников" : "51-200 employees"}</option>
+                                                <option value="201-1000">{isRu ? "201-1000 сотрудников" : "201-1000 employees"}</option>
+                                                <option value="1000+">{isRu ? "1000+ сотрудников" : "1000+ employees"}</option>
                                             </select>
                                         </div>
                                     </div>
@@ -525,7 +529,7 @@ export default function OtherPage() {
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    Доступ
+                                    {isRu ? "Доступ" : "Access"}
                                 </label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
@@ -539,9 +543,9 @@ export default function OtherPage() {
                                     >
                                         <div className="text-xs font-semibold flex items-center gap-1.5">
                                             <Globe size={13} />
-                                            Публичное
+                                            {isRu ? "Публичное" : "Public"}
                                         </div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Вход без заявок</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Вход без заявок" : "Open to join"}</div>
                                     </button>
                                     <button
                                         type="button"
@@ -554,16 +558,16 @@ export default function OtherPage() {
                                     >
                                         <div className="text-xs font-semibold flex items-center gap-1.5">
                                             <Lock size={13} />
-                                            Ограниченное
+                                            {isRu ? "Ограниченное" : "Restricted"}
                                         </div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">По заявкам</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "По заявкам" : "By request"}</div>
                                     </button>
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    Публикация записей
+                                    {isRu ? "Публикация записей" : "Posting Policy"}
                                 </label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
@@ -577,9 +581,9 @@ export default function OtherPage() {
                                     >
                                         <div className="text-xs font-semibold flex items-center gap-1.5">
                                             <Users size={13} />
-                                            Все участники
+                                            {isRu ? "Все участники" : "All Members"}
                                         </div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Любой член группы</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Любой член группы" : "Any group member"}</div>
                                     </button>
                                     <button
                                         type="button"
@@ -592,9 +596,9 @@ export default function OtherPage() {
                                     >
                                         <div className="text-xs font-semibold flex items-center gap-1.5">
                                             <ShieldCheck size={13} />
-                                            Администрация
+                                            {isRu ? "Администрация" : "Admins Only"}
                                         </div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">Админы и модеры</div>
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Админы и модеры" : "Admins & moderators"}</div>
                                     </button>
                                 </div>
                             </div>
@@ -604,7 +608,7 @@ export default function OtherPage() {
                                 disabled={isCreating}
                                 className="w-full py-3 mt-4 rounded-xl bg-white text-zinc-950 text-sm font-semibold hover:bg-zinc-200 transition active:scale-98 disabled:opacity-50"
                             >
-                                {isCreating ? "Создание..." : (createKind === 1 ? "Создать компанию" : "Создать сообщество")}
+                                {isCreating ? (isRu ? "Создание..." : "Creating...") : (createKind === 1 ? (isRu ? "Создать компанию" : "Create Company") : (isRu ? "Создать сообщество" : "Create Community"))}
                             </button>
                         </form>
                     </div>

@@ -6,6 +6,7 @@ import ReceivedMessage from "@/components/receivedMessage";
 import SentMessage from "@/components/sentMessage";
 import TitlebarMessage from "@/components/titlebarMessage";
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { ChatItem, ChatService, MessageItem } from "@/services/chatService";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -20,6 +21,8 @@ function MessagesContent() {
     const queryChatId = searchParams.get('chatId');
 
     const { userData, connection, onlineUsers } = useApplication();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
 
     const [chats, setChats] = useState<ChatItem[]>([]);
     const [isChatsLoading, setIsChatsLoading] = useState(true);
@@ -61,9 +64,9 @@ function MessagesContent() {
     }, [activeChat?.id]);
 
     useEffect(() => {
-        document.title = 'Messages';
+        document.title = isRu ? 'Сообщения' : 'Messages';
         loadChats();
-    }, [queryChatId]);
+    }, [queryChatId, isRu]);
 
      const loadChats = async () => {
         try {
@@ -165,7 +168,7 @@ function MessagesContent() {
 
             setChats(prev => prev.map(c => 
                 c.id.toLowerCase() === newMessage.chatId.toLowerCase() 
-                    ? { ...c, content: newMessage.content || (newMessage.attachments?.length ? "📷 Photo" : ""), time: newMessage.time }
+                    ? { ...c, content: newMessage.content || (newMessage.attachments?.length ? (isRu ? "📷 Фото" : "📷 Photo") : ""), time: newMessage.time }
                     : c
             ));
         };
@@ -183,7 +186,7 @@ function MessagesContent() {
                 if (lastMsg) {
                     setChats((prevChats) => prevChats.map((c) => 
                         c.id.toLowerCase() === chatId 
-                            ? { ...c, content: lastMsg.content || (lastMsg.attachments?.length ? "Attachment" : ""), time: lastMsg.time }
+                            ? { ...c, content: lastMsg.content || (lastMsg.attachments?.length ? (isRu ? "Вложение" : "Attachment") : ""), time: lastMsg.time }
                             : c
                     ));
                 }
@@ -206,7 +209,7 @@ function MessagesContent() {
 
             setChats((prev) => prev.map((c) => 
                 c.id.toLowerCase() === chatId
-                    ? { ...c, content: newContent || (newAttachments.length ? "📷 Фотография" : c.content) }
+                    ? { ...c, content: newContent || (newAttachments.length ? (isRu ? "📷 Фотография" : "📷 Photo") : c.content) }
                     : c
             ));
         };
@@ -288,7 +291,7 @@ function MessagesContent() {
 
             setChats(prev => prev.map(c => 
                 c.id.toLowerCase() === activeChat.id.toLowerCase()
-                    ? { ...c, content: sentMessage.content || (attachments.length ? "📷 Фото" : ""), time: sentMessage.time }
+                    ? { ...c, content: sentMessage.content || (attachments.length ? (isRu ? "📷 Фото" : "📷 Photo") : ""), time: sentMessage.time }
                     : c
             ));
         } catch (error) {
@@ -387,7 +390,7 @@ function MessagesContent() {
     return (
           <div className="flex flex-row h-full" >
                <div className={`flex flex-col w-[500px] max-sm:w-full border-r border-white/5 overflow-y-auto no-scrollbar max-sm:border-r-0 min-h-full ${activeChat ? 'max-sm:hidden' : 'flex'}`}>
-                    <TitlebarMessages title="Messages"></TitlebarMessages>
+                    <TitlebarMessages title={isRu ? 'Сообщения' : 'Messages'}></TitlebarMessages>
 
                     <div className="flex flex-col">
                          {isChatsLoading ? (
@@ -406,7 +409,7 @@ function MessagesContent() {
                                 ))}
                             </div>
                         ) : chats.length === 0 ? (
-                            <div className="p-4 text-center text-xs text-zinc-500">No chats yet</div>
+                            <div className="p-4 text-center text-xs text-zinc-500">{isRu ? 'Чатов пока нет' : 'No chats yet'}</div>
                         ) : (
                             <div className="animate-fade-in flex flex-col">
                                 {chats.map(chat => {
@@ -421,7 +424,7 @@ function MessagesContent() {
                                                 Id={chat.id} 
                                                 Name={chat.name} 
                                                 UserName={chat.userName || ""} 
-                                                Content={chat.content || "No messages yet"} 
+                                                Content={chat.content || (isRu ? "Сообщений пока нет" : "No messages yet")} 
                                                 Time={chat.time} 
                                                 Avatar={chat.avatar || userData.avatar} 
                                                 isOnline={isUserOnline}
@@ -445,7 +448,7 @@ function MessagesContent() {
                                             Id={activeChat.id} 
                                             Name={activeChat.name} 
                                             UserName={activeChat.userName || ""} 
-                                            Info={isPartnerOnline ? "Online" : "Offline"} 
+                                            Info={isPartnerOnline ? (isRu ? "В сети" : "Online") : (isRu ? "Не в сети" : "Offline")} 
                                             Avatar={activeChat.avatar || userData.avatar} 
                                             isOnline={isPartnerOnline}
                                             onClose={() => setActiveChat(null)}
@@ -459,7 +462,7 @@ function MessagesContent() {
                             
                         </div>
                     ) : messages.length === 0 ? (
-                        <div className="text-center text-zinc-500 my-auto text-xs">Write first message</div>
+                        <div className="text-center text-zinc-500 my-auto text-xs">{isRu ? 'Напишите первое сообщение' : 'Write first message'}</div>
                     ) : (
                         <div className="animate-fade-in flex flex-col gap-1">
                             {messages.map((msg) => 
@@ -470,7 +473,7 @@ function MessagesContent() {
                                         Content={msg.content} 
                                         Attachments={msg.attachments}
                                         ReplyTo={msg.replyTo}
-                                        AuthorName="You"
+                                        AuthorName={isRu ? "Вы" : "You"}
                                         Time={msg.time} 
                                         IsRead={msg.isRead}
                                         onDelete={handleDeleteMessage}
@@ -502,17 +505,17 @@ function MessagesContent() {
                                     <Reply size={14} className="text-sky-400 shrink-0" />
                                     <div className="flex flex-col truncate">
                                         <span className="font-semibold text-sky-400 text-[11px]">
-                                            Replying to {replyingMessage.authorName}
+                                            {isRu ? `В ответ ${replyingMessage.authorName}` : `Replying to ${replyingMessage.authorName}`}
                                         </span>
                                         <span className="truncate text-zinc-400 text-[11px] max-w-md">
-                                            {replyingMessage.content || "📷 Attachment"}
+                                            {replyingMessage.content || (isRu ? "📷 Вложение" : "📷 Attachment")}
                                         </span>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => setReplyingMessage(null)}
                                     className="p-1 hover:bg-white/10 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
-                                    title="Cancel reply"
+                                    title={isRu ? "Отменить ответ" : "Cancel reply"}
                                 >
                                     <X size={14} />
                                 </button>
@@ -523,13 +526,13 @@ function MessagesContent() {
                             <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-t border-white/5 text-xs text-zinc-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
                                 <div className="flex items-center gap-2 truncate">
                                     <Edit size={14} className="text-sky-400 shrink-0" />
-                                    <span className="font-semibold text-sky-400">Editing message:</span>
+                                    <span className="font-semibold text-sky-400">{isRu ? 'Редактирование сообщения:' : 'Editing message:'}</span>
                                     <span className="truncate text-zinc-400 max-w-md">{editingMessage.content}</span>
                                 </div>
                                 <button 
                                     onClick={handleCancelEdit}
                                     className="p-1 hover:bg-white/10 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
-                                    title="Cancel edit"
+                                    title={isRu ? "Отменить редактирование" : "Cancel edit"}
                                 >
                                     <X size={14} />
                                 </button>
@@ -540,13 +543,13 @@ function MessagesContent() {
                             value={inputText}
                             onChange={handleInputChange}
                             onSend={handleSendMessage}
-                            placeholder="Type a message..."
+                            placeholder={isRu ? "Введите сообщение..." : "Type a message..."}
                         />
                     </div>
                 </div>
                ) : (
                <div className="hidden sm:flex flex-1 items-center justify-center text-zinc-600">
-                    Select a conversation to start messaging
+                    {isRu ? 'Выберите диалог, чтобы начать общение' : 'Select a conversation to start messaging'}
                </div>
           )}
 
@@ -561,12 +564,18 @@ function MessagesContent() {
                   >
                       <div className="flex flex-col gap-1.5">
                           <h3 className="text-base font-semibold text-zinc-100">
-                              {confirmAction.type === 'clear' ? 'Очистить переписку?' : 'Удалить чат?'}
+                              {confirmAction.type === 'clear'
+                                  ? (isRu ? 'Очистить переписку?' : 'Clear conversation?')
+                                  : (isRu ? 'Удалить чат?' : 'Delete chat?')}
                           </h3>
                           <p className="text-xs text-zinc-400 leading-relaxed">
                               {confirmAction.type === 'clear'
-                                  ? `Все сообщения в чате с "${confirmAction.chatName}" будут безвозвратно удалены.`
-                                  : `Чат с "${confirmAction.chatName}" и вся переписка будут безвозвратно удалены.`}
+                                  ? (isRu
+                                      ? `Все сообщения в чате с "${confirmAction.chatName}" будут безвозвратно удалены.`
+                                      : `All messages in the chat with "${confirmAction.chatName}" will be permanently deleted.`)
+                                  : (isRu
+                                      ? `Чат с "${confirmAction.chatName}" и вся переписка будут безвозвратно удалены.`
+                                      : `The chat with "${confirmAction.chatName}" and all messages will be permanently deleted.`)}
                           </p>
                       </div>
 
@@ -577,7 +586,7 @@ function MessagesContent() {
                               onClick={() => setConfirmAction(null)}
                               className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition disabled:opacity-50 cursor-pointer"
                           >
-                              Отмена
+                              {isRu ? 'Отмена' : 'Cancel'}
                           </button>
                           <button
                               type="button"
@@ -589,7 +598,11 @@ function MessagesContent() {
                                       : 'bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20'
                               }`}
                           >
-                              {isActionLoading ? 'Подождите...' : confirmAction.type === 'clear' ? 'Очистить' : 'Удалить'}
+                              {isActionLoading
+                                  ? (isRu ? 'Подождите...' : 'Please wait...')
+                                  : confirmAction.type === 'clear'
+                                      ? (isRu ? 'Очистить' : 'Clear')
+                                      : (isRu ? 'Удалить' : 'Delete')}
                           </button>
                       </div>
                   </div>
@@ -600,8 +613,11 @@ function MessagesContent() {
 }
 
 export default function Messages() {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
+
     return (
-        <Suspense fallback={<div className="flex h-full items-center justify-center text-zinc-500">Loading messages...</div>}>
+        <Suspense fallback={<div className="flex h-full items-center justify-center text-zinc-500">{isRu ? 'Загрузка сообщений...' : 'Loading messages...'}</div>}>
             <MessagesContent />
         </Suspense>
     );

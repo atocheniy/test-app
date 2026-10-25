@@ -1,8 +1,12 @@
 'use client';
 
+import { useLanguage } from "@/context/LanguageContext";
 import { LinearBlur } from "progressive-blur";
 
 export default function TitlebarMessages({ title }: { title: string }) {
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
+
     return (
         <div className="sticky top-0 shrink-0 z-50 flex items-center h-14 px-6 relative">
             <LinearBlur
@@ -20,7 +24,7 @@ export default function TitlebarMessages({ title }: { title: string }) {
                 }}
             />
 
-            <h1 className="text-lg font-bold text-zinc-100 relative z-10">{title}</h1>
+            <h1 className="text-lg font-bold text-zinc-100 relative z-10">{title || (isRu ? 'Сообщения' : t.nav.messages)}</h1>
         </div>
     );
 }

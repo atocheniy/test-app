@@ -2,6 +2,7 @@
 
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
+import { useLanguage } from "@/context/LanguageContext";
 import {
     ArrowUpRight,
     Briefcase,
@@ -14,46 +15,50 @@ import Link from "next/link";
 
 export default function Home() {
     const { userData, onlineUsers } = useApplication();
+    const { language, t } = useLanguage();
+    const isRu = language === 'ru';
     const isUserLoading = !userData?.id || userData.userName === '...';
 
     const quickActions = [
         {
-            title: "Write a Post",
-            desc: "Share your thoughts or code snippets with the community",
+            title: isRu ? "Написать пост" : "Write a Post",
+            desc: isRu ? "Поделитесь мыслями или фрагментами кода с сообществом" : "Share your thoughts or code snippets with the community",
             icon: Code2,
             color: "from-blue-500/20 to-cyan-500/10 text-blue-400 border-blue-500/20",
             href: "/feed",
-            btnText: "New Post"
+            btnText: isRu ? "Новый пост" : "New Post"
         },
         {
-            title: "Live Messenger",
-            desc: `Chat in real-time with ${onlineUsers?.length || 0} active developers online`,
+            title: isRu ? "Мессенджер" : "Live Messenger",
+            desc: isRu
+                ? `Общайтесь в реальном времени с ${onlineUsers?.length || 0} разработчиками онлайн`
+                : `Chat in real-time with ${onlineUsers?.length || 0} active developers online`,
             icon: MessageSquare,
             color: "from-purple-500/20 to-pink-500/10 text-purple-400 border-purple-500/20",
             href: "/messages",
-            btnText: "Open Chats"
+            btnText: isRu ? "Открыть чаты" : "Open Chats"
         },
         {
-            title: "Explore Vacancies",
-            desc: "Discover new remote opportunities tailored for your stack",
+            title: isRu ? "Вакансии" : "Explore Vacancies",
+            desc: isRu ? "Откройте новые удаленные вакансии под ваш стек" : "Discover new remote opportunities tailored for your stack",
             icon: Briefcase,
             color: "from-emerald-500/20 to-teal-500/10 text-emerald-400 border-emerald-500/20",
             href: "/vacancies",
-            btnText: "Browse Jobs"
+            btnText: isRu ? "Смотреть вакансии" : "Browse Jobs"
         },
         {
-            title: "Complete Profile",
-            desc: "Add your tech stack, GitHub links, and bio to stand out",
+            title: isRu ? "Заполнить профиль" : "Complete Profile",
+            desc: isRu ? "Добавьте стек технологий, ссылки на GitHub и биографию" : "Add your tech stack, GitHub links, and bio to stand out",
             icon: Sparkles,
             color: "from-amber-500/20 to-orange-500/10 text-amber-400 border-amber-500/20",
             href: `/profile/${userData?.userName}`,
-            btnText: "Edit Profile"
+            btnText: isRu ? "Редактировать профиль" : "Edit Profile"
         }
     ];
 
     return (
         <div className="flex flex-col min-h-full pb-10 animate-fade-in">
-            <Titlebar title="Dashboard" />
+            <Titlebar title={isRu ? "Панель управления" : "Dashboard"} />
 
             <div className="p-6 max-w-5xl space-y-6">
                 
@@ -62,10 +67,10 @@ export default function Home() {
                         <div className="space-y-2">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
                                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                Branch of Workspace
+                                {isRu ? "Рабочее пространство" : "Branch of Workspace"}
                             </div>
                             <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-                                <span>Welcome back,</span>
+                                <span>{isRu ? "С возвращением," : "Welcome back,"}</span>
                                 {isUserLoading ? (
                                     <span className="inline-block h-7 md:h-8 w-36 bg-white/10 rounded-xl animate-pulse align-middle" />
                                 ) : (
@@ -73,7 +78,9 @@ export default function Home() {
                                 )}!
                             </h1>
                             <p className="text-sm text-zinc-400 max-w-md">
-                                Central hub for sharing code, chatting with colleagues, and exploring career opportunities.
+                                {isRu
+                                    ? "Центральный хаб для обмена кодом, общения с коллегами и поиска карьерных возможностей."
+                                    : "Central hub for sharing code, chatting with colleagues, and exploring career opportunities."}
                             </p>
                         </div>
 
@@ -83,7 +90,7 @@ export default function Home() {
                                 className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition active:scale-95 shadow-lg shadow-white/10"
                             >
                                 <Plus size={16} />
-                                Create Post
+                                {isRu ? "Создать пост" : "Create Post"}
                             </Link>
                         </div>
                     </div>
@@ -93,7 +100,7 @@ export default function Home() {
 
                 <div>
                     <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4 px-1">
-                        Recommended Actions
+                        {isRu ? "Рекомендуемые действия" : "Recommended Actions"}
                     </h2>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
