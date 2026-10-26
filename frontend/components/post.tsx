@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Code2, Copy, Heart, MessageCircle, MoreHorizontal, Pencil, Repeat2, Sparkles, Trash2 } from "lucide-react";
+import { Check, Code2, Copy, Heart, MessageCircle, MoreHorizontal, Pencil, Pin, Repeat2, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 import dynamic from "next/dynamic";
@@ -76,6 +76,9 @@ interface PostProps {
   } | null;
 
   recommendationReason?: string;
+  isPinned?: boolean;
+  canPin?: boolean;
+  onPinToggle?: (id: string, isPinned: boolean) => void;
 }
 
 export default function Post({
@@ -94,8 +97,18 @@ export default function Post({
   commentsList,
   community,
   project,
-  recommendationReason
+  recommendationReason,
+  isPinned = false,
+  canPin,
+  onPinToggle
 }: PostProps) {
+  const [isPinnedState, setIsPinnedState] = useState(isPinned);
+  const [isPinning, setIsPinning] = useState(false);
+
+  useEffect(() => {
+    setIsPinnedState(Boolean(isPinned));
+  }, [isPinned]);
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLongPost, setIsLongPost] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
@@ -219,6 +232,29 @@ export default function Post({
     }
   };
 
+  const canPinEffective = canPin !== undefined ? canPin : isMyPost;
+
+  const handleTogglePin = async () => {
+    if (isPinning) return;
+    setIsPinning(true);
+    setIsMenuOpen(false);
+    try {
+      const res = await PostService.togglePinPost(Id);
+      setIsPinnedState(res.isPinned);
+      onPinToggle?.(Id, res.isPinned);
+      await Promise.all([
+        refreshPostsData?.(),
+        refreshCurrentPost?.(Id)
+      ]);
+    } catch (err: any) {
+      console.error(err);
+      const msg = err?.response?.data?.message || (isRu ? "Не удалось изменить статус закрепления" : "Failed to change pin status");
+      alert(msg);
+    } finally {
+      setIsPinning(false);
+    }
+  };
+
   const handleSaveEdit = async () => {
     if (!editContent.trim()) {
       alert(isRu ? "Пост не может быть пустым" : "Post cannot be empty");
@@ -307,7 +343,17 @@ export default function Post({
   };
 
   return (
-    <div className="py-4 border border-white/5 rounded-xl bg-white/[0.02] text-zinc-100 px-4 mx-2 min-w-0 overflow-hidden">
+    <div className={`py-4 border rounded-xl text-zinc-100 px-4 mx-2 min-w-0 overflow-hidden transition-colors ${
+      isPinnedState 
+        ? "border-white/10 bg-white/[0.03]" 
+        : "border-white/5 bg-white/[0.02]"
+    }`}>
+      {isPinnedState && (
+        <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-400 mb-2.5 pl-0.5 select-none">
+          <Pin className="w-3.5 h-3.5 text-zinc-400 shrink-0 rotate-45" />
+          <span>{t.post.pinned}</span>
+        </div>
+      )}
       {recommendationReason ? (
         <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400 mb-2 pl-0.5">
           <Sparkles className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -395,7 +441,7 @@ export default function Post({
           </button>
 
           {isMenuOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-zinc-900 border border-white/10 shadow-2xl p-1 z-50 backdrop-blur-xl">
+            <div className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-[#0a0a0a]/90 border border-white/10 shadow-2xl p-1 z-50 backdrop-blur-xl">
               <button
                 onClick={handleCopyText}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
@@ -407,6 +453,17 @@ export default function Post({
                 )}
                 <span>{isCopied ? t.post.linkCopied : t.post.copyLink}</span>
               </button>
+
+              {canPinEffective && (
+                <button
+                  onClick={handleTogglePin}
+                  disabled={isPinning}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition disabled:opacity-50 cursor-pointer"
+                >
+                  <Pin className="w-3.5 h-3.5" />
+                  <span>{isPinnedState ? t.post.unpin : t.post.pin}</span>
+                </button>
+              )}
 
               {isMyPost && (
                 <>
@@ -519,7 +576,7 @@ export default function Post({
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  height: 180,
+                  height: 120,
                   pointerEvents: "none",
                   zIndex: 10,
                 }}

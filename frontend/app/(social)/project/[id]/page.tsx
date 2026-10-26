@@ -1,5 +1,6 @@
 'use client';
 
+import Modal from "@/components/Modal";
 import Post from "@/components/post";
 import { PROJECT_STATUS_MAP } from "@/components/project_card";
 import PublicBlock from "@/components/public_block";
@@ -32,7 +33,6 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
 export default function ProjectPage() {
     const params = useParams();
@@ -160,12 +160,18 @@ export default function ProjectPage() {
             setProject(prev => prev ? { ...prev, postsCount: Math.max(0, (prev.postsCount ?? 1) - 1) } : prev);
         };
 
+        const handlePostPinChanged = () => {
+            loadPosts();
+        };
+
         connection.on("postCreated", handlePostCreated);
         connection.on("postDeleted", handlePostDeleted);
+        connection.on("postPinChanged", handlePostPinChanged);
 
         return () => {
             connection.off("postCreated", handlePostCreated);
             connection.off("postDeleted", handlePostDeleted);
+            connection.off("postPinChanged", handlePostPinChanged);
         };
     }, [connection, id]);
 
@@ -644,6 +650,9 @@ export default function ProjectPage() {
                                             community={p.community}
                                             project={p.project || { id: project.id, name: project.name, imageUrl: project.imageUrl, status: project.status }}
                                             repostOfPost={p.repostOfPost}
+                                            isPinned={p.isPinned}
+                                            canPin={isOwner}
+                                            onPinToggle={loadPosts}
                                         />
                                     </div>
                                 ))}
@@ -659,307 +668,326 @@ export default function ProjectPage() {
                 </div>
             )}
 
-            {isLightboxOpen && allImages.length > 0 && mounted && createPortal(
-                <div
-                    className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+            <Modal
+                isOpen={isLightboxOpen && allImages.length > 0}
+                onClose={() => setIsLightboxOpen(false)}
+                overlayClassName="bg-black/80 backdrop-blur-xl"
+                className="relative max-w-5xl max-h-[85vh] w-full flex items-center justify-center overflow-hidden rounded-2xl"
+            >
+                <button
+                    type="button"
                     onClick={() => setIsLightboxOpen(false)}
+                    className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-white rounded-full bg-white/5 hover:bg-white/10 transition z-50 cursor-pointer"
                 >
-                    <button
-                        type="button"
-                        onClick={() => setIsLightboxOpen(false)}
-                        className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white rounded-full bg-white/5 hover:bg-white/10 transition z-50"
-                    >
-                        <X size={20} />
-                    </button>
+                    <X size={20} />
+                </button>
 
-                    <div className="relative max-w-5xl max-h-[85vh] w-full flex items-center justify-center overflow-hidden rounded-2xl" onClick={(e) => e.stopPropagation()}>
-                        <img
-                            src={allImages[activeImageIndex]}
-                            alt=""
-                            aria-hidden="true"
-                            className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-25 scale-110 pointer-events-none select-none"
-                        />
+                <div className="relative max-w-5xl max-h-[85vh] w-full flex items-center justify-center overflow-hidden rounded-2xl">
+                    <img
+                        src={allImages[activeImageIndex]}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-25 scale-110 pointer-events-none select-none"
+                    />
 
-                        <img
-                            src={allImages[activeImageIndex]}
-                            alt="Lightbox"
-                            className="relative z-10 max-w-full max-h-[85vh] object-contain rounded-xl border border-white/10 shadow-2xl"
-                        />
+                    <img
+                        src={allImages[activeImageIndex]}
+                        alt="Lightbox"
+                        className="relative z-10 max-w-full max-h-[85vh] object-contain rounded-xl border border-white/10 shadow-2xl"
+                    />
 
-                        {allImages.length > 1 && (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveImageIndex(prev => (prev === 0 ? allImages.length - 1 : prev - 1))}
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 hover:bg-black border border-white/20 text-white flex items-center justify-center backdrop-blur-md cursor-pointer z-20"
-                                >
-                                    <ChevronLeft size={20} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveImageIndex(prev => (prev === allImages.length - 1 ? 0 : prev + 1))}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 hover:bg-black border border-white/20 text-white flex items-center justify-center backdrop-blur-md cursor-pointer z-20"
-                                >
-                                    <ChevronRight size={20} />
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {isEditOpen && mounted && createPortal(
-                <div
-                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
-                    onClick={() => setIsEditOpen(false)}
-                >
-                    <div
-                        className="w-full max-w-lg bg-zinc-950 border border-white/10 rounded-2xl p-6 shadow-2xl my-8 text-zinc-100"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-                            <h3 className="text-base font-semibold text-white">{isRu ? "Редактирование проекта" : "Edit Project"}</h3>
+                    {allImages.length > 1 && (
+                        <>
                             <button
                                 type="button"
-                                onClick={() => setIsEditOpen(false)}
-                                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition"
+                                onClick={() => setActiveImageIndex(prev => (prev === 0 ? allImages.length - 1 : prev - 1))}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 hover:bg-black border border-white/20 text-white flex items-center justify-center backdrop-blur-md cursor-pointer z-20"
                             >
-                                <X size={18} />
+                                <ChevronLeft size={20} />
                             </button>
-                        </div>
+                            <button
+                                type="button"
+                                onClick={() => setActiveImageIndex(prev => (prev === allImages.length - 1 ? 0 : prev + 1))}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 hover:bg-black border border-white/20 text-white flex items-center justify-center backdrop-blur-md cursor-pointer z-20"
+                            >
+                                <ChevronRight size={20} />
+                            </button>
+                        </>
+                    )}
+                </div>
+            </Modal>
 
-                        <form onSubmit={handleSaveProject} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    {isRu ? "Название проекта *" : "Project Name *"}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
-                                    className="w-full px-3 py-2 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30"
-                                    placeholder={isRu ? "Мой крутой проект" : "My awesome project"}
-                                    required
-                                />
-                            </div>
+            <Modal
+                isOpen={isEditOpen}
+                onClose={() => setIsEditOpen(false)}
+                className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 text-neutral-100 relative"
+            >
+                        <div className="md:col-span-5 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-4 overflow-y-auto no-scrollbar max-h-[90vh]">
+                            <div className="space-y-4">
+                                <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+                                    {isRu ? "Обложка и медиа проекта" : "Project Cover & Media"}
+                                </span>
 
-                            <div>
-                                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    {isRu ? "Статус проекта" : "Project Status"}
-                                </label>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    {[
-                                        { val: 0, label: isRu ? "В разработке" : "In Progress" },
-                                        { val: 1, label: isRu ? "Бета" : "Beta" },
-                                        { val: 2, label: isRu ? "Релиз" : "Released" },
-                                        { val: 3, label: isRu ? "Архив" : "Archived" }
-                                    ].map((s) => (
-                                        <button
-                                            key={s.val}
-                                            type="button"
-                                            onClick={() => setEditStatus(s.val as ProjectStatus)}
-                                            className={`py-2 px-2 text-xs font-medium rounded-xl border transition cursor-pointer text-center ${
-                                                editStatus === s.val
-                                                    ? 'bg-white text-black border-white shadow-sm'
-                                                    : 'bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20'
-                                            }`}
-                                        >
-                                            {s.label}
-                                        </button>
-                                    ))}
+                                <div className="space-y-2">
+                                    <div className="relative h-36 w-full rounded-2xl overflow-hidden border border-white/10 bg-[#050505]/90">
+                                        {editBannerUrl ? (
+                                            <img src={editBannerUrl} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-neutral-800 via-neutral-950 to-black flex items-center justify-center text-xs text-neutral-500">
+                                                {isRu ? "Нет обложки" : "No cover image"}
+                                            </div>
+                                        )}
+                                        <input
+                                            ref={bannerInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleBannerUpload}
+                                            className="hidden"
+                                        />
+                                        <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                                            <button
+                                                type="button"
+                                                disabled={isUploadingBanner}
+                                                onClick={() => bannerInputRef.current?.click()}
+                                                className="px-2.5 py-1 rounded-lg bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/15 text-[11px] font-medium text-neutral-100 flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
+                                            >
+                                                {isUploadingBanner ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
+                                                <span>{editBannerUrl ? (isRu ? "Сменить" : "Replace") : (isRu ? "Обложка" : "Cover")}</span>
+                                            </button>
+                                            {editBannerUrl && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditBannerUrl('')}
+                                                    className="p-1.5 rounded-lg bg-black/70 hover:bg-red-500/80 border border-white/15 text-neutral-200 hover:text-white transition cursor-pointer"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    {isRu ? "Описание" : "Description"}
-                                </label>
-                                <textarea
-                                    value={editDesc}
-                                    onChange={(e) => setEditDesc(e.target.value)}
-                                    rows={3}
-                                    className="w-full px-3 py-2 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 custom-scrollbar resize-none"
-                                    placeholder={isRu ? "О чем этот проект? Какую проблему решает?" : "What is this project about? What problem does it solve?"}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    {isRu ? "Баннер (обложка)" : "Banner (Cover)"}
-                                </label>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        ref={bannerInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleBannerUpload}
-                                        className="hidden"
-                                    />
-                                    <button
-                                        type="button"
-                                        disabled={isUploadingBanner}
-                                        onClick={() => bannerInputRef.current?.click()}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-xl text-xs font-medium text-zinc-300 transition cursor-pointer disabled:opacity-50"
-                                    >
-                                        {isUploadingBanner ? <Loader2 size={13} className="animate-spin" /> : <Camera size={13} />}
-                                        <span>{editBannerUrl ? (isRu ? "Заменить баннер" : "Replace banner") : (isRu ? "Загрузить баннер" : "Upload banner")}</span>
-                                    </button>
-                                    {editBannerUrl && (
+                                <div className="space-y-2 pt-2 border-t border-white/5">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                            {isRu ? "Скриншоты" : "Screenshots"} ({editImages.length})
+                                        </label>
+                                        <input
+                                            ref={imagesInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handleImagesUpload}
+                                            className="hidden"
+                                        />
                                         <button
                                             type="button"
-                                            onClick={() => setEditBannerUrl('')}
-                                            className="p-1.5 text-zinc-400 hover:text-red-400 rounded-lg transition"
-                                            title={isRu ? "Удалить баннер" : "Remove banner"}
+                                            disabled={isUploadingImages}
+                                            onClick={() => imagesInputRef.current?.click()}
+                                            className="inline-flex items-center gap-1 text-xs font-medium text-neutral-300 hover:text-white transition cursor-pointer disabled:opacity-50"
                                         >
-                                            <Trash2 size={14} />
+                                            {isUploadingImages ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                                            <span>{isRu ? "Добавить" : "Add"}</span>
+                                        </button>
+                                    </div>
+
+                                    {editImages.length > 0 ? (
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {editImages.map((img, idx) => (
+                                                <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-white/10 group">
+                                                    <img src={img} alt={`Screenshot ${idx}`} className="w-full h-full object-cover" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditImages(prev => prev.filter((_, i) => i !== idx))}
+                                                        className="absolute top-1.5 right-1.5 p-1 rounded-lg bg-black/70 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => imagesInputRef.current?.click()}
+                                            className="w-full py-6 rounded-2xl border border-dashed border-white/15 hover:border-white/30 bg-[#050505]/90 text-xs text-neutral-400 hover:text-white transition cursor-pointer flex flex-col items-center justify-center gap-1.5"
+                                        >
+                                            <Plus size={16} />
+                                            <span>{isRu ? "Добавить скриншоты галереи" : "Add gallery screenshots"}</span>
                                         </button>
                                     )}
                                 </div>
-                                {editBannerUrl && (
-                                    <div className="w-full h-20 rounded-xl overflow-hidden mt-2 border border-white/10">
-                                        <img src={editBannerUrl} alt="Banner preview" className="w-full h-full object-cover" />
-                                    </div>
-                                )}
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    {isRu ? "Скриншоты и медиа" : "Screenshots & Media"}
-                                </label>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <input
-                                        ref={imagesInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={handleImagesUpload}
-                                        className="hidden"
-                                    />
-                                    <button
-                                        type="button"
-                                        disabled={isUploadingImages}
-                                        onClick={() => imagesInputRef.current?.click()}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-xl text-xs font-medium text-zinc-300 transition cursor-pointer disabled:opacity-50"
-                                    >
-                                        {isUploadingImages ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
-                                        <span>{isRu ? "Добавить скриншоты" : "Add screenshots"}</span>
-                                    </button>
-                                </div>
-                                {editImages.length > 0 && (
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                        {editImages.map((img, idx) => (
-                                            <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-white/10 group">
-                                                <img src={img} alt={`Screenshot ${idx}`} className="w-full h-full object-cover" />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setEditImages(prev => prev.filter((_, i) => i !== idx))}
-                                                    className="absolute top-1 right-1 p-1 rounded-md bg-black/70 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100 transition"
-                                                >
-                                                    <X size={12} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            <p className="text-[11px] text-neutral-500 hidden md:block leading-relaxed">
+                                {isRu ? "Скриншоты отображаются в интерактивной галерее на странице проекта." : "Screenshots are showcased in the interactive gallery on the project page."}
+                            </p>
+                        </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="md:col-span-7 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh]">
+                            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
                                 <div>
-                                    <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                        GitHub URL
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={editGithubUrl}
-                                        onChange={(e) => setEditGithubUrl(e.target.value)}
-                                        className="w-full px-3 py-2 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30"
-                                        placeholder="https://github.com/..."
-                                    />
+                                    <h3 className="text-lg font-bold text-white tracking-tight">{isRu ? "Редактирование проекта" : "Edit Project"}</h3>
+                                    <p className="text-xs text-neutral-400 mt-0.5">{isRu ? "Обновите информацию, статус, ссылки и стек" : "Update project info, status, links & tech stack"}</p>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                        Live Demo URL
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={editLiveUrl}
-                                        onChange={(e) => setEditLiveUrl(e.target.value)}
-                                        className="w-full px-3 py-2 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30"
-                                        placeholder="https://myproject.com"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                                    {isRu ? "Стек технологий" : "Tech Stack"}
-                                </label>
-                                <div className="flex gap-2 mb-2">
-                                    <input
-                                        type="text"
-                                        value={newTechInput}
-                                        onChange={(e) => setNewTechInput(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleAddTech();
-                                            }
-                                        }}
-                                        className="flex-1 px-3 py-2 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30"
-                                        placeholder="React, Next.js, C#, PostgreSQL..."
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleAddTech}
-                                        className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-medium text-zinc-200 transition"
-                                    >
-                                        {isRu ? "Добавить" : "Add"}
-                                    </button>
-                                </div>
-                                {editTechs.length > 0 && (
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {editTechs.map((tech) => (
-                                            <span
-                                                key={tech}
-                                                className="inline-flex items-center gap-1 text-xs bg-zinc-900 border border-white/10 px-2 py-0.5 rounded-lg text-zinc-300"
-                                            >
-                                                <span>{tech}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveTech(tech)}
-                                                    className="hover:text-red-400"
-                                                >
-                                                    <X size={11} />
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10">
                                 <button
                                     type="button"
                                     onClick={() => setIsEditOpen(false)}
-                                    className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white rounded-xl hover:bg-white/5 transition"
+                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0"
                                 >
-                                    {t.common.cancel}
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSaving}
-                                    className="px-5 py-2 text-xs font-semibold bg-white text-black hover:bg-zinc-200 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50"
-                                >
-                                    {isSaving && <Loader2 size={13} className="animate-spin" />}
-                                    <span>{t.common.save}</span>
+                                    <X size={16} />
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>,
-                document.body
-            )}
+
+                            <form onSubmit={handleSaveProject} className="space-y-4">
+                                <div>
+                                    <label className="block text-[11px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">
+                                        {isRu ? "Название проекта *" : "Project Name *"}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        className="w-full px-3.5 py-2.5 text-sm bg-white/[0.02] border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-white/25"
+                                        placeholder={isRu ? "Мой проект" : "My project"}
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">
+                                        {isRu ? "Статус проекта" : "Project Status"}
+                                    </label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                        {[
+                                            { val: 0, label: isRu ? "В разработке" : "In Progress" },
+                                            { val: 1, label: isRu ? "Бета" : "Beta" },
+                                            { val: 2, label: isRu ? "Релиз" : "Released" },
+                                            { val: 3, label: isRu ? "Архив" : "Archived" }
+                                        ].map((s) => (
+                                            <button
+                                                key={s.val}
+                                                type="button"
+                                                onClick={() => setEditStatus(s.val as ProjectStatus)}
+                                                className={`py-2 px-2 text-xs font-medium rounded-xl border transition cursor-pointer text-center ${
+                                                    editStatus === s.val
+                                                        ? 'bg-white text-black border-white shadow-sm'
+                                                        : 'bg-white/[0.02] text-neutral-400 border-white/10 hover:border-white/20'
+                                                }`}
+                                            >
+                                                {s.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">
+                                        {isRu ? "Описание" : "Description"}
+                                    </label>
+                                    <textarea
+                                        value={editDesc}
+                                        onChange={(e) => setEditDesc(e.target.value)}
+                                        rows={4}
+                                        className="w-full min-h-[116px] px-3.5 py-2.5 text-sm leading-relaxed bg-white/[0.02] border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-white/25 custom-scrollbar resize-y"
+                                        placeholder={isRu ? "О чем этот проект? Какую проблему решает?" : "What is this project about? What problem does it solve?"}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                    <div>
+                                        <label className="block text-[11px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">
+                                            GitHub URL
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editGithubUrl}
+                                            onChange={(e) => setEditGithubUrl(e.target.value)}
+                                            className="w-full px-3.5 py-2 text-xs bg-white/[0.02] border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-white/25"
+                                            placeholder="https://github.com/..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">
+                                            Live Demo URL
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editLiveUrl}
+                                            onChange={(e) => setEditLiveUrl(e.target.value)}
+                                            className="w-full px-3.5 py-2 text-xs bg-white/[0.02] border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-white/25"
+                                            placeholder="https://myproject.com"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="p-3.5 rounded-2xl bg-white/[0.015] border border-white/5 space-y-2.5">
+                                    <label className="block text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        {isRu ? "Стек технологий" : "Tech Stack"}
+                                    </label>
+                                    {editTechs.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {editTechs.map((tech) => (
+                                                <span
+                                                    key={tech}
+                                                    className="inline-flex items-center gap-1.5 text-xs bg-white/10 border border-white/10 px-2.5 py-0.5 rounded-lg text-neutral-200"
+                                                >
+                                                    <span>{tech}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveTech(tech)}
+                                                        className="text-neutral-400 hover:text-red-400 cursor-pointer"
+                                                    >
+                                                        <X size={11} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newTechInput}
+                                            onChange={(e) => setNewTechInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleAddTech();
+                                                }
+                                            }}
+                                            className="flex-1 px-3 py-1.5 text-xs bg-white/[0.02] border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-white/25"
+                                            placeholder="React, Next.js, C#, PostgreSQL..."
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddTech}
+                                            className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-semibold text-neutral-100 transition cursor-pointer"
+                                        >
+                                            {isRu ? "Добавить" : "Add"}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditOpen(false)}
+                                        className="px-5 py-2.5 text-xs font-semibold text-neutral-300 bg-white/5 hover:bg-white/10 rounded-xl transition cursor-pointer"
+                                    >
+                                        {t.common.cancel}
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSaving}
+                                        className="px-6 py-2.5 text-xs font-semibold bg-white text-black hover:bg-neutral-200 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                                    >
+                                        {isSaving && <Loader2 size={13} className="animate-spin" />}
+                                        <span>{t.common.save}</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </Modal>
         </div>
     );
 }

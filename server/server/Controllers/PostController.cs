@@ -164,8 +164,8 @@ namespace server.Controllers
                     likesCount = p.LikesCount,
                     isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                     commentsCount = p.CommentsCount,
-                    
                     repostsCount = p.RepostsCount,
+                    isPinned = p.IsPinned,
                     repostOfPost = p.RepostOfPost == null ? null : new {
                         id = p.RepostOfPost.Id,
                         content = p.RepostOfPost.Content,
@@ -361,6 +361,8 @@ namespace server.Controllers
                 likesCount = post.LikesCount,
                 isLikedByMe = false,
                 commentsCount = post.CommentsCount,
+                repostsCount = post.RepostsCount,
+                isPinned = false,
                 
                 authorName = user.FullName,
                 authorUsername = user.UserName,
@@ -505,6 +507,7 @@ namespace server.Controllers
                         isLikedByMe = _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                         commentsCount = p.CommentsCount,
                         repostsCount = p.RepostsCount,
+                        isPinned = p.IsPinned,
                         repostOfPost = p.RepostOfPost == null ? null : new {
                             id = p.RepostOfPost.Id,
                             content = p.RepostOfPost.Content,
@@ -677,6 +680,7 @@ namespace server.Controllers
                         isLikedByMe = likedIdsSet.Contains(p.Id),
                         commentsCount = p.CommentsCount,
                         repostsCount = p.RepostsCount,
+                        isPinned = p.IsPinned,
                         recommendationReason = sp.RecommendationReason,
                         repostOfPost = p.RepostOfPost == null ? null : new {
                             id = p.RepostOfPost.Id,
@@ -752,6 +756,7 @@ namespace server.Controllers
                         isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                         commentsCount = p.CommentsCount,
                         repostsCount = p.RepostsCount,
+                        isPinned = p.IsPinned,
                         recommendationReason = (string?)null,
                         repostOfPost = p.RepostOfPost == null ? null : new {
                             id = p.RepostOfPost.Id,
@@ -850,6 +855,105 @@ namespace server.Controllers
                 likesCount = post.LikesCount 
             });
         }
+
+        [HttpPost("{id}/toggle-pin")]
+        [HttpPost("togglePin/{id}")]
+        [Authorize]
+        public async Task<IActionResult> TogglePin(Guid id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+            var post = await _context.Post
+                .Include(p => p.Project)
+                .Include(p => p.Community)
+                    .ThenInclude(c => c.Members)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (post == null) return NotFound(new { message = "Пост не найден" });
+
+            bool hasPermission = false;
+
+            if (post.CommunityId != null && post.Community != null)
+            {
+                bool isCreator = post.Community.CreatorId == currentUserId;
+                bool isAdmin = post.Community.Members.Any(m => m.UserId == currentUserId && (m.Role == CommunityRole.Admin || m.Role == CommunityRole.Moderator));
+                hasPermission = isCreator || isAdmin;
+            }
+            else if (post.ProjectId != null && post.Project != null)
+            {
+                hasPermission = post.Project.UserId == currentUserId;
+            }
+            else
+            {
+                hasPermission = post.UserId == currentUserId;
+            }
+
+            if (!hasPermission)
+            {
+                return StatusCode(403, new { message = "У вас нет прав для закрепления этого поста" });
+            }
+
+            bool newPinnedStatus = !post.IsPinned;
+
+            if (newPinnedStatus)
+            {
+                if (post.CommunityId != null)
+                {
+                    var otherPinned = await _context.Post
+                        .Where(p => p.CommunityId == post.CommunityId && p.IsPinned && p.Id != post.Id)
+                        .ToListAsync();
+                    foreach (var p in otherPinned)
+                    {
+                        p.IsPinned = false;
+                        p.PinnedAt = null;
+                    }
+                }
+                else if (post.ProjectId != null)
+                {
+                    var otherPinned = await _context.Post
+                        .Where(p => p.ProjectId == post.ProjectId && p.IsPinned && p.Id != post.Id)
+                        .ToListAsync();
+                    foreach (var p in otherPinned)
+                    {
+                        p.IsPinned = false;
+                        p.PinnedAt = null;
+                    }
+                }
+                else
+                {
+                    var otherPinned = await _context.Post
+                        .Where(p => p.UserId == post.UserId && p.CommunityId == null && p.ProjectId == null && p.IsPinned && p.Id != post.Id)
+                        .ToListAsync();
+                    foreach (var p in otherPinned)
+                    {
+                        p.IsPinned = false;
+                        p.PinnedAt = null;
+                    }
+                }
+
+                post.IsPinned = true;
+                post.PinnedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                post.IsPinned = false;
+                post.PinnedAt = null;
+            }
+
+            await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("postPinChanged", new 
+            { 
+                id = post.Id, 
+                isPinned = post.IsPinned,
+                communityId = post.CommunityId,
+                projectId = post.ProjectId,
+                userId = post.UserId
+            });
+
+            return Ok(new { id = post.Id, isPinned = post.IsPinned });
+        }
         
         [HttpGet("getUserPosts")]
         [Authorize]
@@ -870,11 +974,12 @@ namespace server.Controllers
                 var cursorUtc = cursor.Value.Kind == DateTimeKind.Utc 
                     ? cursor.Value 
                     : cursor.Value.ToUniversalTime();
-                query = query.Where(p => p.Created < cursorUtc);
+                query = query.Where(p => !p.IsPinned && p.Created < cursorUtc);
             }
 
             var rawPosts = await query
-                .OrderByDescending(p => p.Created)
+                .OrderByDescending(p => p.IsPinned)
+                .ThenByDescending(p => p.Created)
                 .ThenByDescending(p => p.Id)
                 .Take(limit + 1)
                 .Select(p => new {
@@ -885,6 +990,8 @@ namespace server.Controllers
                     likesCount = p.LikesCount,
                     isLikedByMe = _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == userId),
                     commentsCount = p.CommentsCount,
+                    repostsCount = p.RepostsCount,
+                    isPinned = p.IsPinned,
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,
                     authorAvatar = p.User.Avatar,
@@ -896,7 +1003,6 @@ namespace server.Controllers
                         status = (int)p.Project.Status
                     },
                     
-                    repostsCount = p.RepostsCount,
                     repostOfPost = p.RepostOfPost == null ? null : new {
                         id = p.RepostOfPost.Id,
                         content = p.RepostOfPost.Content,
@@ -953,11 +1059,12 @@ namespace server.Controllers
                 var cursorUtc = cursor.Value.Kind == DateTimeKind.Utc 
                     ? cursor.Value 
                     : cursor.Value.ToUniversalTime();
-                query = query.Where(p => p.Created < cursorUtc);
+                query = query.Where(p => !p.IsPinned && p.Created < cursorUtc);
             }
 
             var rawPosts = await query
-                .OrderByDescending(p => p.Created)
+                .OrderByDescending(p => p.IsPinned)
+                .ThenByDescending(p => p.Created)
                 .ThenByDescending(p => p.Id)
                 .Take(limit + 1)
                 .Select(p => new {
@@ -969,6 +1076,7 @@ namespace server.Controllers
                     isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                     commentsCount = p.CommentsCount,
                     repostsCount = p.RepostsCount,
+                    isPinned = p.IsPinned,
                     
                     repostOfPost = p.RepostOfPost == null ? null : new {
                         id = p.RepostOfPost.Id,
@@ -1038,11 +1146,12 @@ namespace server.Controllers
                 var cursorUtc = cursor.Value.Kind == DateTimeKind.Utc 
                     ? cursor.Value 
                     : cursor.Value.ToUniversalTime();
-                query = query.Where(p => p.Created < cursorUtc);
+                query = query.Where(p => !p.IsPinned && p.Created < cursorUtc);
             }
 
             var rawPosts = await query
-                .OrderByDescending(p => p.Created)
+                .OrderByDescending(p => p.IsPinned)
+                .ThenByDescending(p => p.Created)
                 .ThenByDescending(p => p.Id)
                 .Take(limit + 1)
                 .Select(p => new {
@@ -1053,6 +1162,8 @@ namespace server.Controllers
                     likesCount = p.LikesCount,
                     isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                     commentsCount = p.CommentsCount,
+                    repostsCount = p.RepostsCount,
+                    isPinned = p.IsPinned,
                     authorName = p.User.FullName,
                     authorUsername = p.User.UserName,
                     authorAvatar = p.User.Avatar,
@@ -1064,7 +1175,6 @@ namespace server.Controllers
                         status = (int)p.Project.Status
                     },
                     
-                    repostsCount = p.RepostsCount,
                     repostOfPost = p.RepostOfPost == null ? null : new {
                         id = p.RepostOfPost.Id,
                         content = p.RepostOfPost.Content,
@@ -1144,6 +1254,7 @@ namespace server.Controllers
                     isLikedByMe = currentUserId != null && _context.PostLikes.Any(l => l.PostId == p.Id && l.UserId == currentUserId),
                     commentsCount = p.CommentsCount,
                     repostsCount = p.RepostsCount,
+                    isPinned = p.IsPinned,
                     
                     repostOfPost = p.RepostOfPost == null ? null : new {
                         id = p.RepostOfPost.Id,

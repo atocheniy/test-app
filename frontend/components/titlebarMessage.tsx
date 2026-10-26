@@ -65,16 +65,16 @@ export default function TitlebarMessage({ Id, Name, UserName, Info, Avatar, isOn
                     <h1 className="text-sm font-bold text-zinc-100 leading-tight">{Name}</h1>
                     
                     {isTyping ? (
-                        <div className="flex items-center gap-1.5 text-xs text-white-400 font-medium animate-pulse">
+                        <div className="flex items-center gap-1.5 text-xs text-neutral-300 font-medium animate-pulse">
                             <span>{isRu ? "печатает" : "typing"}</span>
                             <span className="flex gap-0.5 items-center mt-1">
-                                <span className="w-1 h-1 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.3s]"></span>
-                                <span className="w-1 h-1 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.15s]"></span>
-                                <span className="w-1 h-1 rounded-full bg-blue-400 animate-bounce"></span>
+                                <span className="w-1 h-1 rounded-full bg-white animate-bounce [animation-delay:-0.3s]"></span>
+                                <span className="w-1 h-1 rounded-full bg-white animate-bounce [animation-delay:-0.15s]"></span>
+                                <span className="w-1 h-1 rounded-full bg-white animate-bounce"></span>
                             </span>
                         </div>
                     ) : (
-                        <span className={`text-xs ${isOnline ? 'text-white-400 font-medium' : 'text-zinc-500'}`}>
+                        <span className={`text-xs ${isOnline ? 'text-neutral-300 font-medium' : 'text-neutral-500'}`}>
                             {Info}
                         </span>
                     )}

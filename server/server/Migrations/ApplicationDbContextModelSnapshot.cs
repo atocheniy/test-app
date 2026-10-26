@@ -536,11 +536,17 @@ namespace server.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsPostedAsCommunity")
                         .HasColumnType("boolean");
 
                     b.Property<int>("LikesCount")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("PinnedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("ProjectId")
                         .HasColumnType("uuid");

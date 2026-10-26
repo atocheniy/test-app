@@ -1,5 +1,6 @@
 'use client';
 
+import Modal from "@/components/Modal";
 import Post from "@/components/post";
 import PublicBlock from "@/components/public_block";
 import { PostSkeleton, ProfileSkeleton } from "@/components/skeletons";
@@ -21,6 +22,8 @@ import {
     ExternalLink,
     FileText,
     Globe,
+    Image as ImageIcon,
+    Loader2,
     Lock,
     MapPin,
     Plus,
@@ -203,12 +206,18 @@ export default function Profile() {
             setCommunityPosts((prev) => prev.filter((p) => p.id !== data.id));
         };
 
+        const handleCommunityPostPinChanged = () => {
+            refreshCommunityPosts();
+        };
+
         connection.on("postCreated", handleCommunityPostCreated);
         connection.on("postDeleted", handleCommunityPostDeleted);
+        connection.on("postPinChanged", handleCommunityPostPinChanged);
 
         return () => {
             connection.off("postCreated", handleCommunityPostCreated);
             connection.off("postDeleted", handleCommunityPostDeleted);
+            connection.off("postPinChanged", handleCommunityPostPinChanged);
         };
     }, [connection, slug]);
 
@@ -581,10 +590,10 @@ export default function Profile() {
                             </div>
                         </div>
 
-                        <div className="sm:ml-auto sm:mb-5 flex flex-wrap items-center gap-2 shrink-0">
+                        <div className="sm:ml-auto sm:mb-5 flex items-center gap-2 shrink-0 flex-nowrap">
                             {isCanEdit && (
                                 <button
-                                    className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition"
+                                    className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 text-center"
                                     onClick={() => {
                                         setEditName(community.name || '');
                                         setEditDescription(community.description || '');
@@ -605,13 +614,13 @@ export default function Profile() {
 
                             <button
                                 onClick={handleToggleWatch}
-                                className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition ${
+                                className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 min-w-[90px] sm:min-w-[100px] text-center ${
                                     community?.isWatching
-                                        ? "bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/25"
+                                        ? "bg-white/10 text-white border border-white/20 hover:bg-white/15"
                                         : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white"
                                 }`}
                             >
-                                {community?.isWatching ? (isRu ? "Отслеживается" : "Watching") : t.profile.watchBtn}
+                                {community?.isWatching ? (isRu ? "Вы читаете" : "Following") : t.profile.watchBtn}
                             </button>
 
                             {isCompany ? (
@@ -827,6 +836,9 @@ export default function Profile() {
                                             repostsCount={p.repostsCount}
                                             repostOfPost={p.repostOfPost}
                                             community={p.community}
+                                            isPinned={p.isPinned}
+                                            canPin={isOwnerOrAdminOrMod}
+                                            onPinToggle={refreshCommunityPosts}
                                         />
                                     </div>
                                 ))
@@ -1144,397 +1156,541 @@ export default function Profile() {
                 )}
             </div>
 
-            {/* Modal: Create Vacancy */}
-            {isCreateVacancyOpen && mounted && createPortal(
-                <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-                    <div className="w-full max-w-[500px] max-h-[90vh] overflow-y-auto no-scrollbar bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl relative">
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h3 className="text-lg font-bold text-zinc-100">{isRu ? "Создать вакансию" : "Create Vacancy"}</h3>
-                                <p className="text-xs text-zinc-400 mt-0.5">{community.name}</p>
-                            </div>
-                            <button
-                                onClick={() => setIsCreateVacancyOpen(false)}
-                                className="p-1 rounded-full text-zinc-500 hover:text-white hover:bg-white/10 transition cursor-pointer"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleCreateVacancy} className="space-y-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    {isRu ? "Название должности" : "Job Title"}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={vacancyTitle}
-                                    onChange={(e) => setVacancyTitle(e.target.value)}
-                                    placeholder="e.g. Senior Backend Engineer"
-                                    required
-                                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                        {isRu ? "Уровень" : "Level"}
-                                    </label>
-                                    <select
-                                        value={vacancyLevel}
-                                        onChange={(e) => setVacancyLevel(parseInt(e.target.value))}
-                                        className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
-                                    >
-                                        <option value={0}>Intern</option>
-                                        <option value={1}>Junior</option>
-                                        <option value={2}>Middle</option>
-                                        <option value={3}>Senior</option>
-                                        <option value={4}>Lead</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                        {isRu ? "Формат работы" : "Work Format"}
-                                    </label>
-                                    <select
-                                        value={vacancyFormat}
-                                        onChange={(e) => setVacancyFormat(parseInt(e.target.value))}
-                                        className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
-                                    >
-                                        <option value={0}>{isRu ? "Удаленно (Remote)" : "Remote"}</option>
-                                        <option value={1}>{isRu ? "Гибрид (Hybrid)" : "Hybrid"}</option>
-                                        <option value={2}>{isRu ? "Офис (Office)" : "Office"}</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                        {isRu ? "Зарплата от" : "Salary from"}
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={vacancySalaryFrom}
-                                        onChange={(e) => setVacancySalaryFrom(e.target.value)}
-                                        placeholder="3000"
-                                        className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                        {t.vacancies.salaryTo}
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={vacancySalaryTo}
-                                        onChange={(e) => setVacancySalaryTo(e.target.value)}
-                                        placeholder="5000"
-                                        className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                        {isRu ? "Валюта" : "Currency"}
-                                    </label>
-                                    <select
-                                        value={vacancyCurrency}
-                                        onChange={(e) => setVacancyCurrency(e.target.value)}
-                                        className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
-                                    >
-                                        <option value="USD">USD ($)</option>
-                                        <option value="EUR">EUR (€)</option>
-                                        <option value="RUB">RUB (₽)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    {isRu ? "Стек технологий (через запятую)" : "Tech Stack (comma-separated)"}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={vacancyStack}
-                                    onChange={(e) => setVacancyStack(e.target.value)}
-                                    placeholder=".NET, C#, PostgreSQL, Docker"
-                                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20"
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                                    {isRu ? "Описание вакансии и требования" : "Job Description & Requirements"}
-                                </label>
-                                <textarea
-                                    value={vacancyDescription}
-                                    onChange={(e) => setVacancyDescription(e.target.value)}
-                                    placeholder={isRu ? "Обязанности, стек, условия работы, стек технологий..." : "Responsibilities, stack, working conditions, requirements..."}
-                                    rows={5}
-                                    required
-                                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/20 resize-none"
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={isSubmittingVacancy}
-                                className="w-full py-3 mt-4 rounded-xl bg-white text-zinc-950 text-sm font-semibold hover:bg-zinc-200 transition active:scale-98 disabled:opacity-50 cursor-pointer"
-                            >
-                                {isSubmittingVacancy ? (isRu ? "Публикация..." : "Publishing...") : (isRu ? "Опубликовать вакансию" : "Publish Vacancy")}
-                            </button>
-                        </form>
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {/* Modal: Edit Community / Company */}
-            {isEditOpen && mounted && createPortal(
-                <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-                    <div className="w-full max-w-[480px] max-h-[85vh] overflow-y-auto no-scrollbar bg-[#0a0a0a] border border-white/10 rounded-[32px] p-6 md:p-8 shadow-2xl relative">
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h3 className="text-lg font-bold text-zinc-100">
-                                    {editKind === 1 ? (isRu ? "Редактировать компанию" : "Edit Company") : (isRu ? "Редактировать сообщество" : "Edit Community")}
-                                </h3>
-                                <p className="text-xs text-zinc-400 mt-0.5">{isRu ? "Управление информацией и профилем" : "Manage information and profile"}</p>
-                            </div>
-                            <button
-                                onClick={() => setIsEditOpen(false)}
-                                className="text-zinc-500 hover:text-zinc-300 text-xs transition cursor-pointer"
-                            >
-                                {t.common.cancel}
-                            </button>
-                        </div>
-
-                        <div className="flex gap-4 mb-6 pb-6 border-b border-white/5">
-                            <div className="flex-1 space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Аватар" : "Avatar"}</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleAvatarUpload}
-                                    disabled={isSaving}
-                                    className="block w-full text-xs text-zinc-400 file:mr-3 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-white file:text-black cursor-pointer"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex gap-4 mb-6 pb-6 border-b border-white/5">
-                            <div className="flex-1 space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Баннер" : "Banner"}</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleBannerUpload}
-                                    disabled={isSaving}
-                                    className="block w-full text-xs text-zinc-400 file:mr-3 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-white file:text-black cursor-pointer"
-                                />
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleSaveCommunity} className="space-y-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Тип пространства" : "Space Type"}</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditKind(0)}
-                                        className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                                            editKind === 0
-                                                ? "border-white/30 bg-white/10 text-white"
-                                                : "border-white/5 bg-zinc-950/60 text-zinc-400 hover:border-white/10"
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-1.5 text-xs font-semibold">
-                                            <Users size={14} />
-                                            {isRu ? "Сообщество" : "Community"}
+            <Modal
+                isOpen={isCreateVacancyOpen}
+                onClose={() => setIsCreateVacancyOpen(false)}
+                className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative"
+            >
+                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-4">
+                            <div className="space-y-3">
+                                <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+                                    {isRu ? "Превью вакансии" : "Vacancy Preview"}
+                                </span>
+                                <div className="p-4 rounded-2xl border border-white/10 bg-[#050505]/90 space-y-3 shadow-xl">
+                                    <div className="flex flex-wrap gap-1.5">
+                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-neutral-200 border border-white/15">
+                                            {formatLevelText(vacancyLevel)}
+                                        </span>
+                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-neutral-300 border border-white/10">
+                                            {formatWorkTypeText(vacancyFormat)}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-neutral-100 truncate">
+                                            {vacancyTitle || (isRu ? "Название должности" : "Job Title")}
                                         </div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Публикации, обсуждения" : "Posts, discussions"}</div>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditKind(1)}
-                                        className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                                            editKind === 1
-                                                ? "border-white/30 bg-white/10 text-white"
-                                                : "border-white/5 bg-zinc-950/60 text-zinc-400 hover:border-white/10"
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-1.5 text-xs font-semibold">
-                                            <Building2 size={14} />
-                                            {isRu ? "Компания" : "Company"}
-                                        </div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Вакансии и сотрудники" : "Vacancies & employees"}</div>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
-                                    {editKind === 1 ? (isRu ? "Название компании" : "Company Name") : (isRu ? "Название сообщества" : "Community Name")}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10"
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Описание" : "Description"}</label>
-                                <textarea
-                                    value={editDescription}
-                                    onChange={(e) => setEditDescription(e.target.value)}
-                                    rows={3}
-                                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10 resize-none"
-                                />
-                            </div>
-
-                            {editKind === 1 && (
-                                <div className="space-y-3 pt-1 border-t border-white/5">
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Сайт" : "Website"}</label>
-                                            <input
-                                                type="url"
-                                                value={editWebsiteUrl}
-                                                onChange={(e) => setEditWebsiteUrl(e.target.value)}
-                                                placeholder="https://company.com"
-                                                className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10"
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Локация" : "Location"}</label>
-                                            <input
-                                                type="text"
-                                                value={editLocation}
-                                                onChange={(e) => setEditLocation(e.target.value)}
-                                                placeholder={isRu ? "Москва / Remote" : "Moscow / Remote"}
-                                                className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10"
-                                            />
+                                        <div className="text-xs text-neutral-500 truncate mt-0.5">
+                                            {community.name}
                                         </div>
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Сфера" : "Industry"}</label>
-                                            <input
-                                                type="text"
-                                                value={editIndustry}
-                                                onChange={(e) => setEditIndustry(e.target.value)}
-                                                placeholder={isRu ? "IT, Финтех" : "IT, Fintech"}
-                                                className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10"
-                                            />
+                                    {(vacancySalaryFrom || vacancySalaryTo) && (
+                                        <div className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                            {vacancySalaryFrom || "..."} – {vacancySalaryTo || "..."} {vacancyCurrency}
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Размер" : "Size"}</label>
-                                            <select
-                                                value={editCompanySize}
-                                                onChange={(e) => setEditCompanySize(e.target.value)}
-                                                className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10"
+                                    )}
+                                    {vacancyStack && (
+                                        <div className="flex flex-wrap gap-1 pt-2 border-t border-white/5">
+                                            {vacancyStack.split(',').map(s => s.trim()).filter(Boolean).slice(0, 6).map((tech, i) => (
+                                                <span key={i} className="px-2 py-0.5 text-[10px] font-mono rounded-md bg-white/5 text-neutral-300 border border-white/5">
+                                                    {tech}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-neutral-500 hidden md:block leading-relaxed">
+                                {isRu ? "Вакансия появится в общем разделе «Вакансии» и во вкладке вашей компании." : "This vacancy will appear in the main Jobs board and your company tab."}
+                            </p>
+                        </div>
+
+                        <div className="md:col-span-8 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh]">
+                            <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10">
+                                <div>
+                                    <h3 className="text-lg font-bold text-neutral-100 tracking-tight">{isRu ? "Создать вакансию" : "Create Vacancy"}</h3>
+                                    <p className="text-xs text-neutral-400 mt-0.5">{community.name}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCreateVacancyOpen(false)}
+                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleCreateVacancy} className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        {isRu ? "Название должности" : "Job Title"}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={vacancyTitle}
+                                        onChange={(e) => setVacancyTitle(e.target.value)}
+                                        placeholder="e.g. Senior Backend Engineer"
+                                        required
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                            {isRu ? "Уровень" : "Level"}
+                                        </label>
+                                        <select
+                                            value={vacancyLevel}
+                                            onChange={(e) => setVacancyLevel(parseInt(e.target.value))}
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-[#050505]/90 text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                        >
+                                            <option value={0}>Intern</option>
+                                            <option value={1}>Junior</option>
+                                            <option value={2}>Middle</option>
+                                            <option value={3}>Senior</option>
+                                            <option value={4}>Lead</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                            {isRu ? "Формат работы" : "Work Format"}
+                                        </label>
+                                        <select
+                                            value={vacancyFormat}
+                                            onChange={(e) => setVacancyFormat(parseInt(e.target.value))}
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-[#050505]/90 text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                        >
+                                            <option value={0}>{isRu ? "Удаленно (Remote)" : "Remote"}</option>
+                                            <option value={1}>{isRu ? "Гибрид (Hybrid)" : "Hybrid"}</option>
+                                            <option value={2}>{isRu ? "Офис (Office)" : "Office"}</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                            {isRu ? "Зарплата от" : "Salary from"}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={vacancySalaryFrom}
+                                            onChange={(e) => setVacancySalaryFrom(e.target.value)}
+                                            placeholder="3000"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                            {t.vacancies.salaryTo}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={vacancySalaryTo}
+                                            onChange={(e) => setVacancySalaryTo(e.target.value)}
+                                            placeholder="5000"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                            {isRu ? "Валюта" : "Currency"}
+                                        </label>
+                                        <select
+                                            value={vacancyCurrency}
+                                            onChange={(e) => setVacancyCurrency(e.target.value)}
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-[#050505]/90 text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                        >
+                                            <option value="USD">USD ($)</option>
+                                            <option value="EUR">EUR (€)</option>
+                                            <option value="RUB">RUB (₽)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        {isRu ? "Стек технологий (через запятую)" : "Tech Stack (comma-separated)"}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={vacancyStack}
+                                        onChange={(e) => setVacancyStack(e.target.value)}
+                                        placeholder=".NET, C#, PostgreSQL, Docker"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        {isRu ? "Описание вакансии и требования" : "Job Description & Requirements"}
+                                    </label>
+                                    <textarea
+                                        value={vacancyDescription}
+                                        onChange={(e) => setVacancyDescription(e.target.value)}
+                                        placeholder={isRu ? "Обязанности, стек, условия работы, стек технологий..." : "Responsibilities, stack, working conditions, requirements..."}
+                                        rows={5}
+                                        required
+                                        className="w-full min-h-[120px] px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm leading-relaxed border border-white/10 focus:outline-none focus:border-white/25 resize-y"
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCreateVacancyOpen(false)}
+                                        className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-semibold transition cursor-pointer"
+                                    >
+                                        {t.common.cancel}
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmittingVacancy}
+                                        className="px-6 py-2.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                                    >
+                                        {isSubmittingVacancy ? (isRu ? "Публикация..." : "Publishing...") : (isRu ? "Опубликовать вакансию" : "Publish Vacancy")}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </Modal>
+
+            <Modal
+                isOpen={isEditOpen}
+                onClose={() => setIsEditOpen(false)}
+                className="w-full max-w-[920px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative"
+            >
+                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-5">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+                                        {isRu ? "Превью карточки" : "Live Card Preview"}
+                                    </span>
+                                    {isSaving && (
+                                        <span className="inline-flex items-center gap-1.5 text-xs text-neutral-400">
+                                            <Loader2 size={12} className="animate-spin text-white" />
+                                            <span>{isRu ? "Загрузка..." : "Saving..."}</span>
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="rounded-2xl border border-white/10 bg-[#050505]/90 overflow-hidden shadow-xl">
+                                    <div className="relative h-24 w-full bg-neutral-900 overflow-hidden">
+                                        {community.banner ? (
+                                            <img src={community.banner} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-neutral-800 via-neutral-950 to-black" />
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+                                        <label className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/15 text-[11px] font-medium text-neutral-100 flex items-center gap-1 cursor-pointer transition">
+                                            <ImageIcon size={12} />
+                                            <span>{isRu ? "Баннер" : "Banner"}</span>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleBannerUpload}
+                                                disabled={isSaving}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    </div>
+
+                                    <div className="p-4 pt-0">
+                                        <div className="flex items-end justify-between gap-2 -mt-8 mb-3 relative z-10">
+                                            <label className="relative w-16 h-16 rounded-2xl ring-4 ring-[#050505] bg-neutral-800 overflow-hidden cursor-pointer group/avatar shrink-0 shadow-lg">
+                                                {community.avatar ? (
+                                                    <img src={community.avatar} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-lg font-bold text-neutral-200">
+                                                        {editName?.[0]?.toUpperCase() || "C"}
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/avatar:opacity-100 transition flex items-center justify-center text-white">
+                                                    <ImageIcon size={15} />
+                                                </div>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleAvatarUpload}
+                                                    disabled={isSaving}
+                                                    className="hidden"
+                                                />
+                                            </label>
+                                            <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-medium text-neutral-300">
+                                                {editKind === 1 ? (isRu ? "Компания" : "Company") : (isRu ? "Сообщество" : "Community")}
+                                            </span>
+                                        </div>
+
+                                        <div className="space-y-0.5">
+                                            <div className="text-sm font-bold text-neutral-100 truncate">
+                                                {editName || community.name}
+                                            </div>
+                                            <div className="text-xs text-neutral-500 font-mono truncate">
+                                                /c/{community.slug}
+                                            </div>
+                                        </div>
+
+                                        {editDescription && (
+                                            <p className="text-xs text-neutral-400 mt-2 line-clamp-2 leading-relaxed">
+                                                {editDescription}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <label className="py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-medium text-neutral-200 flex items-center justify-center gap-1.5 cursor-pointer transition text-center">
+                                        <ImageIcon size={13} className="text-neutral-400 shrink-0" />
+                                        <span className="truncate">{isRu ? "Сменить фото" : "Change Logo"}</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleAvatarUpload}
+                                            disabled={isSaving}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                    <label className="py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-medium text-neutral-200 flex items-center justify-center gap-1.5 cursor-pointer transition text-center">
+                                        <ImageIcon size={13} className="text-neutral-400 shrink-0" />
+                                        <span className="truncate">{isRu ? "Сменить фон" : "Change Cover"}</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleBannerUpload}
+                                            disabled={isSaving}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+
+                            <p className="text-[11px] text-neutral-500 hidden md:block leading-relaxed">
+                                {isRu ? "Все изменения мгновенно отображаются на превью карточки слева." : "All updates are previewed live on the card above."}
+                            </p>
+                        </div>
+
+                        <div className="md:col-span-8 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh]">
+                            <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10">
+                                <div>
+                                    <h3 className="text-lg font-bold text-neutral-100 tracking-tight">
+                                        {editKind === 1 ? (isRu ? "Редактировать компанию" : "Edit Company") : (isRu ? "Редактировать сообщество" : "Edit Community")}
+                                    </h3>
+                                    <p className="text-xs text-neutral-400 mt-0.5">{isRu ? "Управление визуальным оформлением, правилами и профилем" : "Manage visual identity, rules and profile"}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditOpen(false)}
+                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSaveCommunity} className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                            {editKind === 1 ? (isRu ? "Название компании" : "Company Name") : (isRu ? "Название сообщества" : "Community Name")}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editName}
+                                            onChange={(e) => setEditName(e.target.value)}
+                                            required
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Тип пространства" : "Space Type"}</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditKind(0)}
+                                                className={`py-2.5 px-3 rounded-xl border text-left transition cursor-pointer flex items-center gap-2 ${
+                                                    editKind === 0
+                                                        ? "border-white/30 bg-white/10 text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                }`}
                                             >
-                                                <option value="">{isRu ? "Не указано" : "Not specified"}</option>
-                                                <option value="1-10">{isRu ? "1-10 сотрудников" : "1-10 employees"}</option>
-                                                <option value="11-50">{isRu ? "11-50 сотрудников" : "11-50 employees"}</option>
-                                                <option value="51-200">{isRu ? "51-200 сотрудников" : "51-200 employees"}</option>
-                                                <option value="201-1000">{isRu ? "201-1000 сотрудников" : "201-1000 employees"}</option>
-                                                <option value="1000+">{isRu ? "1000+ сотрудников" : "1000+ employees"}</option>
-                                            </select>
+                                                <Users size={14} className="shrink-0" />
+                                                <span className="text-xs font-semibold truncate">{isRu ? "Сообщество" : "Community"}</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditKind(1)}
+                                                className={`py-2.5 px-3 rounded-xl border text-left transition cursor-pointer flex items-center gap-2 ${
+                                                    editKind === 1
+                                                        ? "border-white/30 bg-white/10 text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                }`}
+                                            >
+                                                <Building2 size={14} className="shrink-0" />
+                                                <span className="text-xs font-semibold truncate">{isRu ? "Компания" : "Company"}</span>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                            )}
 
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
-                                    {editKind === 1 ? (isRu ? "Культура и правила" : "Culture & Rules") : (isRu ? "Правила" : "Rules")}
-                                </label>
-                                <textarea
-                                    value={editRules}
-                                    onChange={(e) => setEditRules(e.target.value)}
-                                    rows={3}
-                                    placeholder={isRu ? "Правила сообщества, формат общения, требования..." : "Community rules, communication format, guidelines..."}
-                                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 focus:outline-none focus:border-white/10 resize-none"
-                                />
-                            </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Описание" : "Description"}</label>
+                                    <textarea
+                                        value={editDescription}
+                                        onChange={(e) => setEditDescription(e.target.value)}
+                                        rows={4}
+                                        className="w-full min-h-[116px] px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm leading-relaxed border border-white/10 focus:outline-none focus:border-white/25 resize-y"
+                                    />
+                                </div>
 
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Кто может публиковать записи" : "Who can post"}</label>
-                                <div className="grid grid-cols-2 gap-2">
+                                {editKind === 1 && (
+                                    <div className="p-4 rounded-2xl bg-white/[0.015] border border-white/5 space-y-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Сайт" : "Website"}</label>
+                                                <input
+                                                    type="url"
+                                                    value={editWebsiteUrl}
+                                                    onChange={(e) => setEditWebsiteUrl(e.target.value)}
+                                                    placeholder="https://company.com"
+                                                    className="w-full px-3.5 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Локация" : "Location"}</label>
+                                                <input
+                                                    type="text"
+                                                    value={editLocation}
+                                                    onChange={(e) => setEditLocation(e.target.value)}
+                                                    placeholder={isRu ? "Москва / Remote" : "Moscow / Remote"}
+                                                    className="w-full px-3.5 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Сфера" : "Industry"}</label>
+                                                <input
+                                                    type="text"
+                                                    value={editIndustry}
+                                                    onChange={(e) => setEditIndustry(e.target.value)}
+                                                    placeholder={isRu ? "IT, Финтех" : "IT, Fintech"}
+                                                    className="w-full px-3.5 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Размер" : "Size"}</label>
+                                                <select
+                                                    value={editCompanySize}
+                                                    onChange={(e) => setEditCompanySize(e.target.value)}
+                                                    className="w-full px-3.5 py-2 rounded-xl bg-[#050505]/90 text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
+                                                >
+                                                    <option value="">{isRu ? "Не указано" : "Not specified"}</option>
+                                                    <option value="1-10">{isRu ? "1-10 сотрудников" : "1-10 employees"}</option>
+                                                    <option value="11-50">{isRu ? "11-50 сотрудников" : "11-50 employees"}</option>
+                                                    <option value="51-200">{isRu ? "51-200 сотрудников" : "51-200 employees"}</option>
+                                                    <option value="201-1000">{isRu ? "201-1000 сотрудников" : "201-1000 employees"}</option>
+                                                    <option value="1000+">{isRu ? "1000+ сотрудников" : "1000+ employees"}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        {editKind === 1 ? (isRu ? "Культура и правила" : "Culture & Rules") : (isRu ? "Правила" : "Rules")}
+                                    </label>
+                                    <textarea
+                                        value={editRules}
+                                        onChange={(e) => setEditRules(e.target.value)}
+                                        rows={4}
+                                        placeholder={isRu ? "Правила сообщества, формат общения, требования..." : "Community rules, communication format, guidelines..."}
+                                        className="w-full min-h-[116px] px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm leading-relaxed border border-white/10 focus:outline-none focus:border-white/25 resize-y"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Кто может публиковать" : "Who can post"}</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditPostingPolicy(0)}
+                                                className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                                                    editPostingPolicy === 0
+                                                        ? "border-white/30 bg-white/10 text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                }`}
+                                            >
+                                                <div className="text-xs font-semibold">{isRu ? "Все участники" : "All Members"}</div>
+                                                <div className="text-[10px] text-neutral-500 mt-0.5">{isRu ? "Любой участник" : "Any member"}</div>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditPostingPolicy(1)}
+                                                className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                                                    editPostingPolicy === 1
+                                                        ? "border-white/30 bg-white/10 text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                }`}
+                                            >
+                                                <div className="text-xs font-semibold">{isRu ? "Администрация" : "Admins Only"}</div>
+                                                <div className="text-[10px] text-neutral-500 mt-0.5">{isRu ? "Админы и модеры" : "Admins & mods"}</div>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Доступ к сообществу" : "Community Access"}</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditType(0)}
+                                                className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                                                    editType === 0
+                                                        ? "border-white/30 bg-white/10 text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                }`}
+                                            >
+                                                <div className="text-xs font-semibold">{isRu ? "Публичное" : "Public"}</div>
+                                                <div className="text-[10px] text-neutral-500 mt-0.5">{isRu ? "Вход свободный" : "Open to join"}</div>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditType(1)}
+                                                className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                                                    editType === 1
+                                                        ? "border-white/30 bg-white/10 text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                }`}
+                                            >
+                                                <div className="text-xs font-semibold">{isRu ? "Ограниченное" : "Restricted"}</div>
+                                                <div className="text-[10px] text-neutral-500 mt-0.5">{isRu ? "По заявкам" : "By request"}</div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
                                     <button
                                         type="button"
-                                        onClick={() => setEditPostingPolicy(0)}
-                                        className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                                            editPostingPolicy === 0
-                                                ? "border-white/30 bg-white/10 text-white"
-                                                : "border-white/5 bg-zinc-950/60 text-zinc-400 hover:border-white/10"
-                                        }`}
+                                        onClick={() => setIsEditOpen(false)}
+                                        className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-semibold transition cursor-pointer"
                                     >
-                                        <div className="text-xs font-semibold">{isRu ? "Все участники" : "All Members"}</div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Любой член сообщества" : "Any community member"}</div>
+                                        {t.common.cancel}
                                     </button>
                                     <button
-                                        type="button"
-                                        onClick={() => setEditPostingPolicy(1)}
-                                        className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                                            editPostingPolicy === 1
-                                                ? "border-white/30 bg-white/10 text-white"
-                                                : "border-white/5 bg-zinc-950/60 text-zinc-400 hover:border-white/10"
-                                        }`}
+                                        type="submit"
+                                        disabled={isSaving}
+                                        className="px-6 py-2.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-neutral-200 active:scale-[0.98] transition disabled:opacity-50 cursor-pointer"
                                     >
-                                        <div className="text-xs font-semibold">{isRu ? "Только администрация" : "Admins Only"}</div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Админы и модераторы" : "Admins and moderators"}</div>
+                                        {isSaving ? (isRu ? "Сохранение..." : "Saving...") : (isRu ? "Сохранить изменения" : "Save Changes")}
                                     </button>
                                 </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{isRu ? "Тип сообщества" : "Community Type"}</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditType(0)}
-                                        className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                                            editType === 0
-                                                ? "border-white/30 bg-white/10 text-white"
-                                                : "border-white/5 bg-zinc-950/60 text-zinc-400 hover:border-white/10"
-                                        }`}
-                                    >
-                                        <div className="text-xs font-semibold">{isRu ? "Публичное" : "Public"}</div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Вход свободный" : "Open to join"}</div>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditType(1)}
-                                        className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                                            editType === 1
-                                                ? "border-white/30 bg-white/10 text-white"
-                                                : "border-white/5 bg-zinc-950/60 text-zinc-400 hover:border-white/10"
-                                        }`}
-                                    >
-                                        <div className="text-xs font-semibold">{isRu ? "Ограниченное" : "Restricted"}</div>
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">{isRu ? "Вход по заявкам" : "Join by request"}</div>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={isSaving}
-                                className="w-full py-3 mt-4 rounded-xl bg-white text-zinc-950 text-sm font-semibold hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer"
-                            >
-                                {isSaving ? (isRu ? "Сохранение..." : "Saving...") : (isRu ? "Сохранить изменения" : "Save Changes")}
-                            </button>
-                        </form>
-                    </div>
-                </div>,
-                document.body
-            )}
+                            </form>
+                        </div>
+                    </Modal>
         </div>
     );
 }

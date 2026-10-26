@@ -2,6 +2,7 @@
 
 import BottomInput from "@/components/bottomInput";
 import MessagePreview from "@/components/messagePreview";
+import Modal from "@/components/Modal";
 import ReceivedMessage from "@/components/receivedMessage";
 import SentMessage from "@/components/sentMessage";
 import TitlebarMessage from "@/components/titlebarMessage";
@@ -442,7 +443,7 @@ function MessagesContent() {
                     </div>
                 </div>
                {activeChat ? (
-                    <div className="w-full flex flex-col flex-1 min-w-0 h-full relative overflow-hidden no-scrollbar max-md:fixed max-md:inset-0 max-md:z-[1001] max-md:bg-black/75 max-md:backdrop-blur-xl">
+                    <div className="w-full flex flex-col flex-1 min-w-0 h-full relative overflow-hidden no-scrollbar max-md:fixed max-md:inset-0 max-md:z-[1001] max-md:bg-black/75 max-md:backdrop-blur-xl animate-in fade-in max-md:slide-in-from-right-4 duration-200">
                                         <div className="absolute top-0 inset-x-0 z-20">
                                     <TitlebarMessage 
                                             Id={activeChat.id} 
@@ -500,21 +501,21 @@ function MessagesContent() {
 
                     <div className="absolute bottom-0 inset-x-0 z-20 flex flex-col">
                         {replyingMessage && (
-                            <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-t border-white/5 text-xs text-zinc-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                            <div className="flex items-center justify-between px-4 py-2 bg-[#0a0a0a]/85 backdrop-blur-xl border-t border-white/5 text-xs text-neutral-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
                                 <div className="flex items-center gap-2 truncate">
-                                    <Reply size={14} className="text-sky-400 shrink-0" />
+                                    <Reply size={14} className="text-neutral-200 shrink-0" />
                                     <div className="flex flex-col truncate">
-                                        <span className="font-semibold text-sky-400 text-[11px]">
+                                        <span className="font-semibold text-neutral-100 text-[11px]">
                                             {isRu ? `В ответ ${replyingMessage.authorName}` : `Replying to ${replyingMessage.authorName}`}
                                         </span>
-                                        <span className="truncate text-zinc-400 text-[11px] max-w-md">
+                                        <span className="truncate text-neutral-400 text-[11px] max-w-md">
                                             {replyingMessage.content || (isRu ? "📷 Вложение" : "📷 Attachment")}
                                         </span>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => setReplyingMessage(null)}
-                                    className="p-1 hover:bg-white/10 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
+                                    className="p-1 hover:bg-white/10 rounded-full text-neutral-400 hover:text-neutral-200 transition-colors"
                                     title={isRu ? "Отменить ответ" : "Cancel reply"}
                                 >
                                     <X size={14} />
@@ -523,15 +524,15 @@ function MessagesContent() {
                         )}
 
                         {editingMessage && (
-                            <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-t border-white/5 text-xs text-zinc-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                            <div className="flex items-center justify-between px-4 py-2 bg-[#0a0a0a]/85 backdrop-blur-xl border-t border-white/5 text-xs text-neutral-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
                                 <div className="flex items-center gap-2 truncate">
-                                    <Edit size={14} className="text-sky-400 shrink-0" />
-                                    <span className="font-semibold text-sky-400">{isRu ? 'Редактирование сообщения:' : 'Editing message:'}</span>
-                                    <span className="truncate text-zinc-400 max-w-md">{editingMessage.content}</span>
+                                    <Edit size={14} className="text-neutral-200 shrink-0" />
+                                    <span className="font-semibold text-neutral-100">{isRu ? 'Редактирование сообщения:' : 'Editing message:'}</span>
+                                    <span className="truncate text-neutral-400 max-w-md">{editingMessage.content}</span>
                                 </div>
                                 <button 
                                     onClick={handleCancelEdit}
-                                    className="p-1 hover:bg-white/10 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
+                                    className="p-1 hover:bg-white/10 rounded-full text-neutral-400 hover:text-neutral-200 transition-colors"
                                     title={isRu ? "Отменить редактирование" : "Cancel edit"}
                                 >
                                     <X size={14} />
@@ -548,27 +549,25 @@ function MessagesContent() {
                     </div>
                 </div>
                ) : (
-               <div className="hidden md:flex flex-1 items-center justify-center text-zinc-600">
+               <div className="hidden md:flex flex-1 items-center justify-center text-neutral-600">
                     {isRu ? 'Выберите диалог, чтобы начать общение' : 'Select a conversation to start messaging'}
                </div>
           )}
 
-          {confirmAction && (
-              <div 
-                  className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
-                  onClick={() => !isActionLoading && setConfirmAction(null)}
-              >
-                  <div 
-                      className="bg-zinc-900 border border-white/10 rounded-2xl p-6 w-full max-w-[500px] mx-4 shadow-2xl flex flex-col gap-4 text-center animate-in zoom-in-95 duration-150"
-                      onClick={(e) => e.stopPropagation()}
-                  >
+          <Modal
+              isOpen={!!confirmAction}
+              onClose={() => !isActionLoading && setConfirmAction(null)}
+              className="bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 w-full max-w-[500px] mx-4 shadow-2xl flex flex-col gap-4 text-center"
+          >
+              {confirmAction && (
+                  <>
                       <div className="flex flex-col gap-1.5">
-                          <h3 className="text-base font-semibold text-zinc-100">
+                          <h3 className="text-base font-semibold text-neutral-100">
                               {confirmAction.type === 'clear'
                                   ? (isRu ? 'Очистить переписку?' : 'Clear conversation?')
                                   : (isRu ? 'Удалить чат?' : 'Delete chat?')}
                           </h3>
-                          <p className="text-xs text-zinc-400 leading-relaxed">
+                          <p className="text-xs text-neutral-400 leading-relaxed">
                               {confirmAction.type === 'clear'
                                   ? (isRu
                                       ? `Все сообщения в чате с "${confirmAction.chatName}" будут безвозвратно удалены.`
@@ -584,7 +583,7 @@ function MessagesContent() {
                               type="button"
                               disabled={isActionLoading}
                               onClick={() => setConfirmAction(null)}
-                              className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition disabled:opacity-50 cursor-pointer"
+                              className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white hover:bg-white/5 transition disabled:opacity-50 cursor-pointer"
                           >
                               {isRu ? 'Отмена' : 'Cancel'}
                           </button>
@@ -605,9 +604,9 @@ function MessagesContent() {
                                       : (isRu ? 'Удалить' : 'Delete')}
                           </button>
                       </div>
-                  </div>
-              </div>
-          )}
+                  </>
+              )}
+          </Modal>
      </div>
     )
 }

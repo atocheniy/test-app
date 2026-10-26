@@ -182,7 +182,8 @@ public class ProjectController : ControllerBase
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
             .Where(p => p.ProjectId == id)
-            .OrderByDescending(p => p.Created);
+            .OrderByDescending(p => p.IsPinned)
+            .ThenByDescending(p => p.Created);
 
         var total = await query.CountAsync();
 
@@ -199,6 +200,7 @@ public class ProjectController : ControllerBase
                 isLikedByMe = !string.IsNullOrEmpty(currentUserId) && _context.PostLikes.Any(pl => pl.PostId == p.Id && pl.UserId == currentUserId),
                 commentsCount = p.CommentsCount,
                 repostsCount = p.RepostsCount,
+                isPinned = p.IsPinned,
                 authorName = p.User.FullName,
                 authorUsername = p.User.UserName,
                 authorAvatar = p.User.Avatar,

@@ -1,5 +1,6 @@
 'use client';
 
+import Modal from "@/components/Modal";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -306,103 +307,107 @@ export default function Settings() {
 
             </div>
 
-            {isPasswordModalOpen && mounted && createPortal(
-                <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-                    <div className="w-full max-w-[420px] mx-4 bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 shadow-2xl relative">
-                        <div className="flex justify-between items-center mb-5">
-                            <h3 className="text-base font-bold text-zinc-100">{t.settings.modalChangePasswordTitle}</h3>
-                            <button
-                                onClick={() => {
-                                    setIsPasswordModalOpen(false);
-                                    setPasswordError("");
-                                    setPasswordSuccess("");
-                                    setOldPassword("");
-                                    setNewPassword("");
-                                }}
-                                className="p-1 rounded-full text-zinc-500 hover:text-white transition cursor-pointer"
-                            >
-                                <X size={16} />
-                            </button>
+            <Modal
+                isOpen={isPasswordModalOpen}
+                onClose={() => {
+                    setIsPasswordModalOpen(false);
+                    setPasswordError("");
+                    setPasswordSuccess("");
+                    setOldPassword("");
+                    setNewPassword("");
+                }}
+                className="w-full max-w-[420px] mx-4 bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl relative"
+            >
+                <div className="flex justify-between items-center mb-5">
+                    <h3 className="text-base font-bold text-neutral-100">{t.settings.modalChangePasswordTitle}</h3>
+                    <button
+                        onClick={() => {
+                            setIsPasswordModalOpen(false);
+                            setPasswordError("");
+                            setPasswordSuccess("");
+                            setOldPassword("");
+                            setNewPassword("");
+                        }}
+                        className="p-1 rounded-full text-neutral-500 hover:text-white transition cursor-pointer"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleChangePassword} className="space-y-3">
+                    {passwordError && (
+                        <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                            {passwordError}
                         </div>
+                    )}
 
-                        <form onSubmit={handleChangePassword} className="space-y-3">
-                            {passwordError && (
-                                <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
-                                    {passwordError}
-                                </div>
-                            )}
+                    {passwordSuccess && (
+                        <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">
+                            {passwordSuccess}
+                        </div>
+                    )}
 
-                            {passwordSuccess && (
-                                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">
-                                    {passwordSuccess}
-                                </div>
-                            )}
-
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase">{t.settings.currentPasswordLabel}</label>
-                                <input
-                                    type="password"
-                                    value={oldPassword}
-                                    onChange={(e) => setOldPassword(e.target.value)}
-                                    required
-                                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/10 focus:outline-none focus:border-white/20"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-zinc-500 uppercase">{t.settings.newPasswordLabel}</label>
-                                <input
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    required
-                                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 text-zinc-100 text-xs border border-white/10 focus:outline-none focus:border-white/20"
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={isChangingPassword}
-                                className="w-full py-2.5 mt-3 rounded-xl bg-white text-black text-xs font-semibold hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer"
-                            >
-                                {isChangingPassword ? t.settings.updatingPasswordBtn : t.settings.updatePasswordBtn}
-                            </button>
-                        </form>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-medium text-neutral-500 uppercase">{t.settings.currentPasswordLabel}</label>
+                        <input
+                            type="password"
+                            value={oldPassword}
+                            onChange={(e) => setOldPassword(e.target.value)}
+                            required
+                            className="w-full px-3 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/20"
+                        />
                     </div>
-                </div>,
-                document.body
-            )}
-
-            {isDeleteModalOpen && mounted && createPortal(
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-                    <div className="w-full max-w-[420px] mx-4 bg-[#0a0a0a] border border-red-500/20 rounded-3xl p-6 shadow-2xl relative text-center">
-                        <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mx-auto mb-4">
-                            <Trash2 size={24} />
-                        </div>
-                        <h3 className="text-base font-bold text-zinc-100">{t.settings.modalDeleteTitle}</h3>
-                        <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
-                            {t.settings.modalDeleteDesc}
-                        </p>
-
-                        <div className="flex gap-2 mt-6">
-                            <button
-                                type="button"
-                                onClick={() => setIsDeleteModalOpen(false)}
-                                className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-semibold transition cursor-pointer"
-                            >
-                                {t.settings.cancelBtn}
-                            </button>
-                            <button
-                                type="button"
-                                disabled={isDeleting}
-                                onClick={handleDeleteAccount}
-                                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
-                            >
-                                {isDeleting ? t.settings.deletingBtn : t.settings.confirmDeleteBtn}
-                            </button>
-                        </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-medium text-neutral-500 uppercase">{t.settings.newPasswordLabel}</label>
+                        <input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            required
+                            className="w-full px-3 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/20"
+                        />
                     </div>
-                </div>,
-                document.body
-            )}
+                    <button
+                        type="submit"
+                        disabled={isChangingPassword}
+                        className="w-full py-2.5 mt-3 rounded-xl bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition disabled:opacity-50 cursor-pointer"
+                    >
+                        {isChangingPassword ? t.settings.updatingPasswordBtn : t.settings.updatePasswordBtn}
+                    </button>
+                </form>
+            </Modal>
+
+            <Modal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                className="w-full max-w-[420px] mx-4 bg-[#0a0a0a]/85 backdrop-blur-2xl border border-red-500/20 rounded-3xl p-6 shadow-2xl relative text-center"
+            >
+                <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mx-auto mb-4">
+                    <Trash2 size={24} />
+                </div>
+                <h3 className="text-base font-bold text-neutral-100">{t.settings.modalDeleteTitle}</h3>
+                <p className="text-xs text-neutral-400 mt-2 leading-relaxed">
+                    {t.settings.modalDeleteDesc}
+                </p>
+
+                <div className="flex gap-2 mt-6">
+                    <button
+                        type="button"
+                        onClick={() => setIsDeleteModalOpen(false)}
+                        className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-semibold transition cursor-pointer"
+                    >
+                        {t.settings.cancelBtn}
+                    </button>
+                    <button
+                        type="button"
+                        disabled={isDeleting}
+                        onClick={handleDeleteAccount}
+                        className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
+                    >
+                        {isDeleting ? t.settings.deletingBtn : t.settings.confirmDeleteBtn}
+                    </button>
+                </div>
+            </Modal>
 
         </div>
     );

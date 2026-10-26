@@ -104,7 +104,7 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
             {attachments.length > 0 && (
                 <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-thin">
                     {attachments.map((url, index) => (
-                        <div key={index} className="relative group w-14 h-14 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-zinc-900">
+                        <div key={index} className="relative group w-14 h-14 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-[#0a0a0a]">
                             <img src={url} alt={isRu ? "Предпросмотр вложения" : "Attachment preview"} className="w-full h-full object-cover" />
                             <button
                                 type="button"
@@ -133,11 +133,11 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={disabled || isUploading}
-                    className="p-2.5 rounded-full text-zinc-400 hover:text-zinc-100 hover:bg-white/5 transition-colors disabled:opacity-50"
+                    className="p-2.5 rounded-full text-neutral-400 hover:text-neutral-100 hover:bg-white/5 transition-colors disabled:opacity-50"
                     title={isRu ? "Прикрепить изображение" : "Attach image"}
                 >
                     {isUploading ? (
-                        <Loader2 size={20} className="animate-spin text-sky-400" />
+                        <Loader2 size={20} className="animate-spin text-white" />
                     ) : (
                         <Paperclip size={20} />
                     )}
@@ -151,14 +151,14 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
                     onKeyDown={handleKeyDown}
                     disabled={disabled}
                     placeholder={isUploading ? (isRu ? "Загрузка изображения..." : "Uploading image...") : activePlaceholder} 
-                    className="flex-1 min-h-[40px] max-h-[140px] py-2.5 px-4 resize-none transition rounded-2xl bg-white/5 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-sky-500 border border-transparent focus:border-sky-500 text-sm leading-relaxed overflow-y-auto no-scrollbar"
+                    className="flex-1 min-h-[40px] max-h-[140px] py-2.5 px-4 resize-none transition rounded-2xl bg-white/[0.04] backdrop-blur-md text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-white/20 border border-white/10 focus:border-white/25 text-sm leading-relaxed overflow-y-auto no-scrollbar"
                 />
 
                 <button 
                     type="button"
                     onClick={handleSend}
                     disabled={!canSend}
-                    className={`p-2.5 rounded-full transition-all duration-200 flex items-center justify-center ${ canSend ? 'bg-white hover:bg-zinc-200 text-black active:scale-95 cursor-pointer shadow-md' : 'bg-white/5 text-zinc-600 cursor-not-allowed' }`}
+                    className={`p-2.5 rounded-full transition-all duration-200 flex items-center justify-center ${ canSend ? 'bg-white hover:bg-neutral-200 text-black active:scale-95 cursor-pointer shadow-md' : 'bg-white/5 text-neutral-600 cursor-not-allowed' }`}
                     title={isRu ? "Отправить" : t.post.send}
                 >
                     <SendHorizontal size={18} className="translate-x-[1px]" />

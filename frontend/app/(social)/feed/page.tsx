@@ -118,7 +118,7 @@ export default function Feed() {
                 </div>
             </Titlebar>
 
-            <PublicBlock Avatar={userData.avatar} onPostCreated={() => refreshPostsData(feedTab === 'watching' ? 'watching' : undefined)}></PublicBlock>
+            <PublicBlock floating Avatar={userData.avatar} onPostCreated={() => refreshPostsData(feedTab === 'watching' ? 'watching' : undefined)} />
             
             <div className="flex flex-col max-sm:mb-[60px] gap-4 p-6 py-6 max-sm:p-0 max-sm:py-6 min-w-0 w-full overflow-x-hidden" >
                 {isLoading ? (
@@ -177,6 +177,7 @@ export default function Feed() {
                                     community={p.community}
                                     project={p.project}
                                     recommendationReason={p.recommendationReason}
+                                    canPin={false}
                                 />
 
                                 {shouldShowVacancies && (

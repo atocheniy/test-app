@@ -132,7 +132,7 @@ export default function PagePost() {
                     <TitlebarBack title={isRu ? `Публикация от ${currentPost.authorName}` : `Post from ${currentPost.authorName}`} />
                         
                     <div className="flex flex-col lg:p-6 md:p-6 py-6">
-                        <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={formatPostTime(currentPost.created)} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount} repostsCount={currentPost.repostsCount} repostOfPost={currentPost.repostOfPost} community={currentPost.community} project={currentPost.project}></Post>
+                        <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={formatPostTime(currentPost.created)} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount} repostsCount={currentPost.repostsCount} repostOfPost={currentPost.repostOfPost} community={currentPost.community} project={currentPost.project} isPinned={currentPost.isPinned} onPinToggle={() => refreshCurrentPost(idFromUrl)}></Post>
                     </div>
 
                     <div className="w-full border-t border-white/5"></div>

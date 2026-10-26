@@ -57,6 +57,8 @@ export const translations = {
             delete: 'Удалить',
             edit: 'Редактировать',
             pinned: 'Закреплено',
+            pin: 'Закрепить',
+            unpin: 'Открепить',
             justNow: 'только что',
         },
         sidebarRight: {
@@ -247,6 +249,8 @@ export const translations = {
             delete: 'Delete',
             edit: 'Edit',
             pinned: 'Pinned',
+            pin: 'Pin',
+            unpin: 'Unpin',
             justNow: 'just now',
         },
         sidebarRight: {

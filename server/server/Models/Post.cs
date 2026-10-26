@@ -32,6 +32,9 @@ public class Post
 
     public bool ShowInGeneralFeed { get; set; } = true;
     
+    public bool IsPinned { get; set; } = false;
+    public DateTime? PinnedAt { get; set; }
+    
     public string UserId { get; set; } = string.Empty;
     public ApplicationUser User { get; set; }
 }

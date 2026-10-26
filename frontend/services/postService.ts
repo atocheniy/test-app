@@ -94,4 +94,9 @@ export const PostService = {
         const response = await $api.get<any[]>(`/Post/trending?limit=${limit}`);
         return response.data;
     },
+
+    async togglePinPost(id: string) {
+        const response = await $api.post<{ id: string; isPinned: boolean }>(`/Post/${id}/toggle-pin`);
+        return response.data;
+    },
 };

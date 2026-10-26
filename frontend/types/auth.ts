@@ -134,6 +134,7 @@ export interface Post{
     isLikedByMe: boolean;
     commentsCount: number;
     repostsCount?: number;
+    isPinned?: boolean;
 
     authorName: string;
     authorUsername: string;

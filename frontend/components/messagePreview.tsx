@@ -68,10 +68,10 @@ export default function MessagePreview({
                     <img
                         src={Avatar}
                         alt={Name}
-                        className="w-full h-full rounded-full object-cover bg-zinc-800"
+                        className="w-full h-full rounded-full object-cover bg-neutral-800"
                     />
                 ) : (
-                    <div className="w-full h-full rounded-full bg-zinc-800 flex items-center justify-center font-bold text-zinc-400">
+                    <div className="w-full h-full rounded-full bg-neutral-800 flex items-center justify-center font-bold text-neutral-400">
                         {Name?.charAt(0) || "U"}
                     </div>
                 )}
@@ -85,15 +85,15 @@ export default function MessagePreview({
 
             <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
                 <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-zinc-200 truncate">
+                    <p className="text-sm font-semibold text-neutral-200 truncate">
                         {Name}
                     </p>
 
                     <div className="flex items-center gap-1.5 shrink-0">
                         {isPinned && (
-                            <Pin size={12} className="text-zinc-400 shrink-0 fill-zinc-400/20 rotate-45" />
+                            <Pin size={12} className="text-neutral-400 shrink-0 fill-neutral-400/20 rotate-45" />
                         )}
-                        <span className="text-[11px] text-zinc-500 shrink-0 select-none">
+                        <span className="text-[11px] text-neutral-500 shrink-0 select-none">
                             {Time}
                         </span>
 
@@ -104,7 +104,7 @@ export default function MessagePreview({
                                     e.stopPropagation();
                                     setIsMenuOpen((prev) => !prev);
                                 }}
-                                className="p-1 -mr-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors opacity-70 group-hover:opacity-100"
+                                className="p-1 -mr-1 rounded-md text-neutral-400 hover:text-white hover:bg-white/10 transition-colors opacity-70 group-hover:opacity-100"
                                 title={isRu ? "Действия" : "Actions"}
                             >
                                 <MoreVertical size={14} />
@@ -114,7 +114,7 @@ export default function MessagePreview({
                                 <div
                                     ref={menuRef}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="absolute right-0 top-full mt-1.5 w-48 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl py-1 z-50 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 text-xs font-medium"
+                                    className="absolute right-0 top-full mt-1.5 w-48 bg-[#0a0a0a]/90 border border-white/10 rounded-xl shadow-2xl py-1 z-50 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 text-xs font-medium"
                                 >
                                     {onOpenProfile && UserName && (
                                         <button

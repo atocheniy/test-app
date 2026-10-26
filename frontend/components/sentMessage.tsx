@@ -66,14 +66,14 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
     
     return(
        <div className="flex flex-col self-end max-w-[75%] sm:max-w-md my-0.5 group">
-            <div className="relative flex flex-col gap-1 px-3.5 py-2 bg-zinc-800 hover:bg-zinc-750 transition rounded-2xl rounded-tr-sm border border-white/10 text-zinc-100 shadow-sm min-w-[100px]">
+            <div className="relative flex flex-col gap-1 px-3.5 py-2 bg-white/[0.08] hover:bg-white/[0.12] backdrop-blur-md transition rounded-2xl rounded-tr-sm border border-white/10 text-neutral-100 shadow-sm min-w-[100px]">
                 
                 {ReplyTo && (
-                    <div className="flex flex-col text-xs border-l-2 border-sky-400 bg-black/25 hover:bg-black/40 transition px-2 py-1 rounded-r-lg mb-1 cursor-pointer">
-                        <span className="font-semibold text-sky-400 text-[11px] truncate">
+                    <div className="flex flex-col text-xs border-l-2 border-white/40 bg-black/30 hover:bg-black/45 transition px-2 py-1 rounded-r-lg mb-1 cursor-pointer">
+                        <span className="font-semibold text-neutral-200 text-[11px] truncate">
                             {ReplyTo.authorName}
                         </span>
-                        <span className="text-zinc-400 text-[11px] truncate">
+                        <span className="text-neutral-400 text-[11px] truncate">
                             {ReplyTo.content || (ReplyTo.attachments?.length ? (isRu ? "📷 Вложение" : "📷 Attachment") : (isRu ? "Сообщение" : "Message"))}
                         </span>
                     </div>
@@ -105,29 +105,29 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
 
                 <div className="flex items-end justify-between gap-3">
                     {Content && Content.trim().length > 0 && (
-                        <p className="text-[14px] leading-relaxed break-words whitespace-pre-wrap text-zinc-100">
+                        <p className="text-[14px] leading-relaxed break-words whitespace-pre-wrap text-neutral-100">
                             {Content}
                         </p>
                     )}
 
                     <div className="flex items-center gap-1.5 ml-auto shrink-0 pb-0.5 select-none relative" ref={menuRef}>
                         
-                        <span className="text-[10px] text-zinc-400">
+                        <span className="text-[10px] text-neutral-400">
                             {Time}
                         </span>
 
                         {IsRead ? (
-                            <CheckCheck size={14} className="text-sky-400" />
+                            <CheckCheck size={14} className="text-white" />
                         ) : (
-                            <Check size={14} className="text-zinc-400" />
+                            <Check size={14} className="text-neutral-400" />
                         )}
 
                         <button
                             ref={buttonRef}
                             type="button"
                             onClick={handleToggleMenu}
-                            className={`p-0.5 rounded hover:bg-white/10 text-zinc-400 hover:text-zinc-100 transition-all ${
-                                isMenuOpen ? 'opacity-100 bg-white/10 text-zinc-100' : 'opacity-0 group-hover:opacity-100'
+                            className={`p-0.5 rounded hover:bg-white/10 text-neutral-400 hover:text-neutral-100 transition-all ${
+                                isMenuOpen ? 'opacity-100 bg-white/10 text-neutral-100' : 'opacity-0 group-hover:opacity-100'
                             }`}
                             title={isRu ? "Действия" : "Actions"}
                         >
@@ -137,7 +137,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                         {isMenuOpen && (
                             <div className={`absolute right-0 ${
                                 menuPlacement === 'bottom' ? 'top-full mt-1.5' : 'bottom-full mb-1.5'
-                            } w-32 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl py-1 z-50 flex flex-col text-xs text-zinc-300 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100`}>
+                            } w-32 bg-[#0a0a0a]/90 border border-white/10 rounded-xl shadow-2xl py-1 z-50 flex flex-col text-xs text-neutral-300 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100`}>
                                 
                                 {onReply && (
                                     <button
@@ -146,7 +146,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                             setIsMenuOpen(false);
                                             onReply({ id: Id, content: Content || "", authorName: resolvedAuthorName });
                                         }}
-                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100 transition-colors text-left w-full"
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 transition-colors text-left w-full"
                                     >
                                         <Reply size={13} />
                                         <span>{isRu ? "Ответить" : "Reply"}</span>
@@ -157,7 +157,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                     <button
                                         type="button"
                                         onClick={handleCopy}
-                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100 transition-colors text-left w-full"
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 transition-colors text-left w-full"
                                     >
                                         {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
                                         <span>{copied ? (isRu ? "Скопировано!" : "Copied!") : (isRu ? "Копировать" : "Copy")}</span>
@@ -171,7 +171,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                             setIsMenuOpen(false);
                                             onEdit(Id, Content, Attachments);
                                         }}
-                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-zinc-100 transition-colors text-left w-full"
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 transition-colors text-left w-full"
                                     >
                                         <Edit size={13} />
                                         <span>{isRu ? "Редактировать" : t.post.edit}</span>

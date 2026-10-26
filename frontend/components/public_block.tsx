@@ -9,6 +9,7 @@ import "@uiw/react-md-editor/markdown-editor.css";
 import { upload } from '@vercel/blob/client';
 import {
     Check,
+    ChevronUp,
     Code,
     Eye,
     FileCode2,
@@ -21,7 +22,7 @@ import {
     X
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import rehypeHighlight from 'rehype-highlight';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
@@ -37,6 +38,7 @@ interface PublicBlockProps {
     className?: string;
     onPostCreated?: () => void;
     placeholder?: string;
+    floating?: boolean;
 }
 
 const POPULAR_LANGUAGES = [
@@ -70,7 +72,8 @@ export default function PublicBlock({
     subtitle,
     className,
     onPostCreated,
-    placeholder
+    placeholder,
+    floating = false
 }: PublicBlockProps) 
 {
     const [newContent, setContent] = useState('');
@@ -88,6 +91,14 @@ export default function PublicBlock({
     const [codeFileName, setCodeFileName] = useState('');
     const [codeViewMode, setCodeViewMode] = useState<'edit' | 'preview'>('edit');
     const [isMainPreview, setIsMainPreview] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [isVisible, setIsVisible] = useState(true);
+    const [isFocused, setIsFocused] = useState(false);
+    const lastScrollY = useRef(0);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +106,60 @@ export default function PublicBlock({
     const { language, t } = useLanguage();
     const isRu = language === 'ru';
     const activePlaceholder = placeholder || t.feed.whatsOnYourMind;
+
+    useEffect(() => {
+        if (!floating) return;
+
+        const el = containerRef.current;
+        if (!el) return;
+
+        const mainEl = el.closest('main');
+        const scrollTarget: (EventTarget & { scrollTop?: number }) = mainEl || window;
+
+        const getScrollTop = () => {
+            if (mainEl) return mainEl.scrollTop;
+            return window.scrollY || document.documentElement.scrollTop;
+        };
+
+        lastScrollY.current = getScrollTop();
+
+        let ticking = false;
+
+        const handleScroll = () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    const currentScrollY = getScrollTop();
+                    const delta = currentScrollY - lastScrollY.current;
+
+                    if (currentScrollY <= 60) {
+                        setIsScrolled(false);
+                        setIsVisible(true);
+                        lastScrollY.current = currentScrollY;
+                        ticking = false;
+                        return;
+                    }
+
+                    setIsScrolled(true);
+
+                    if (delta > 10) {
+                        setIsVisible(false);
+                        lastScrollY.current = currentScrollY;
+                    } else if (delta < -10) {
+                        setIsVisible(true);
+                        lastScrollY.current = currentScrollY;
+                    }
+
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        };
+
+        scrollTarget.addEventListener('scroll', handleScroll, { passive: true });
+        return () => {
+            scrollTarget.removeEventListener('scroll', handleScroll);
+        };
+    }, [floating]);
 
     const handleCreatePost = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -125,6 +190,8 @@ export default function PublicBlock({
             setRepostTarget(null);
             setIsCodeMode(false);
             setIsMainPreview(false);
+            setIsFocused(false);
+            setIsExpanded(false);
 
             await Promise.all([
                 refreshPostsData(),
@@ -284,23 +351,181 @@ export default function PublicBlock({
     const defaultTitle = ProjectId ? (isRu ? "Новая запись в девлог" : "New devlog entry") : (isRu ? "Что нового" : "What's New");
     const defaultSubtitle = ProjectId ? (isRu ? "Обновление появится в ленте проекта" : "Update will appear in the project feed") : (isRu ? "Публикации от людей, на которых вы подписаны" : "Public posts from people you follow");
 
+    const isBusyUploading = Boolean(uploadingMedia) || isSaving;
+    const hasActiveContent = newContent.trim().length > 0 || attachments.length > 0 || isCodeMode || codeSnippet.trim().length > 0 || Boolean(repostTarget);
+    const isEffectivelyExpanded = !floating || isExpanded;
+    const shouldShow = !floating || !isScrolled || isVisible || isFocused || isBusyUploading || isExpanded || hasActiveContent;
+
+    const containerClasses = floating
+        ? `sticky top-14 z-40 transition-all duration-300 ease-out will-change-transform m-4 lg:mx-8 md:mx-11 border rounded-2xl ${
+            shouldShow
+                ? "translate-y-0 opacity-100 pointer-events-auto"
+                : "-translate-y-[140%] opacity-0 pointer-events-none"
+        } ${
+            isScrolled
+                ? "bg-[#0a0a0a]/90 backdrop-blur-2xl border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.85)]"
+                : "bg-white/[0.02] border-white/5 shadow-none hover:border-white/10 hover:bg-white/[0.03]"
+        } ${className || ""}`
+        : className || "m-4 lg:mx-8 md:mx-11 border border-white/5 rounded-xl bg-white/[0.02]";
+
     return (
-        <div className={className || "m-4 lg:mx-8 md:mx-11 border border-white/5 rounded-xl bg-white/[0.02]"}>
-            <div className="flex flex-row items-center gap-3.5 p-4 pb-2 px-4">
-                <div className="w-10 h-10 bg-zinc-800 border border-white/10 rounded-full shrink-0 overflow-hidden flex items-center justify-center text-zinc-300 font-semibold text-sm">
-                    {displayAvatar ? (
-                        <img src={displayAvatar} className="w-full h-full object-cover" alt={isRu ? "Аватар" : "Avatar"} />
-                    ) : (
-                        <span>{userData?.fullName?.[0]?.toUpperCase() || "U"}</span>
-                    )}
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 min-w-0">
-                    <h1 className="text-base max-sm:text-sm font-bold text-zinc-100 truncate">{title || defaultTitle}</h1>
-                    <p className="text-zinc-500 max-sm:text-xs text-xs truncate">{subtitle || defaultSubtitle}</p>
+        <div 
+            ref={containerRef}
+            onFocusCapture={() => setIsFocused(true)}
+            onBlurCapture={(e) => {
+                if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+                    setIsFocused(false);
+                    if (!newContent.trim() && attachments.length === 0 && !isCodeMode && !uploadingMedia && !repostTarget) {
+                        setIsExpanded(false);
+                    }
+                }
+            }}
+            className={containerClasses}
+        >
+            <input 
+                ref={fileInputRef}
+                type="file" 
+                accept="image/*"
+                onChange={handleImgUpload}
+                disabled={isSaving || Boolean(uploadingMedia)}
+                className="hidden" 
+            />
+            <input 
+                ref={videoInputRef}
+                type="file" 
+                accept="video/mp4,video/webm,video/ogg,video/quicktime,video/x-m4v"
+                onChange={handleVideoUpload}
+                disabled={isSaving || Boolean(uploadingMedia)}
+                className="hidden" 
+            />
+
+            <div 
+                className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+                style={{
+                    gridTemplateRows: !isEffectivelyExpanded ? '1fr' : '0fr',
+                    opacity: !isEffectivelyExpanded ? 1 : 0,
+                    pointerEvents: !isEffectivelyExpanded ? 'auto' : 'none',
+                }}
+            >
+                <div className="overflow-hidden min-h-0">
+                    <div 
+                        onClick={() => {
+                            setIsExpanded(true);
+                            setTimeout(() => textareaRef.current?.focus({ preventScroll: true }), 120);
+                        }}
+                        className="flex items-center gap-3 p-2.5 px-3.5 sm:px-4 cursor-pointer select-none group min-h-[48px]"
+                    >
+                        <div className="w-8 h-8 bg-zinc-800 border border-white/10 rounded-full shrink-0 overflow-hidden flex items-center justify-center text-zinc-300 font-semibold text-xs">
+                            {displayAvatar ? (
+                                <img src={displayAvatar} className="w-full h-full object-cover" alt={isRu ? "Аватар" : "Avatar"} />
+                            ) : (
+                                <span>{userData?.fullName?.[0]?.toUpperCase() || "U"}</span>
+                            )}
+                        </div>
+
+                        <div className="flex-1 text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors truncate py-1">
+                            {newContent.trim() ? (
+                                <span className="text-zinc-200 font-medium truncate">{newContent}</span>
+                            ) : (
+                                <span className="truncate">{activePlaceholder}</span>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <button 
+                                type="button" 
+                                disabled={isSaving || Boolean(uploadingMedia)} 
+                                onClick={() => {
+                                    setIsExpanded(true);
+                                    fileInputRef.current?.click();
+                                }} 
+                                className="p-1.5 w-8 h-8 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40"
+                                title={isRu ? "Прикрепить изображение" : "Attach image"}
+                            >
+                                <ImageIcon className="w-4 h-4"/>
+                            </button>
+                            <button 
+                                type="button" 
+                                disabled={isSaving || Boolean(uploadingMedia)} 
+                                onClick={() => {
+                                    setIsExpanded(true);
+                                    videoInputRef.current?.click();
+                                }} 
+                                className="p-1.5 w-8 h-8 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40"
+                                title={isRu ? "Прикрепить видео (до 60 МБ)" : "Attach video (up to 60 MB)"}
+                            >
+                                <Video className="w-4 h-4"/>
+                            </button>
+                            <button 
+                                type="button" 
+                                disabled={isSaving || Boolean(uploadingMedia)} 
+                                onClick={() => {
+                                    setIsExpanded(true);
+                                    setIsCodeMode(true);
+                                }} 
+                                className="p-1.5 w-8 h-8 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40"
+                                title={isRu ? "Вставить фрагмент кода" : "Insert code snippet"}
+                            >
+                                <Code className="w-4 h-4"/>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsExpanded(true);
+                                    setTimeout(() => textareaRef.current?.focus({ preventScroll: true }), 120);
+                                }}
+                                className="h-7 px-3 text-xs font-semibold bg-white text-black rounded-full hover:bg-zinc-200 transition flex items-center justify-center cursor-pointer ml-1 active:scale-95 shadow-sm"
+                            >
+                                {isRu ? "Написать" : "Write"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <form onSubmit={handleCreatePost}>
+            <div 
+                className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+                style={{
+                    gridTemplateRows: isEffectivelyExpanded ? '1fr' : '0fr',
+                    opacity: isEffectivelyExpanded ? 1 : 0,
+                    pointerEvents: isEffectivelyExpanded ? 'auto' : 'none',
+                }}
+            >
+                <div className="overflow-hidden min-h-0">
+                    <div className="flex flex-row items-center justify-between gap-3.5 p-4 pb-2 px-4">
+                        <div className="flex items-center gap-3.5 min-w-0">
+                            <div className="w-10 h-10 bg-zinc-800 border border-white/10 rounded-full shrink-0 overflow-hidden flex items-center justify-center text-zinc-300 font-semibold text-sm">
+                                {displayAvatar ? (
+                                    <img src={displayAvatar} className="w-full h-full object-cover" alt={isRu ? "Аватар" : "Avatar"} />
+                                ) : (
+                                    <span>{userData?.fullName?.[0]?.toUpperCase() || "U"}</span>
+                                )}
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 min-w-0">
+                                <h1 className="text-base max-sm:text-sm font-bold text-zinc-100 truncate">{title || defaultTitle}</h1>
+                                <p className="text-zinc-500 max-sm:text-xs text-xs truncate">{subtitle || defaultSubtitle}</p>
+                            </div>
+                        </div>
+
+                        {floating && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (hasActiveContent) {
+                                        const confirmClose = confirm(isRu ? "Свернуть форму? Введенный текст сохранится в черновике." : "Collapse form? Entered text will be saved in draft.");
+                                        if (!confirmClose) return;
+                                    }
+                                    setIsExpanded(false);
+                                }}
+                                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition flex items-center justify-center cursor-pointer shrink-0"
+                                title={isRu ? "Свернуть форму" : "Collapse form"}
+                            >
+                                <ChevronUp className="w-5 h-5" />
+                            </button>
+                        )}
+                    </div>
+
+                    <form onSubmit={handleCreatePost}>
                 {isCodeMode ? (
                     <div className="mx-4 mb-3 p-4 rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-2xl flex flex-col gap-3 animate-fade-in backdrop-blur-md">
                         <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/10">
@@ -505,11 +730,12 @@ export default function PublicBlock({
                             </div>
                         ) : (
                             <textarea
+                                ref={textareaRef}
                                 rows={1}
                                 value={newContent}
                                 onChange={(e) => setContent(e.target.value)}
                                 placeholder={activePlaceholder}
-                                className="w-full p-2 text-sm text-zinc-100 bg-[#0a0a0a] border border-white/5 rounded-xl focus:outline-none transition focus:ring-2 focus:ring-white-500 focus:border-white-500 resize-none [field-sizing:content] min-h-[38px] max-h-[250px]"
+                                className="w-full p-2 text-sm text-zinc-100 bg-[#0a0a0a] border border-white/5 rounded-xl focus:outline-none transition focus:ring-1 focus:ring-white/20 focus:border-white/20 resize-none [field-sizing:content] min-h-[38px] max-h-[250px]"
                             />
                         )}
                     </div>
@@ -599,22 +825,6 @@ export default function PublicBlock({
 
                 <div className="flex flex-row flex-wrap justify-between items-center gap-2 p-2 px-3 sm:px-4">
                     <div className="flex flex-row items-center gap-1">
-                        <input 
-                            ref={fileInputRef}
-                            type="file" 
-                            accept="image/*"
-                            onChange={handleImgUpload}
-                            disabled={isSaving || Boolean(uploadingMedia)}
-                            className="hidden" 
-                        />
-                        <input 
-                            ref={videoInputRef}
-                            type="file" 
-                            accept="video/mp4,video/webm,video/ogg,video/quicktime,video/x-m4v"
-                            onChange={handleVideoUpload}
-                            disabled={isSaving || Boolean(uploadingMedia)}
-                            className="hidden" 
-                        />
                         <button 
                             type="button" 
                             disabled={isSaving || Boolean(uploadingMedia)} 
@@ -674,7 +884,9 @@ export default function PublicBlock({
                         </button>
                     </div>
                 </div>
-            </form>
+                    </form>
+                </div>
+            </div>
         </div>
     );
 }

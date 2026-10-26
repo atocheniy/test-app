@@ -218,7 +218,7 @@ export default function Profile() {
                                 />
                             )}
                         </div>
-                        <div className="mb-1 sm:mb-2 min-w-0">
+                        <div className="mb-1 sm:mb-2 min-w-0 flex-1">
                             <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 break-words">{otherUserData.fullName}</h2>
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
                                 <p className="text-sm text-zinc-400 break-all">@{otherUserData.userName}</p>
@@ -229,11 +229,11 @@ export default function Profile() {
                             </div>
                         </div>
 
-                        <div className="sm:ml-auto sm:mb-5 flex flex-wrap items-center gap-2">
+                        <div className="sm:ml-auto sm:mb-5 flex items-center gap-2 shrink-0 flex-nowrap">
                             {isOwnProfile ? (
                                 <Link 
                                     href="/profile"
-                                    className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition"
+                                    className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition whitespace-nowrap shrink-0 text-center"
                                 >
                                     {t.profile.editProfile}
                                 </Link>
@@ -241,16 +241,16 @@ export default function Profile() {
                                 <>
                                     <button 
                                         onClick={handleToggleWatchUser}
-                                        className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition ${
+                                        className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 text-center min-w-[90px] sm:min-w-[100px] ${
                                             isWatchingUser 
-                                                ? "bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/25" 
+                                                ? "bg-white/10 text-white border border-white/20 hover:bg-white/15" 
                                                 : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white"
                                         }`}
                                     >
-                                        {isWatchingUser ? (isRu ? "Отслеживается" : "Watching") : t.profile.watchBtn}
+                                        {isWatchingUser ? (isRu ? "Вы читаете" : "Following") : t.profile.watchBtn}
                                     </button>
                                     <button 
-                                        className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition"
+                                        className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 text-center"
                                         onClick={handleWriteMessage}
                                     >
                                         {isRu ? "Написать сообщение" : "Write a message"}
@@ -711,6 +711,9 @@ export default function Profile() {
                                         repostOfPost={p.repostOfPost}
                                         community={p.community}
                                         project={p.project}
+                                        isPinned={p.isPinned}
+                                        canPin={userData?.userName?.toLowerCase() === otherUserData?.userName?.toLowerCase()}
+                                        onPinToggle={() => refreshOtherUserPostsData(usernameFromUrl)}
                                     />
                                 </div>
                             ))
