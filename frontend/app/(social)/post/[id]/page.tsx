@@ -11,7 +11,6 @@ import { CommentsService } from "@/services/commentService";
 import { Check, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { LinearBlur } from "progressive-blur";
 import { useEffect, useState } from "react";
 
 export default function PagePost() {
@@ -265,23 +264,8 @@ export default function PagePost() {
                 </div>
             </div>
 
-           <div className="sticky bottom-0 p-3 px-6 max-sm:bottom-7 flex flex-row items-center gap-4 relative z-1050">
-                <LinearBlur
-                    side="bottom"
-                    steps={5}
-                    strength={20}
-                    falloffPercentage={100}
-                    tint="rgba(2, 2, 2, 0.75)"
-                    style={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: 140,
-                        zIndex: 0,
-                        pointerEvents: "none",
-                    }}
-                />
+           <div className="sticky bottom-0 p-3 px-6 max-sm:pb-0 flex flex-row items-center gap-4 relative z-1050">
+                
                 <div className="w-8 h-8 bg-zinc-700 rounded-full shrink-0 overflow-hidden relative z-10">
                     {userData.avatar && (
                         <img src={userData.avatar} className="w-full h-full object-cover" alt="My Avatar" />
@@ -294,7 +278,7 @@ export default function PagePost() {
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
                         placeholder={isRu ? "Написать комментарий..." : "Write a comment..."}
-                        className="flex-1 p-2.5 px-4 text-sm text-zinc-100 bg-white/[0.02] border border-white/10 rounded-2xl focus:outline-none transition focus:ring-1 focus:ring-white/20 resize-none [field-sizing:content] min-h-[38px] max-h-[120px]"
+                        className="flex-1 p-2.5 px-4 text-sm text-zinc-100 bg-stone/[0.1] backdrop-blur-md border border-white/10 rounded-2xl focus:outline-none transition focus:ring-1 focus:ring-white/20 resize-none [field-sizing:content] min-h-[38px] max-h-[120px]"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
@@ -305,7 +289,7 @@ export default function PagePost() {
                     <button
                         type="submit"
                         disabled={isSubmitting || !commentText.trim()}
-                        className="px-4 py-2 text-xs font-semibold bg-white text-stone-950 rounded-2xl hover:bg-stone-300 disabled:opacity-30 transition shrink-0"
+                        className="px-4 py-2 text-xs font-semibold bg-white text-stone-950 rounded-2xl hover:bg-stone-300 transition shrink-0"
                     >
                         {isSubmitting ? "..." : (isRu ? "Ответить" : "Reply")}
                     </button>

@@ -15,7 +15,6 @@ import {
     FileCode2,
     Image as ImageIcon,
     Loader2,
-    Newspaper,
     Repeat2,
     Sparkles,
     Video,
@@ -858,9 +857,6 @@ export default function PublicBlock({
                             title={isRu ? "Вставить фрагмент кода (с выбором языка и превью)" : "Insert code snippet (with language selection and preview)"}
                         >
                             <Code className="w-5 h-5"/>
-                        </button>
-                        <button type="button" disabled={isSaving} className="p-2 w-10 h-10 text-zinc-600 border-white/5 rounded-xl hover:bg-white/10 transition flex items-center justify-center">
-                            <Newspaper className="w-5 h-5"/>
                         </button>
                     </div>
                     <div className="flex items-center gap-2 sm:gap-3.5 ml-auto">
