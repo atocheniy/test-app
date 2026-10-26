@@ -131,7 +131,7 @@ export default function RightSidebar() {
     const displayVacancies = liveVacancies.length > 0 ? liveVacancies : fallbackVacancies;
 
     return (
-        <aside className="hidden lg:block w-80 shrink-0 p-4 text-zinc-400">
+        <aside className="hidden lg:block w-80 shrink-0 pt-3 p-4 text-zinc-400">
             <div className="sticky space-y-4">
                 
                 <div className="border border-white/5 p-4 bg-white/[0.02] backdrop-blur-md rounded-2xl">

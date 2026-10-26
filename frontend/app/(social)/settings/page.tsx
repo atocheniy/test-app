@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 
 export default function Settings() {
     const { userData, logout } = useApplication();
@@ -107,7 +106,7 @@ export default function Settings() {
     );
 
     return (
-        <div className="flex flex-col min-h-full pb-16 animate-fade-in">
+        <div className="flex flex-col min-h-full animate-fade-in">
             <Titlebar title={t.settings.title} />
 
             <div className="p-4 sm:p-6 space-y-6">

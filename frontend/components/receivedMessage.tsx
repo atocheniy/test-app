@@ -57,8 +57,8 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
     };
 
     return(
-        <div className="flex flex-col self-start max-w-[75%] sm:max-w-md my-0.5 group">
-            <div className="flex flex-col gap-1 px-3.5 py-2 bg-[#0a0a0a]/75 hover:bg-[#141414]/85 backdrop-blur-md transition rounded-2xl rounded-tl-sm border border-white/5 text-neutral-100 shadow-sm min-w-[85px]">
+        <div className={`flex flex-col self-start max-w-[75%] sm:max-w-md my-0.5 group ${isMenuOpen ? 'z-30' : 'z-0'}`}>
+            <div className="flex flex-col gap-1 px-3.5 py-2 bg-[#0a0a0a] hover:bg-[#141414] transition rounded-2xl rounded-tl-sm border border-white/5 text-neutral-100 shadow-sm min-w-[85px]">
                 
                 {ReplyTo && (
                     <div className="flex flex-col text-xs border-l-2 border-white/40 bg-black/30 hover:bg-black/45 transition px-2 py-1 rounded-r-lg mb-1 cursor-pointer">
@@ -111,7 +111,7 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                             type="button"
                             onClick={handleToggleMenu}
                             className={`p-0.5 rounded hover:bg-white/10 text-neutral-400 hover:text-neutral-100 transition-all ${
-                                isMenuOpen ? 'opacity-100 bg-white/10 text-neutral-100' : 'opacity-0 group-hover:opacity-100'
+                                isMenuOpen ? 'opacity-100 bg-white/10 text-neutral-100' : 'opacity-0 opacity-100'
                             }`}
                             title={isRu ? "Действия" : "Actions"}
                         >
@@ -121,7 +121,7 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                         {isMenuOpen && (
                             <div className={`absolute right-0 ${
                                 menuPlacement === 'bottom' ? 'top-full mt-1.5' : 'bottom-full mb-1.5'
-                            } w-32 bg-[#0a0a0a]/90 border border-white/10 rounded-xl shadow-2xl py-1 z-50 flex flex-col text-xs text-neutral-300 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100`}>
+                            } w-32 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl py-1 z-150 flex flex-col text-xs text-neutral-300 animate-in fade-in zoom-in-95 duration-100`}>
                                 
                                 {onReply && (
                                     <button

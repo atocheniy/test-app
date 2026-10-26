@@ -501,7 +501,7 @@ function MessagesContent() {
 
                     <div className="absolute bottom-0 inset-x-0 z-20 flex flex-col">
                         {replyingMessage && (
-                            <div className="flex items-center justify-between px-4 py-2 bg-[#0a0a0a]/85 backdrop-blur-xl border-t border-white/5 text-xs text-neutral-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                            <div className="flex z-11150 items-center justify-between px-4 py-2 mx-5 bg-white/[0.04] backdrop-blur-md border border-white/10 backdrop-blur-xl rounded-xl text-xs text-neutral-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
                                 <div className="flex items-center gap-2 truncate">
                                     <Reply size={14} className="text-neutral-200 shrink-0" />
                                     <div className="flex flex-col truncate">
@@ -524,7 +524,7 @@ function MessagesContent() {
                         )}
 
                         {editingMessage && (
-                            <div className="flex items-center justify-between px-4 py-2 bg-[#0a0a0a]/85 backdrop-blur-xl border-t border-white/5 text-xs text-neutral-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                            <div className="flex z-50 items-center justify-between px-4 py-2 mx-5 bg-white/[0.04] backdrop-blur-md border border-white/10 backdrop-blur-xl rounded-xl text-xs text-neutral-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
                                 <div className="flex items-center gap-2 truncate">
                                     <Edit size={14} className="text-neutral-200 shrink-0" />
                                     <span className="font-semibold text-neutral-100">{isRu ? 'Редактирование сообщения:' : 'Editing message:'}</span>
