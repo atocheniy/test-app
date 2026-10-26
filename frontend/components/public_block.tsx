@@ -356,7 +356,7 @@ export default function PublicBlock({
     const shouldShow = !floating || !isScrolled || isVisible || isFocused || isBusyUploading || isExpanded || hasActiveContent;
 
     const containerClasses = floating
-        ? `sticky top-14 z-40 transition-all duration-300 ease-out will-change-transform m-4 lg:mx-8 md:mx-11 border rounded-2xl ${
+        ? `sticky top-14 max-md:top-17 z-40 transition-all duration-300 ease-out will-change-transform m-4 lg:mx-8 md:mx-11 border rounded-2xl ${
             shouldShow
                 ? "translate-y-0 opacity-100 pointer-events-auto"
                 : "-translate-y-[140%] opacity-0 pointer-events-none"

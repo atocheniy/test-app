@@ -1,11 +1,10 @@
 'use client'
 
+import { useLanguage } from "@/context/LanguageContext";
 import clsx from "clsx";
 import { Briefcase, LayoutGrid, MessageCircle, Newspaper, Search, UserPen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LinearBlur } from "progressive-blur";
-import { useLanguage } from "@/context/LanguageContext";
 
 export default function BottomPanel() {
   const pathname = usePathname();
@@ -24,22 +23,6 @@ export default function BottomPanel() {
   return (
     <div className="md:hidden block fixed inset-x-0 bottom-0 z-1000 pointer-events-none">
       <div className="relative h-28">
-        <LinearBlur
-          side="bottom"
-          steps={6}
-          strength={20}
-          falloffPercentage={100}
-          tint="rgba(2, 2, 2, 0.75)"
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 120,
-            zIndex: 0,
-            pointerEvents: "none",
-          }}
-        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
       </div>
 
@@ -47,7 +30,7 @@ export default function BottomPanel() {
         className="absolute inset-x-0 flex justify-center px-2 pointer-events-none"
         style={{ bottom: "calc(env(safe-area-inset-bottom) + 10px)" }}
       >
-        <nav className="pointer-events-auto flex items-center justify-between gap-1 px-2 py-1.5 rounded-full bg-black/75 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/60 max-w-[calc(100vw-16px)]">
+        <nav className="pointer-events-auto flex items-center justify-between backdrop-blur-2xl gap-1 px-2 py-1.5 rounded-full bg-[#0a0a0a]/90 border border-white/10 shadow-2xl shadow-black/60 max-w-[calc(100vw-16px)]">
           {links.map((link) => {
             const LinkIcon = link.icon;
             const active = pathname === link.href;

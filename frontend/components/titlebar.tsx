@@ -14,8 +14,9 @@ export default function Titlebar({
     const isRu = language === 'ru';
 
     return (
-        <div className="sticky top-0 shrink-0 z-50 flex items-center h-14 px-6 relative">
+        <div className="sticky top-0 shrink-0 z-50 flex items-center h-14 px-6 relative max-md:top-2 max-md:mx-3 max-md:mt-2 max-md:mb-1 max-md:h-12 max-md:px-4 max-md:backdrop-blur-2xl max-md:rounded-full max-md:bg-[#0a0a0a]/90 max-md:border max-md:border-white/10 max-md:shadow-2xl max-md:shadow-black/60">
             <LinearBlur
+                className="max-md:hidden"
                 side="top"
                 steps={6}
                 strength={20}

@@ -20,8 +20,9 @@ export default function TitlebarMessage({ Id, Name, UserName, Info, Avatar, isOn
     const isRu = language === 'ru';
 
     return (
-        <div className="sticky top-0 shrink-0 z-50 flex items-center h-14 px-3 bg-transparent relative">
+        <div className="sticky top-0 shrink-0 z-50 flex items-center h-14 px-3 bg-transparent relative max-md:bg-black/90">
             <LinearBlur
+                className="max-md:hidden"
                 side="top"
                 steps={6}
                 strength={20}

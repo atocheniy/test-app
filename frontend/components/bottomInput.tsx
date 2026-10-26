@@ -83,8 +83,9 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
     };
 
     return (
-        <div className="shrink-0 sticky bottom-0 bg-transparent px-4 py-2 flex flex-col gap-2 z-50 relative">
+        <div className="shrink-0 sticky bottom-0 bg-transparent px-4 py-2 flex flex-col gap-2 z-50 relative max-md:bg-black/90">
             <LinearBlur
+                className="max-md:hidden"
                 side="bottom"
                 steps={6}
                 strength={20}
