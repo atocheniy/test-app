@@ -1,5 +1,6 @@
 'use client'
 
+import Avatar from "@/components/Avatar";
 import Post from "@/components/post";
 import { PostSkeleton } from "@/components/skeletons";
 import Titlebar from "@/components/titlebar";
@@ -106,16 +107,16 @@ export default function PagePost() {
                     <PostSkeleton />
                 </div>
 
-                <div className="w-full border-t border-white/5" />
+                <div className="w-full border-t border-white/5 light:border-zinc-200/80" />
                 <Titlebar title={isRu ? "Комментарии" : "Comments"} />
 
                 <div className="flex flex-col gap-4 p-6 lg:px-11 md:px-11">
                     {[1, 2].map((i) => (
-                        <div key={i} className="flex gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse">
-                            <div className="w-8 h-8 rounded-full bg-white/5 shrink-0" />
+                        <div key={i} className="flex gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse light:bg-white light:border-zinc-200/80 light:shadow-sm">
+                            <div className="w-8 h-8 rounded-full bg-white/5 shrink-0 light:bg-zinc-200" />
                             <div className="flex-1 space-y-2">
-                                <div className="h-3 w-28 bg-white/5 rounded" />
-                                <div className="h-3 w-full bg-white/5 rounded" />
+                                <div className="h-3 w-28 bg-white/5 rounded light:bg-zinc-200" />
+                                <div className="h-3 w-full bg-white/5 rounded light:bg-zinc-200" />
                             </div>
                         </div>
                     ))}
@@ -134,7 +135,7 @@ export default function PagePost() {
                         <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={formatPostTime(currentPost.created)} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount} repostsCount={currentPost.repostsCount} repostOfPost={currentPost.repostOfPost} community={currentPost.community} project={currentPost.project} isPinned={currentPost.isPinned} onPinToggle={() => refreshCurrentPost(idFromUrl)}></Post>
                     </div>
 
-                    <div className="w-full border-t border-white/5"></div>
+                    <div className="w-full border-t border-white/5 light:border-zinc-200/80"></div>
                 </div>
                 <div>
                     <Titlebar title={isRu ? "Комментарии" : "Comments"}></Titlebar>
@@ -149,29 +150,29 @@ export default function PagePost() {
                             const isMyComment = userData?.userName?.toLowerCase() === cleanUser;
 
                             return (
-                                <div key={comment.id} className="relative flex gap-3 text-sm p-4 rounded-2xl bg-white/[0.02] border border-white/5 group">
+                                <div key={comment.id} className="relative flex gap-3 text-sm p-4 rounded-2xl bg-white/[0.02] border border-white/5 group light:bg-white light:border-zinc-200/80 light:text-zinc-800 light:shadow-sm">
                                     <div className="relative w-8 h-8 shrink-0">
                                         <Link href={isMyComment ? '/profile' : `/profile/${cleanUser}`} className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
-                                            {comment.authorAvatar ? (
-                                                <img src={comment.authorAvatar} className="w-full h-full object-cover" alt="Avatar" />
-                                            ) : (
-                                                <div className="w-full h-full bg-zinc-800" />
-                                            )}
+                                            <Avatar
+                                                src={comment.authorAvatar}
+                                                name={comment.authorName || comment.authorUsername}
+                                                className="w-full h-full text-[10px]"
+                                            />
                                         </Link>
                                         {isCommenterOnline && (
-                                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-white border-2 border-[#0a0a0a] rounded-full" title={isRu ? "В сети" : "Online"} />
+                                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-white border-2 border-[#0a0a0a] rounded-full light:bg-emerald-500 light:border-white" title={isRu ? "В сети" : "Online"} />
                                         )}
                                     </div>
 
                                     <div className="flex-1">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-baseline gap-2">
-                                                <Link href={isMyComment ? '/profile' : `/profile/${cleanUser}`} className="font-semibold text-zinc-100 text-xs hover:underline cursor-pointer">
+                                                <Link href={isMyComment ? '/profile' : `/profile/${cleanUser}`} className="font-semibold text-zinc-100 text-xs hover:underline cursor-pointer light:text-zinc-900">
                                                     {comment.authorName}
                                                 </Link>
-                                                <span className="text-zinc-500 text-[10px]">@{cleanUser}</span>
-                                                <span className="text-zinc-500 text-[10px]">·</span>
-                                                <span className="text-zinc-500 text-[10px]">
+                                                <span className="text-zinc-500 text-[10px] light:text-zinc-500">@{cleanUser}</span>
+                                                <span className="text-zinc-500 text-[10px] light:text-zinc-400">·</span>
+                                                <span className="text-zinc-500 text-[10px] light:text-zinc-500">
                                                     {formatPostTime(comment.created)}
                                                 </span>
                                             </div>
@@ -180,18 +181,18 @@ export default function PagePost() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveMenuCommentId(activeMenuCommentId === comment.id ? null : comment.id)}
-                                                    className="p-1 text-zinc-500 hover:text-zinc-200 hover:bg-white/5 rounded-full transition"
+                                                    className="p-1 text-zinc-500 hover:text-zinc-200 hover:bg-white/5 rounded-full transition light:text-zinc-400 light:hover:text-zinc-800 light:hover:bg-zinc-100"
                                                 >
                                                     <MoreHorizontal size={14} />
                                                 </button>
 
                                                 {activeMenuCommentId === comment.id && (
-                                                    <div className="absolute right-0 top-full mt-1 w-40 rounded-xl bg-zinc-900 border border-white/10 shadow-xl p-1 z-50">
+                                                    <div className="absolute right-0 top-full mt-1 w-40 rounded-xl bg-zinc-900 border border-white/10 shadow-xl p-1 z-50 light:bg-white light:border-zinc-200 light:text-zinc-800 light:shadow-xl">
                                                         <button
                                                             onClick={() => handleCopyComment(comment.content, comment.id)}
-                                                            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
+                                                            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition light:text-zinc-700 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                                         >
-                                                            {copiedCommentId === comment.id ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                                                            {copiedCommentId === comment.id ? <Check size={12} className="text-green-400 light:text-green-600" /> : <Copy size={12} />}
                                                             <span>{copiedCommentId === comment.id ? (isRu ? "Скопировано" : "Copied") : (isRu ? "Копировать" : "Copy")}</span>
                                                         </button>
 
@@ -203,15 +204,15 @@ export default function PagePost() {
                                                                         setEditCommentText(comment.content);
                                                                         setActiveMenuCommentId(null);
                                                                     }}
-                                                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition"
+                                                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition light:text-zinc-700 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                                                 >
                                                                     <Pencil size={12} />
                                                                     <span>{isRu ? "Редактировать" : "Edit"}</span>
                                                                 </button>
-                                                                <div className="h-[1px] bg-white/5 my-1" />
+                                                                <div className="h-[1px] bg-white/5 my-1 light:bg-zinc-100" />
                                                                 <button
                                                                     onClick={() => handleDeleteComment(comment.id)}
-                                                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition"
+                                                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition light:text-red-600 light:hover:text-red-700 light:hover:bg-red-50"
                                                                 >
                                                                     <Trash2 size={12} />
                                                                     <span>{isRu ? "Удалить" : "Delete"}</span>
@@ -229,34 +230,34 @@ export default function PagePost() {
                                                     value={editCommentText}
                                                     onChange={(e) => setEditCommentText(e.target.value)}
                                                     rows={2}
-                                                    className="w-full p-2.5 text-xs text-zinc-100 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-white/20 resize-none"
+                                                    className="w-full p-2.5 text-xs text-zinc-100 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-white/20 resize-none light:bg-zinc-100/70 light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:bg-white light:focus:border-zinc-300"
                                                 />
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         type="button"
                                                         onClick={() => setEditingCommentId(null)}
-                                                        className="px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200 transition"
+                                                        className="px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200 transition light:text-zinc-500 light:hover:text-zinc-800"
                                                     >
                                                         {isRu ? "Отмена" : "Cancel"}
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleSaveEditComment(comment.id)}
-                                                        className="px-3 py-1 text-xs font-medium bg-white text-black rounded-lg hover:bg-zinc-200 transition"
+                                                        className="px-3 py-1 text-xs font-medium bg-white text-black rounded-lg hover:bg-zinc-200 transition light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                                     >
                                                         {isRu ? "Сохранить" : "Save"}
                                                     </button>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-zinc-300 leading-relaxed mt-1">{comment.content}</p>
+                                            <p className="text-xs text-zinc-300 leading-relaxed mt-1 light:text-zinc-700">{comment.content}</p>
                                         )}
                                     </div>
                                 </div>
                             );
                         })
                         ) : (
-                            <p className="text-xs text-zinc-500 text-center py-6 select-none">
+                            <p className="text-xs text-zinc-500 text-center py-6 select-none light:text-zinc-400">
                                 {isRu ? "Комментариев пока нет" : "No comments yet"}
                             </p>
                         )}
@@ -264,13 +265,13 @@ export default function PagePost() {
                 </div>
             </div>
 
-           <div className="sticky bottom-0 p-3 px-6 max-sm:pb-0 flex flex-row items-center gap-4 relative z-1050">
+           <div className="sticky bottom-0 p-3 px-6 max-sm:pb-0 flex flex-row items-center gap-4 relative z-1050 light:bg-white/80 light:backdrop-blur-md light:border-t light:border-zinc-200/80">
                 
-                <div className="w-8 h-8 bg-zinc-700 rounded-full shrink-0 overflow-hidden relative z-10">
-                    {userData.avatar && (
-                        <img src={userData.avatar} className="w-full h-full object-cover" alt="My Avatar" />
-                    )}
-                </div>
+                <Avatar
+                    src={userData.avatar}
+                    name={userData.fullName || userData.userName}
+                    className="w-8 h-8 text-[10px] relative z-10"
+                />
 
                 <form onSubmit={handleSendComment} className="flex-1 flex flex-row items-center gap-3 relative z-10">
                     <textarea
@@ -278,7 +279,7 @@ export default function PagePost() {
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
                         placeholder={isRu ? "Написать комментарий..." : "Write a comment..."}
-                        className="flex-1 p-2.5 px-4 text-sm text-zinc-100 bg-stone/[0.1] backdrop-blur-md border border-white/10 rounded-2xl focus:outline-none transition focus:ring-1 focus:ring-white/20 resize-none [field-sizing:content] min-h-[38px] max-h-[120px]"
+                        className="flex-1 p-2.5 px-4 text-sm text-zinc-100 bg-stone/[0.1] backdrop-blur-md border border-white/10 rounded-2xl focus:outline-none transition focus:ring-1 focus:ring-white/20 resize-none [field-sizing:content] min-h-[38px] max-h-[120px] light:bg-zinc-100/70 light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:bg-white light:focus:ring-zinc-300"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
@@ -289,7 +290,7 @@ export default function PagePost() {
                     <button
                         type="submit"
                         disabled={isSubmitting || !commentText.trim()}
-                        className="px-4 py-2 text-xs font-semibold bg-white text-stone-950 rounded-2xl hover:bg-stone-300 transition shrink-0"
+                        className="px-4 py-2 text-xs font-semibold bg-white text-stone-950 rounded-2xl hover:bg-stone-300 transition shrink-0 light:bg-zinc-900 light:text-white light:hover:bg-zinc-800 disabled:opacity-50"
                     >
                         {isSubmitting ? "..." : (isRu ? "Ответить" : "Reply")}
                     </button>

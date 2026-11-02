@@ -1,6 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
+import Avatar from '@/components/Avatar';
 import { LayoutGrid, Menu, MessageCircle, MessageSquareWarning, Newspaper, Search, Settings } from 'lucide-react';
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
@@ -25,10 +26,10 @@ export default function Sidebar() {
     ];
 
     return (
-         <aside className="w-64 shrink-0 hidden md:flex text-white p-3 flex flex-col h-screen sticky top-0">
+         <aside className="w-64 shrink-0 hidden md:flex text-white p-3 flex flex-col h-screen sticky top-0 light:text-zinc-900">
             <div>
-                <div className="p-3 mb-4 border border-white/5 bg-white/[0.02]  rounded-2xl text-sm font-bold text-white flex flex-row items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40px" height="34px" className="border border-white/15 rounded-xl">
+                <div className="p-3 mb-4 border border-white/5 bg-white/[0.02]  rounded-2xl text-sm font-bold text-white flex flex-row items-center gap-2 light:bg-white light:border-zinc-200/80 light:shadow-sm light:text-zinc-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40px" height="34px" className="border border-white/15 rounded-xl light:border-zinc-200">
                         <rect width="100" height="100" rx="40" fill="#000000" />
                         <g fill="#FFFFFF">
                             <path d="M 50,28 L 80,48 H 65 L 50,39 L 35,48 H 20 Z" />
@@ -47,9 +48,9 @@ export default function Sidebar() {
                                     key={link.href}
                                     href={link.href} 
                                     className={clsx(
-                                        "block py-1.5 px-3 text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-md transition-all duration-150 flex flex-row gap-2 items-center",
+                                        "block py-1.5 px-3 text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-md transition-all duration-150 flex flex-row gap-2 items-center light:text-zinc-600 light:hover:text-zinc-950 light:hover:bg-zinc-100",
                                         {
-                                            'block py-1.5 px-3 text-sm font-medium text-zinc-100 bg-white/5 rounded-md transition-all duration-150': pathname === link.href,
+                                            'block py-1.5 px-3 text-sm font-medium text-zinc-100 bg-white/5 rounded-md transition-all duration-150 light:bg-zinc-100 light:text-zinc-950': pathname === link.href,
                                         },
                                     )}
                                 >
@@ -62,16 +63,16 @@ export default function Sidebar() {
             </div>
 
             <div className="mt-8">
-                <h1 className="text-md font-semibold text-zinc-100 p-2">{t.nav.forApplicants}</h1>
+                <h1 className="text-md font-semibold text-zinc-100 p-2 light:text-zinc-900">{t.nav.forApplicants}</h1>
                 <nav>
                     <ul className="space-y-1">
                         <li>
                             <Link 
                                 href="/vacancies"
                                 className={clsx(
-                                    "block py-1.5 px-3 text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-md transition-all duration-150 flex flex-row gap-2 items-center",
+                                    "block py-1.5 px-3 text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-md transition-all duration-150 flex flex-row gap-2 items-center light:text-zinc-600 light:hover:text-zinc-950 light:hover:bg-zinc-100",
                                     {
-                                        'block py-1.5 px-3 text-sm font-medium text-zinc-100 bg-white/5 rounded-md transition-all duration-150': pathname === '/vacancies',
+                                        'block py-1.5 px-3 text-sm font-medium text-zinc-100 bg-white/5 rounded-md transition-all duration-150 light:bg-zinc-100 light:text-zinc-950': pathname === '/vacancies',
                                     },
                                 )}
                             >
@@ -88,7 +89,7 @@ export default function Sidebar() {
                     <li>
                         <Link 
                             href="/settings"
-                            className="border border-white/5 block py-1.5 px-3 text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-xl transition-all duration-150 flex flex-row gap-2 items-center"
+                            className="border border-white/5 block py-1.5 px-3 text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-xl transition-all duration-150 flex flex-row gap-2 items-center light:border-zinc-200/80 light:bg-white light:text-zinc-600 light:hover:text-zinc-950 light:hover:bg-zinc-100 light:shadow-sm"
                         >
                             <Settings className="w-4 h-4 stroke-[1.8]"/>
                             {t.nav.settings}
@@ -101,18 +102,18 @@ export default function Sidebar() {
                 onClick={(e) => {
                     router.push('/profile');
                 }} 
-                className="mt-4 p-3 bg-white/[0.02] border rounded-2xl text-sm text-zinc-400 flex flex-row gap-3 items-center justify-start hover:bg-stone-950 hover:border border-white/5 cursor-pointer transition-all duration-150"
+                className="mt-4 p-3 bg-white/[0.02] border rounded-2xl text-sm text-zinc-400 flex flex-row gap-3 items-center justify-start hover:bg-stone-950 hover:border border-white/5 cursor-pointer transition-all duration-150 light:bg-white light:border-zinc-200/80 light:shadow-sm light:hover:bg-zinc-50 light:text-zinc-600"
             >
-                <div className="w-10 h-10 bg-zinc-700 rounded-full shrink-0 overflow-hidden">
-                    {userData.avatar && (
-                        <img src={userData.avatar} className="w-full h-full object-cover" alt="Avatar" />
-                    )}
-                </div>
+                <Avatar
+                    src={userData.avatar}
+                    name={userData.fullName || UserNameNormalized}
+                    className="w-10 h-10 text-xs"
+                />
                 <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer">
+                    <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer light:text-zinc-900">
                         {userData.fullName}
                     </span>
-                    <span className="text-zinc-500 text-sm">{UserNameNormalized}</span>
+                    <span className="text-zinc-500 text-sm light:text-zinc-500">{UserNameNormalized}</span>
                 </div>
             </div>
         </aside>

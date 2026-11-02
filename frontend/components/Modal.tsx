@@ -65,13 +65,13 @@ export default function Modal({
 
     return createPortal(
         <div
-            className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xl ${
+            className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 light:bg-black/35 backdrop-blur-xl ${
                 isClosing ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'
             } ${overlayClassName}`}
             onClick={onClose}
         >
             <div
-                className={`will-change-transform ${
+                className={`will-change-transform light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl ${
                     isClosing ? 'animate-modal-panel-out' : 'animate-modal-panel-in'
                 } ${className}`}
                 onClick={(e) => e.stopPropagation()}

@@ -17,7 +17,6 @@ export async function POST(request: Request): Promise<NextResponse> {
             'video/quicktime',
             'video/x-m4v',
           ],
-          // Maximum size: 60 MB for reasonable video post uploads
           maximumSizeInBytes: 60 * 1024 * 1024,
           addRandomSuffix: true,
           tokenPayload: JSON.stringify({}),

@@ -1,5 +1,6 @@
 'use client';
 
+import Avatar from "@/components/Avatar";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -131,12 +132,12 @@ export default function VacanciesPage() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder={t.vacancies.searchPlaceholder}
-                            className="w-full h-12 pl-4 pr-10 rounded-2xl bg-white/[0.03] border border-white/10 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-md transition-all text-sm shadow-inner"
+                            className="w-full h-12 pl-4 pr-10 rounded-2xl bg-white/[0.03] border border-white/10 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-md transition-all text-sm shadow-inner light:bg-white light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:shadow-sm"
                         />
                         {search && (
                             <button
                                 onClick={() => setSearch('')}
-                                className="absolute right-3 p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition cursor-pointer"
+                                className="absolute right-3 p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition cursor-pointer light:text-zinc-400 light:hover:text-zinc-700 light:hover:bg-zinc-100"
                             >
                                 <X size={16} />
                             </button>
@@ -144,25 +145,25 @@ export default function VacanciesPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                        <div className="flex flex-wrap items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5 max-w-full overflow-x-auto no-scrollbar">
-                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">{isRu ? "Сортировка:" : "Sort by:"}</span>
+                        <div className="flex flex-wrap items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5 max-w-full overflow-x-auto no-scrollbar light:bg-zinc-100/80 light:border-zinc-200">
+                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold light:text-zinc-500">{isRu ? "Сортировка:" : "Sort by:"}</span>
                             <button
                                 onClick={() => setSelectedSort('recommended')}
                                 className={`px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
                                     selectedSort === 'recommended'
-                                        ? "bg-white text-black font-semibold"
-                                        : "text-zinc-400 hover:text-white"
+                                        ? "bg-white text-black font-semibold light:bg-zinc-900 light:text-white"
+                                        : "text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900"
                                 }`}
                             >
-                                <Sparkles size={11} className={selectedSort === 'recommended' ? "text-amber-500" : "text-zinc-400"} />
+                                <Sparkles size={11} className={selectedSort === 'recommended' ? "text-amber-500" : "text-zinc-400 light:text-zinc-500"} />
                                 {t.sidebarRight.forYou}
                             </button>
                             <button
                                 onClick={() => setSelectedSort('created')}
                                 className={`px-2.5 py-1 rounded-lg transition ${
                                     selectedSort === 'created'
-                                        ? "bg-white text-black font-semibold"
-                                        : "text-zinc-400 hover:text-white"
+                                        ? "bg-white text-black font-semibold light:bg-zinc-900 light:text-white"
+                                        : "text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900"
                                 }`}
                             >
                                 {isRu ? "Свежие" : "Newest"}
@@ -171,22 +172,22 @@ export default function VacanciesPage() {
                                 onClick={() => setSelectedSort('salary')}
                                 className={`px-2.5 py-1 rounded-lg transition ${
                                     selectedSort === 'salary'
-                                        ? "bg-white text-black font-semibold"
-                                        : "text-zinc-400 hover:text-white"
+                                        ? "bg-white text-black font-semibold light:bg-zinc-900 light:text-white"
+                                        : "text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900"
                                 }`}
                             >
                                 {isRu ? "По зарплате" : "By Salary"}
                             </button>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5 max-w-full overflow-x-auto no-scrollbar">
-                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">{isRu ? "Формат:" : "Format:"}</span>
+                        <div className="flex flex-wrap items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5 max-w-full overflow-x-auto no-scrollbar light:bg-zinc-100/80 light:border-zinc-200">
+                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold light:text-zinc-500">{isRu ? "Формат:" : "Format:"}</span>
                             <button
                                 onClick={() => setSelectedFormat(null)}
                                 className={`px-2.5 py-1 rounded-lg transition ${
                                     selectedFormat === null
-                                        ? "bg-white text-black font-semibold"
-                                        : "text-zinc-400 hover:text-white"
+                                        ? "bg-white text-black font-semibold light:bg-zinc-900 light:text-white"
+                                        : "text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900"
                                 }`}
                             >
                                 {isRu ? "Все" : "All"}
@@ -195,8 +196,8 @@ export default function VacanciesPage() {
                                 onClick={() => setSelectedFormat(0)}
                                 className={`px-2.5 py-1 rounded-lg transition ${
                                     selectedFormat === 0
-                                        ? "bg-white text-black font-semibold"
-                                        : "text-zinc-400 hover:text-white"
+                                        ? "bg-white text-black font-semibold light:bg-zinc-900 light:text-white"
+                                        : "text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900"
                                 }`}
                             >
                                 {t.vacancies.remote}
@@ -205,8 +206,8 @@ export default function VacanciesPage() {
                                 onClick={() => setSelectedFormat(1)}
                                 className={`px-2.5 py-1 rounded-lg transition ${
                                     selectedFormat === 1
-                                        ? "bg-white text-black font-semibold"
-                                        : "text-zinc-400 hover:text-white"
+                                        ? "bg-white text-black font-semibold light:bg-zinc-900 light:text-white"
+                                        : "text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900"
                                 }`}
                             >
                                 {t.vacancies.hybrid}
@@ -215,22 +216,22 @@ export default function VacanciesPage() {
                                 onClick={() => setSelectedFormat(2)}
                                 className={`px-2.5 py-1 rounded-lg transition ${
                                     selectedFormat === 2
-                                        ? "bg-white text-black font-semibold"
-                                        : "text-zinc-400 hover:text-white"
+                                        ? "bg-white text-black font-semibold light:bg-zinc-900 light:text-white"
+                                        : "text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900"
                                 }`}
                             >
                                 {t.vacancies.office}
                             </button>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5 max-w-full overflow-x-auto no-scrollbar">
-                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold">{isRu ? "Уровень:" : "Level:"}</span>
+                        <div className="flex flex-wrap items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5 max-w-full overflow-x-auto no-scrollbar light:bg-zinc-100/80 light:border-zinc-200">
+                            <span className="text-zinc-500 px-2 text-[11px] uppercase tracking-wider font-semibold light:text-zinc-500">{isRu ? "Уровень:" : "Level:"}</span>
                             <button
                                 onClick={() => setSelectedLevel(null)}
                                 className={`px-2.5 py-1 rounded-lg transition ${
                                     selectedLevel === null
-                                        ? "bg-white text-black font-semibold"
-                                        : "text-zinc-400 hover:text-white"
+                                        ? "bg-white text-black font-semibold light:bg-zinc-900 light:text-white"
+                                        : "text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900"
                                 }`}
                             >
                                 {isRu ? "Все" : "All"}
@@ -246,8 +247,8 @@ export default function VacanciesPage() {
                                     onClick={() => setSelectedLevel(lvl.val)}
                                     className={`px-2.5 py-1 rounded-lg transition ${
                                         selectedLevel === lvl.val
-                                            ? "bg-white text-black font-semibold"
-                                            : "text-zinc-400 hover:text-white"
+                                            ? "bg-white text-black font-semibold light:bg-zinc-900 light:text-white"
+                                            : "text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900"
                                     }`}
                                 >
                                     {lvl.label}
@@ -257,7 +258,7 @@ export default function VacanciesPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        <span className="text-[11px] text-zinc-500 font-semibold uppercase tracking-wider mr-1">{isRu ? "Стек:" : "Stack:"}</span>
+                        <span className="text-[11px] text-zinc-500 font-semibold uppercase tracking-wider mr-1 light:text-zinc-500">{isRu ? "Стек:" : "Stack:"}</span>
                         {popularStacks.map((tech) => {
                             const isSelected = selectedStack.toLowerCase() === tech.toLowerCase();
                             return (
@@ -266,8 +267,8 @@ export default function VacanciesPage() {
                                     onClick={() => setSelectedStack(isSelected ? "" : tech)}
                                     className={`px-2 py-0.5 text-xs rounded-lg border transition ${
                                         isSelected
-                                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-semibold"
-                                            : "bg-white/[0.02] text-zinc-400 border-white/5 hover:border-white/20 hover:text-zinc-200"
+                                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-semibold light:bg-emerald-100 light:text-emerald-800 light:border-emerald-300"
+                                            : "bg-white/[0.02] text-zinc-400 border-white/5 hover:border-white/20 hover:text-zinc-200 light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200 light:hover:border-zinc-300"
                                     }`}
                                 >
                                     {tech}
@@ -277,7 +278,7 @@ export default function VacanciesPage() {
                         {selectedStack && (
                             <button
                                 onClick={() => setSelectedStack("")}
-                                className="px-2 py-0.5 text-[11px] rounded-lg text-zinc-500 hover:text-red-400 transition flex items-center gap-1"
+                                className="px-2 py-0.5 text-[11px] rounded-lg text-zinc-500 hover:text-red-400 transition flex items-center gap-1 light:text-zinc-500 light:hover:text-red-600"
                             >
                                 <X size={12} />
                                 {isRu ? "Сбросить" : "Reset"}
@@ -290,16 +291,16 @@ export default function VacanciesPage() {
                     {isLoading ? (
                         <div className="space-y-3">
                             {[1, 2, 3].map((i) => (
-                                <div key={i} className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] animate-pulse h-36" />
+                                <div key={i} className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] animate-pulse h-36 light:bg-white light:border-zinc-200 light:shadow-sm" />
                             ))}
                         </div>
                     ) : vacancies.length === 0 ? (
-                        <div className="p-12 text-center rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col items-center justify-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-500">
+                        <div className="p-12 text-center rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col items-center justify-center gap-3 light:bg-white light:border-zinc-200 light:shadow-sm">
+                            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-500 light:bg-zinc-100 light:text-zinc-600">
                                 <Briefcase size={22} />
                             </div>
-                            <h3 className="text-sm font-semibold text-zinc-200">{t.vacancies.noVacancies}</h3>
-                            <p className="text-xs text-zinc-500 max-w-sm">
+                            <h3 className="text-sm font-semibold text-zinc-200 light:text-zinc-900">{t.vacancies.noVacancies}</h3>
+                            <p className="text-xs text-zinc-500 max-w-sm light:text-zinc-600">
                                 {isRu ? "Попробуйте изменить параметры поиска или фильтры по уровню и технологиям." : "Try adjusting your search query or filters by level and technologies."}
                             </p>
                         </div>
@@ -311,38 +312,37 @@ export default function VacanciesPage() {
                             return (
                                 <div
                                     key={v.id}
-                                    className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all space-y-3 backdrop-blur-md"
+                                    className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all space-y-3 backdrop-blur-md light:bg-white light:border-zinc-200/80 light:hover:bg-zinc-50/60 light:shadow-sm"
                                 >
                                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                                         <div className="flex items-start gap-3.5 min-w-0">
                                             <Link
                                                 href={`/c/${v.companySlug}`}
-                                                className="w-12 h-12 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden shrink-0 group block"
+                                                className="w-12 h-12 rounded-xl overflow-hidden shrink-0 group block"
                                             >
-                                                {v.companyAvatar ? (
-                                                    <img src={v.companyAvatar} className="w-full h-full object-cover" alt="" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center font-bold text-sm text-zinc-300">
-                                                        {v.companyName?.[0]?.toUpperCase()}
-                                                    </div>
-                                                )}
+                                                <Avatar
+                                                    src={v.companyAvatar}
+                                                    name={v.companyName}
+                                                    shape="rounded"
+                                                    className="w-full h-full text-sm"
+                                                />
                                             </Link>
 
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                     <Link
                                                         href={`/c/${v.companySlug}`}
-                                                        className="text-xs font-semibold text-zinc-400 hover:text-white transition flex items-center gap-1"
+                                                        className="text-xs font-semibold text-zinc-400 hover:text-white transition flex items-center gap-1 light:text-zinc-600 light:hover:text-zinc-950"
                                                     >
                                                         <span>{v.companyName}</span>
                                                         {v.isCompanyVerified && (
-                                                            <CheckCircle2 size={13} className="text-blue-400 shrink-0" />
+                                                            <CheckCircle2 size={13} className="text-blue-400 light:text-blue-600 shrink-0" />
                                                         )}
                                                     </Link>
                                                     {v.companyLocation && (
                                                         <>
-                                                            <span className="text-zinc-600">•</span>
-                                                            <span className="text-[11px] text-zinc-500 flex items-center gap-1">
+                                                            <span className="text-zinc-600 light:text-zinc-400">•</span>
+                                                            <span className="text-[11px] text-zinc-500 flex items-center gap-1 light:text-zinc-500">
                                                                 <MapPin size={11} />
                                                                 {v.companyLocation}
                                                             </span>
@@ -350,7 +350,7 @@ export default function VacanciesPage() {
                                                     )}
                                                 </div>
 
-                                                <h3 className="text-base font-bold text-zinc-100 mt-0.5 truncate">
+                                                <h3 className="text-base font-bold text-zinc-100 mt-0.5 truncate light:text-zinc-900">
                                                     {v.title}
                                                 </h3>
 
@@ -358,23 +358,23 @@ export default function VacanciesPage() {
                                                     {v.matchPercent && (
                                                         <span
                                                             title={v.matchReason || undefined}
-                                                            className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1"
+                                                            className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200"
                                                         >
-                                                            <Sparkles size={11} className="text-emerald-400" />
+                                                            <Sparkles size={11} className="text-emerald-400 light:text-emerald-600" />
                                                             {v.matchPercent}% {isRu ? "совпадение" : "match"}
                                                         </span>
                                                     )}
-                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 light:bg-blue-50 light:text-blue-700 light:border-blue-200">
                                                         {formatLevelText(v.level)}
                                                     </span>
-                                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/5 text-zinc-300 border border-white/10">
+                                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/5 text-zinc-300 border border-white/10 light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200">
                                                         {formatWorkTypeText(v.format)}
                                                     </span>
 
                                                     {hasSalary && (
                                                         <span 
                                                             suppressHydrationWarning
-                                                            className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                                            className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200"
                                                         >
                                                             {formatSalary(v.salaryFrom, v.salaryTo, v.currency)}
                                                         </span>
@@ -387,7 +387,7 @@ export default function VacanciesPage() {
                                             <button
                                                 onClick={() => handleApply(v.id)}
                                                 disabled={isApplyingId === v.id}
-                                                className="w-full sm:w-auto flex justify-center px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-lg shadow-white/5"
+                                                className="w-full sm:w-auto flex justify-center px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-lg shadow-white/5 light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                             >
                                                 {isApplyingId === v.id ? (isRu ? "Отправка..." : "Sending...") : t.vacancies.apply}
                                             </button>
@@ -395,13 +395,13 @@ export default function VacanciesPage() {
                                     </div>
 
                                     <div>
-                                        <p className={`text-xs text-zinc-300 whitespace-pre-line leading-relaxed ${!isExpanded ? 'line-clamp-2' : ''}`}>
+                                        <p className={`text-xs text-zinc-300 whitespace-pre-line leading-relaxed light:text-zinc-700 ${!isExpanded ? 'line-clamp-2' : ''}`}>
                                             {v.description}
                                         </p>
                                         {v.description && v.description.length > 140 && (
                                             <button
                                                 onClick={() => setExpandedVacancyId(isExpanded ? null : v.id)}
-                                                className="mt-1 text-[11px] text-zinc-500 hover:text-zinc-300 flex items-center gap-1 transition"
+                                                className="mt-1 text-[11px] text-zinc-500 hover:text-zinc-300 flex items-center gap-1 transition light:text-zinc-500 light:hover:text-zinc-800"
                                             >
                                                 {isExpanded ? (
                                                     <>{isRu ? "Свернуть" : "Collapse"} <ChevronUp size={12} /></>
@@ -412,20 +412,20 @@ export default function VacanciesPage() {
                                         )}
                                     </div>
 
-                                    <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-white/5">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-white/5 light:border-zinc-200/80">
                                         <div className="flex flex-wrap gap-1.5">
                                             {v.stack?.map((tech, i) => (
                                                 <button
                                                     key={i}
                                                     onClick={() => setSelectedStack(tech)}
-                                                    className="px-2 py-0.5 text-[11px] font-mono rounded-md bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 transition"
+                                                    className="px-2 py-0.5 text-[11px] font-mono rounded-md bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 transition light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200 light:hover:bg-zinc-200 light:hover:text-zinc-950"
                                                 >
                                                     {tech}
                                                 </button>
                                             ))}
                                         </div>
 
-                                        <span className="text-[11px] text-zinc-500 font-mono shrink-0 pl-2">
+                                        <span className="text-[11px] text-zinc-500 font-mono shrink-0 pl-2 light:text-zinc-500">
                                             {new Date(v.created).toLocaleDateString(isRu ? 'ru-RU' : 'en-US')}
                                         </span>
                                     </div>

@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export const PROJECT_STATUS_MAP: Record<number, { label: string; labelEn: string; badgeClass: string; dotClass: string }> = {
-    0: { label: 'В разработке', labelEn: 'In Development', badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20', dotClass: 'bg-amber-400' },
-    1: { label: 'Бета', labelEn: 'Beta', badgeClass: 'bg-blue-500/10 text-blue-400 border-blue-500/20', dotClass: 'bg-blue-400' },
-    2: { label: 'Релиз', labelEn: 'Release', badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dotClass: 'bg-emerald-400' },
-    3: { label: 'Архив', labelEn: 'Archived', badgeClass: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20', dotClass: 'bg-zinc-400' },
+    0: { label: 'В разработке', labelEn: 'In Development', badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20 light:bg-amber-50 light:text-amber-700 light:border-amber-200', dotClass: 'bg-amber-400' },
+    1: { label: 'Бета', labelEn: 'Beta', badgeClass: 'bg-blue-500/10 text-blue-400 border-blue-500/20 light:bg-blue-50 light:text-blue-700 light:border-blue-200', dotClass: 'bg-blue-400' },
+    2: { label: 'Релиз', labelEn: 'Release', badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200', dotClass: 'bg-emerald-400' },
+    3: { label: 'Архив', labelEn: 'Archived', badgeClass: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20 light:bg-zinc-100 light:text-zinc-600 light:border-zinc-200', dotClass: 'bg-zinc-400' },
 };
 
 interface LinkItem {
@@ -75,7 +75,7 @@ export default function ProjectCard({
     return (
         <div
             onClick={handleCardClick}
-            className={`p-5 border border-white/5 rounded-2xl bg-zinc-950/40 hover:bg-zinc-900/30 hover:border-white/15 transition-all duration-300 group flex flex-col justify-between h-full relative ${
+            className={`p-5 border border-white/5 rounded-2xl bg-zinc-950/40 hover:bg-zinc-900/30 hover:border-white/15 transition-all duration-300 group flex flex-col justify-between h-full relative light:bg-white light:border-zinc-200/80 light:shadow-sm light:hover:border-zinc-300 light:hover:bg-zinc-50/50 ${
                 id ? 'cursor-pointer' : ''
             }`}
         >
@@ -83,7 +83,7 @@ export default function ProjectCard({
                 <div className="flex justify-between items-start gap-2">
                     <div className="flex flex-col gap-1.5 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors truncate">
+                            <h4 className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors truncate light:text-zinc-900 light:group-hover:text-zinc-950">
                                 {name}
                             </h4>
                             {statusInfo && (
@@ -95,7 +95,7 @@ export default function ProjectCard({
                         </div>
 
                         {(starsCount > 0 || postsCount > 0) && (
-                            <div className="flex items-center gap-2.5 text-[11px] text-zinc-400">
+                            <div className="flex items-center gap-2.5 text-[11px] text-zinc-400 light:text-zinc-500">
                                 {starsCount > 0 && (
                                     <span className="inline-flex items-center gap-1 text-amber-300/90 font-medium">
                                         <Star size={11} className="fill-amber-400 text-amber-400" />
@@ -103,7 +103,7 @@ export default function ProjectCard({
                                     </span>
                                 )}
                                 {postsCount > 0 && (
-                                    <span className="inline-flex items-center gap-1 text-zinc-400">
+                                    <span className="inline-flex items-center gap-1 text-zinc-400 light:text-zinc-500">
                                         <BookOpen size={11} />
                                         {postsCount} {isRu ? (postsCount === 1 ? 'девлог' : postsCount < 5 ? 'девлога' : 'девлогов') : (postsCount === 1 ? 'devlog' : 'devlogs')}
                                     </span>
@@ -122,7 +122,7 @@ export default function ProjectCard({
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         onClick={(e) => e.stopPropagation()}
-                                        className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white transition-colors bg-white/5 px-2 py-0.5 rounded-md hover:bg-white/10"
+                                        className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white transition-colors bg-white/5 px-2 py-0.5 rounded-md hover:bg-white/10 light:text-zinc-600 light:bg-zinc-100 light:hover:bg-zinc-200 light:hover:text-zinc-900"
                                     >
                                         <span>{link.name}</span>
                                         <ExternalLink size={10} />
@@ -143,7 +143,7 @@ export default function ProjectCard({
                                             e.stopPropagation();
                                             onEdit();
                                         }}
-                                        className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition"
+                                        className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                         title={isRu ? "Редактировать проект" : "Edit project"}
                                     >
                                         <Pencil size={12} />
@@ -156,7 +156,7 @@ export default function ProjectCard({
                                             e.stopPropagation();
                                             onDelete();
                                         }}
-                                        className="p-1 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                                        className="p-1 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition light:text-zinc-500 light:hover:text-red-600 light:hover:bg-red-50"
                                         title={isRu ? "Удалить проект" : "Delete project"}
                                     >
                                         <Trash2 size={12} />
@@ -167,7 +167,7 @@ export default function ProjectCard({
                     </div>
                 </div>
 
-                <div className="relative overflow-hidden bg-gradient-to-br from-white/[0.04] to-zinc-900/60 border border-white/5 rounded-xl h-38 mt-3.5 flex flex-col items-center justify-center text-center select-none group/img">
+                <div className="relative overflow-hidden bg-gradient-to-br from-white/[0.04] to-zinc-900/60 border border-white/5 rounded-xl h-38 mt-3.5 flex flex-col items-center justify-center text-center select-none group/img light:from-zinc-100 light:to-zinc-200/50 light:border-zinc-200">
                     {allImages.length > 0 ? (
                         <>
                             <img 
@@ -216,25 +216,25 @@ export default function ProjectCard({
                         </>
                     ) : (
                         <div className="p-4 flex flex-col items-center justify-center">
-                            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-300 mb-2">
+                            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-300 mb-2 light:bg-white light:border-zinc-200 light:text-zinc-600 light:shadow-sm">
                                 <Code2 size={20} />
                             </div>
-                            <span className="text-xs font-medium text-zinc-400 line-clamp-1">{name}</span>
+                            <span className="text-xs font-medium text-zinc-400 line-clamp-1 light:text-zinc-600">{name}</span>
                         </div>
                     )}
                 </div>
 
                 {description && (
-                    <p className="text-xs text-zinc-400 leading-relaxed mt-3 line-clamp-3">
+                    <p className="text-xs text-zinc-400 leading-relaxed mt-3 line-clamp-3 light:text-zinc-700">
                         {description}
                     </p>
                 )}
             </div>
 
             {technologies && technologies.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-white/5">
+                <div className="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-white/5 light:border-zinc-200/80">
                     {technologies.map((tech, idx) => (
-                        <span key={`${tech}-${idx}`} className="text-[10px] font-medium bg-zinc-900 border border-white/5 px-2 py-0.5 rounded-lg text-zinc-400">
+                        <span key={`${tech}-${idx}`} className="text-[10px] font-medium bg-zinc-900 border border-white/5 px-2 py-0.5 rounded-lg text-zinc-400 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-600">
                             {tech}
                         </span>
                     ))}

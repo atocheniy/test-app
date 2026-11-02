@@ -1,8 +1,11 @@
 'use client';
 
+import UserAvatar from '@/components/Avatar';
 import { useApplication } from '@/context/ApplicationContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useTheme } from '@/context/ThemeContext';
 import { isVideoUrl } from '@/libs/format';
+import { compressImage } from '@/libs/imageUtils';
 import { PostService } from '@/services/postService';
 import "@uiw/react-markdown-preview/markdown.css";
 import "@uiw/react-md-editor/markdown-editor.css";
@@ -103,6 +106,7 @@ export default function PublicBlock({
     const videoInputRef = useRef<HTMLInputElement>(null);
     const { userData, refreshUserData, refreshPostsData, repostTarget, setRepostTarget } = useApplication();
     const { language, t } = useLanguage();
+    const { resolvedTheme } = useTheme();
     const isRu = language === 'ru';
     const activePlaceholder = placeholder || t.feed.whatsOnYourMind;
 
@@ -218,7 +222,8 @@ export default function PublicBlock({
 
         setUploadingMedia({ type: 'image' });
         try {
-            const newBlob = await upload(file.name, file, {
+            const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 1920, quality: 0.85 });
+            const newBlob = await upload(compressed.name, compressed, {
                 access: 'public',
                 handleUploadUrl: '/api/img/upload',
             });
@@ -356,16 +361,16 @@ export default function PublicBlock({
     const shouldShow = !floating || !isScrolled || isVisible || isFocused || isBusyUploading || isExpanded || hasActiveContent;
 
     const containerClasses = floating
-        ? `sticky top-14 max-md:top-17 z-40 transition-all duration-300 ease-out will-change-transform m-4 lg:mx-8 md:mx-11 border rounded-2xl ${
+        ? `sticky top-14 max-md:top-17 z-40 transition-all duration-300 ease-out will-change-transform m-4 lg:mx-8 md:mx-11 border rounded-2xl light:bg-white light:border-zinc-200/80 light:shadow-sm ${
             shouldShow
                 ? "translate-y-0 opacity-100 pointer-events-auto"
                 : "-translate-y-[140%] opacity-0 pointer-events-none"
         } ${
             isScrolled
-                ? "bg-[#0a0a0a]/90 backdrop-blur-2xl border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.85)]"
-                : "bg-white/[0.02] border-white/5 shadow-none hover:border-white/10 hover:bg-white/[0.03]"
+                ? "bg-[#0a0a0a]/90 backdrop-blur-2xl border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.85)] light:bg-white/95 light:backdrop-blur-xl light:border-zinc-200/80 light:shadow-md"
+                : "bg-white/[0.02] border-white/5 shadow-none hover:border-white/10 hover:bg-white/[0.03] light:hover:border-zinc-300"
         } ${className || ""}`
-        : className || "m-4 lg:mx-8 md:mx-11 border border-white/5 rounded-xl bg-white/[0.02]";
+        : className || "m-4 lg:mx-8 md:mx-11 border border-white/5 rounded-xl bg-white/[0.02] light:bg-white light:border-zinc-200/80 light:shadow-sm";
 
     return (
         <div 
@@ -414,17 +419,15 @@ export default function PublicBlock({
                         }}
                         className="flex items-center gap-3 p-2.5 px-3.5 sm:px-4 cursor-pointer select-none group min-h-[48px]"
                     >
-                        <div className="w-8 h-8 bg-zinc-800 border border-white/10 rounded-full shrink-0 overflow-hidden flex items-center justify-center text-zinc-300 font-semibold text-xs">
-                            {displayAvatar ? (
-                                <img src={displayAvatar} className="w-full h-full object-cover" alt={isRu ? "Аватар" : "Avatar"} />
-                            ) : (
-                                <span>{userData?.fullName?.[0]?.toUpperCase() || "U"}</span>
-                            )}
-                        </div>
+                        <UserAvatar
+                            src={displayAvatar}
+                            name={userData?.fullName || userData?.userName}
+                            className="w-8 h-8 text-xs"
+                        />
 
-                        <div className="flex-1 text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors truncate py-1">
+                        <div className="flex-1 text-sm text-zinc-400 group-hover:text-zinc-200 transition-colors truncate py-1 light:text-zinc-500 light:group-hover:text-zinc-700">
                             {newContent.trim() ? (
-                                <span className="text-zinc-200 font-medium truncate">{newContent}</span>
+                                <span className="text-zinc-200 font-medium truncate light:text-zinc-800">{newContent}</span>
                             ) : (
                                 <span className="truncate">{activePlaceholder}</span>
                             )}
@@ -438,7 +441,7 @@ export default function PublicBlock({
                                     setIsExpanded(true);
                                     fileInputRef.current?.click();
                                 }} 
-                                className="p-1.5 w-8 h-8 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40"
+                                className="p-1.5 w-8 h-8 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                 title={isRu ? "Прикрепить изображение" : "Attach image"}
                             >
                                 <ImageIcon className="w-4 h-4"/>
@@ -450,7 +453,7 @@ export default function PublicBlock({
                                     setIsExpanded(true);
                                     videoInputRef.current?.click();
                                 }} 
-                                className="p-1.5 w-8 h-8 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40"
+                                className="p-1.5 w-8 h-8 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                 title={isRu ? "Прикрепить видео (до 60 МБ)" : "Attach video (up to 60 MB)"}
                             >
                                 <Video className="w-4 h-4"/>
@@ -462,7 +465,7 @@ export default function PublicBlock({
                                     setIsExpanded(true);
                                     setIsCodeMode(true);
                                 }} 
-                                className="p-1.5 w-8 h-8 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40"
+                                className="p-1.5 w-8 h-8 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                 title={isRu ? "Вставить фрагмент кода" : "Insert code snippet"}
                             >
                                 <Code className="w-4 h-4"/>
@@ -473,7 +476,7 @@ export default function PublicBlock({
                                     setIsExpanded(true);
                                     setTimeout(() => textareaRef.current?.focus({ preventScroll: true }), 120);
                                 }}
-                                className="h-7 px-3 text-xs font-semibold bg-white text-black rounded-full hover:bg-zinc-200 transition flex items-center justify-center cursor-pointer ml-1 active:scale-95 shadow-sm"
+                                className="h-7 px-3 text-xs font-semibold bg-white text-black rounded-full hover:bg-zinc-200 transition flex items-center justify-center cursor-pointer ml-1 active:scale-95 shadow-sm light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                             >
                                 {isRu ? "Написать" : "Write"}
                             </button>
@@ -493,16 +496,14 @@ export default function PublicBlock({
                 <div className="overflow-hidden min-h-0">
                     <div className="flex flex-row items-center justify-between gap-3.5 p-4 pb-2 px-4">
                         <div className="flex items-center gap-3.5 min-w-0">
-                            <div className="w-10 h-10 bg-zinc-800 border border-white/10 rounded-full shrink-0 overflow-hidden flex items-center justify-center text-zinc-300 font-semibold text-sm">
-                                {displayAvatar ? (
-                                    <img src={displayAvatar} className="w-full h-full object-cover" alt={isRu ? "Аватар" : "Avatar"} />
-                                ) : (
-                                    <span>{userData?.fullName?.[0]?.toUpperCase() || "U"}</span>
-                                )}
-                            </div>
+                            <UserAvatar
+                                src={displayAvatar}
+                                name={userData?.fullName || userData?.userName}
+                                className="w-10 h-10 text-xs"
+                            />
                             <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 min-w-0">
-                                <h1 className="text-base max-sm:text-sm font-bold text-zinc-100 truncate">{title || defaultTitle}</h1>
-                                <p className="text-zinc-500 max-sm:text-xs text-xs truncate">{subtitle || defaultSubtitle}</p>
+                                <h1 className="text-base max-sm:text-sm font-bold text-zinc-100 truncate light:text-zinc-900">{title || defaultTitle}</h1>
+                                <p className="text-zinc-500 max-sm:text-xs text-xs truncate light:text-zinc-500">{subtitle || defaultSubtitle}</p>
                             </div>
                         </div>
 
@@ -516,7 +517,7 @@ export default function PublicBlock({
                                     }
                                     setIsExpanded(false);
                                 }}
-                                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition flex items-center justify-center cursor-pointer shrink-0"
+                                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition flex items-center justify-center cursor-pointer shrink-0 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                 title={isRu ? "Свернуть форму" : "Collapse form"}
                             >
                                 <ChevronUp className="w-5 h-5" />
@@ -526,26 +527,26 @@ export default function PublicBlock({
 
                     <form onSubmit={handleCreatePost}>
                 {isCodeMode ? (
-                    <div className="mx-4 mb-3 p-4 rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-2xl flex flex-col gap-3 animate-fade-in backdrop-blur-md">
-                        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/10">
+                    <div className="mx-4 mb-3 p-4 rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-2xl flex flex-col gap-3 animate-fade-in backdrop-blur-md light:bg-zinc-50/70 light:border-zinc-200 light:shadow-sm">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/10 light:border-zinc-200">
                             <div className="flex items-center gap-2">
-                                <div className="p-1.5 rounded-lg bg-white/5 text-zinc-200 border border-white/10">
+                                <div className="p-1.5 rounded-lg bg-white/5 text-zinc-200 border border-white/10 light:bg-zinc-200/60 light:text-zinc-700 light:border-zinc-300/60">
                                     <FileCode2 size={16} />
                                 </div>
-                                <span className="font-semibold text-sm text-zinc-100">
+                                <span className="font-semibold text-sm text-zinc-100 light:text-zinc-900">
                                     {isRu ? "Вставка фрагмента кода" : "Insert code snippet"}
                                 </span>
                             </div>
 
                             <div className="flex items-center gap-2">
-                                <div className="flex items-center bg-white/[0.04] p-0.5 rounded-lg border border-white/10 text-xs">
+                                <div className="flex items-center bg-white/[0.04] p-0.5 rounded-lg border border-white/10 text-xs light:bg-zinc-200/50 light:border-zinc-200">
                                     <button
                                         type="button"
                                         onClick={() => setCodeViewMode('edit')}
                                         className={`px-3 py-1 rounded-md transition font-medium cursor-pointer ${
                                             codeViewMode === 'edit'
-                                                ? 'bg-white text-black font-semibold shadow-sm'
-                                                : 'text-zinc-400 hover:text-white'
+                                                ? 'bg-white text-black font-semibold shadow-sm light:bg-white light:text-zinc-900 light:shadow-sm'
+                                                : 'text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900'
                                         }`}
                                     >
                                         {isRu ? "Код" : t.feed.codeSnippet}
@@ -555,8 +556,8 @@ export default function PublicBlock({
                                         onClick={() => setCodeViewMode('preview')}
                                         className={`px-3 py-1 rounded-md transition font-medium flex items-center gap-1.5 cursor-pointer ${
                                             codeViewMode === 'preview'
-                                                ? 'bg-white text-black font-semibold shadow-sm'
-                                                : 'text-zinc-400 hover:text-white'
+                                                ? 'bg-white text-black font-semibold shadow-sm light:bg-white light:text-zinc-900 light:shadow-sm'
+                                                : 'text-zinc-400 hover:text-white light:text-zinc-600 light:hover:text-zinc-900'
                                         }`}
                                     >
                                         <Eye size={12} />
@@ -567,7 +568,7 @@ export default function PublicBlock({
                                 <button
                                     type="button"
                                     onClick={handleCancelCode}
-                                    className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                                    className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition cursor-pointer light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200/60"
                                     title={isRu ? "Закрыть режим кода" : "Close code mode"}
                                 >
                                     <X size={16} />
@@ -577,7 +578,7 @@ export default function PublicBlock({
 
                         <div className="flex flex-col gap-2">
                             <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider mr-1">{isRu ? "Язык:" : "Language:"}</span>
+                                <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider mr-1 light:text-zinc-500">{isRu ? "Язык:" : "Language:"}</span>
                                 {POPULAR_LANGUAGES.slice(0, 10).map((lang) => {
                                     const isSelected = selectedLanguage === lang.id;
                                     const langLabel = lang.id === 'plaintext' ? (isRu ? 'Текст' : 'Plain Text') : lang.label;
@@ -588,8 +589,8 @@ export default function PublicBlock({
                                             onClick={() => setSelectedLanguage(lang.id)}
                                             className={`px-2.5 py-0.5 rounded-md text-xs font-mono transition border cursor-pointer ${
                                                 isSelected
-                                                    ? 'bg-white text-black font-semibold border-white shadow-sm'
-                                                    : 'bg-white/[0.03] text-zinc-400 border-white/5 hover:border-white/20 hover:text-zinc-200'
+                                                    ? 'bg-white text-black font-semibold border-white shadow-sm light:bg-zinc-900 light:text-white light:border-zinc-900'
+                                                    : 'bg-white/[0.03] text-zinc-400 border-white/5 hover:border-white/20 hover:text-zinc-200 light:bg-zinc-100 light:text-zinc-600 light:border-zinc-200 light:hover:bg-zinc-200 light:hover:text-zinc-900'
                                             }`}
                                         >
                                             {langLabel}
@@ -600,7 +601,7 @@ export default function PublicBlock({
                                 <select
                                     value={selectedLanguage}
                                     onChange={(e) => setSelectedLanguage(e.target.value)}
-                                    className="px-2 py-0.5 rounded-md text-xs font-mono bg-zinc-900 border border-white/10 text-zinc-300 hover:text-white focus:outline-none focus:border-white/30 cursor-pointer"
+                                    className="px-2 py-0.5 rounded-md text-xs font-mono bg-zinc-900 border border-white/10 text-zinc-300 hover:text-white focus:outline-none focus:border-white/30 cursor-pointer light:bg-zinc-100 light:border-zinc-200 light:text-zinc-800 light:hover:bg-zinc-200"
                                 >
                                     {POPULAR_LANGUAGES.map((lang) => {
                                         const langLabel = lang.id === 'plaintext' ? (isRu ? 'Текст' : 'Plain Text') : lang.label;
@@ -619,7 +620,7 @@ export default function PublicBlock({
                                     value={codeFileName}
                                     onChange={(e) => setCodeFileName(e.target.value)}
                                     placeholder={isRu ? "Имя файла (напр. index.ts, Program.cs) — необязательно" : "File name (e.g. index.ts, Program.cs) — optional"}
-                                    className="w-full text-xs font-mono px-3 py-1.5 rounded-lg bg-black border border-white/10 text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition"
+                                    className="w-full text-xs font-mono px-3 py-1.5 rounded-lg bg-black border border-white/10 text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition light:bg-zinc-100/70 light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:bg-white light:focus:border-zinc-300"
                                 />
                             </div>
                         </div>
@@ -627,7 +628,7 @@ export default function PublicBlock({
                         <div className="w-full">
                             {codeViewMode === 'edit' ? (
                                 <div className="flex flex-col gap-1">
-                                    <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 font-mono">
+                                    <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 font-mono light:text-zinc-500">
                                         <span>{isRu ? "Код" : "Code"} ({selectedLanguage})</span>
                                         <span>{isRu ? "Tab = 2 пробела" : "Tab = 2 spaces"}</span>
                                     </div>
@@ -636,7 +637,7 @@ export default function PublicBlock({
                                         onChange={(e) => setCodeSnippet(e.target.value)}
                                         onKeyDown={handleCodeKeyDown}
                                         placeholder={isRu ? `// Вставьте ваш ${selectedLanguage} код сюда...\nfunction example() {\n  return "Привет!";\n}` : `// Paste your ${selectedLanguage} code here...\nfunction example() {\n  return "Hello!";\n}`}
-                                        className="w-full h-64 p-3.5 text-xs sm:text-sm font-mono leading-relaxed text-zinc-100 bg-black border border-white/10 rounded-xl focus:outline-none focus:border-white/30 resize-y custom-scrollbar"
+                                        className="w-full h-64 p-3.5 text-xs sm:text-sm font-mono leading-relaxed text-zinc-100 bg-black border border-white/10 rounded-xl focus:outline-none focus:border-white/30 resize-y custom-scrollbar light:bg-zinc-100/70 light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:bg-white light:focus:border-zinc-300"
                                         spellCheck={false}
                                         autoCapitalize="off"
                                         autoCorrect="off"
@@ -644,14 +645,14 @@ export default function PublicBlock({
                                 </div>
                             ) : (
                                 <div className="flex flex-col gap-1 min-w-0">
-                                    <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 font-mono">
-                                        <span className="flex items-center gap-1 text-zinc-300">
-                                            <Sparkles size={11} className="text-zinc-400" />
+                                    <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 font-mono light:text-zinc-500">
+                                        <span className="flex items-center gap-1 text-zinc-300 light:text-zinc-700">
+                                            <Sparkles size={11} className="text-zinc-400 light:text-zinc-500" />
                                             {isRu ? "Превью Markdown" : "Markdown Preview"}
                                         </span>
-                                        <span className="text-[10px] text-zinc-500">{isRu ? "Подсветка синтаксиса" : "Syntax highlighting"}</span>
+                                        <span className="text-[10px] text-zinc-500 light:text-zinc-500">{isRu ? "Подсветка синтаксиса" : "Syntax highlighting"}</span>
                                     </div>
-                                    <div className="w-full h-64 p-3.5 rounded-xl border border-white/10 bg-black overflow-y-auto overflow-x-auto custom-scrollbar">
+                                    <div className="w-full h-64 p-3.5 rounded-xl border border-white/10 bg-black overflow-y-auto overflow-x-auto custom-scrollbar light:bg-white light:border-zinc-200">
                                         <MarkdownPreview
                                             className="post-markdown"
                                             source={previewCodeMarkdown}
@@ -661,7 +662,7 @@ export default function PublicBlock({
                                                 fontSize: "13px",
                                             }}
                                             wrapperElement={{
-                                                "data-color-mode": "dark",
+                                                "data-color-mode": resolvedTheme === 'light' ? 'light' : 'dark',
                                             }}
                                             remarkPlugins={[remarkGfm as any, remarkBreaks as any]}
                                             rehypePlugins={[rehypeHighlight as any]}
@@ -671,8 +672,8 @@ export default function PublicBlock({
                             )}
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
-                            <span className="text-xs text-zinc-500 font-mono">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10 light:border-zinc-200">
+                            <span className="text-xs text-zinc-500 font-mono light:text-zinc-500">
                                 {codeSnippet.split('\n').filter(Boolean).length} {isRu ? "строк" : "lines"} · {codeSnippet.length} {isRu ? "симв." : "chars"}
                             </span>
 
@@ -680,7 +681,7 @@ export default function PublicBlock({
                                 <button
                                     type="button"
                                     onClick={handleCancelCode}
-                                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition cursor-pointer"
+                                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition cursor-pointer light:text-zinc-600 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                 >
                                     {isRu ? "Отмена" : t.common.cancel}
                                 </button>
@@ -688,7 +689,7 @@ export default function PublicBlock({
                                     type="button"
                                     onClick={handleInsertCode}
                                     disabled={!codeSnippet.trim()}
-                                    className="px-4 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+                                    className="px-4 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95 light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                 >
                                     <Check size={13} />
                                     {isRu ? "Вставить в пост" : "Insert into post"}
@@ -703,7 +704,7 @@ export default function PublicBlock({
                                 <button
                                     type="button"
                                     onClick={() => setIsMainPreview(!isMainPreview)}
-                                    className="text-[11px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 border border-white/5 flex items-center gap-1 transition cursor-pointer"
+                                    className="text-[11px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 border border-white/5 flex items-center gap-1 transition cursor-pointer light:text-zinc-600 light:hover:text-zinc-900 light:bg-zinc-100 light:hover:bg-zinc-200 light:border-zinc-200"
                                 >
                                     <Eye size={11} />
                                     {isMainPreview ? (isRu ? "Редактировать" : t.post.edit) : (isRu ? "Превью поста" : "Post preview")}
@@ -712,7 +713,7 @@ export default function PublicBlock({
                         )}
 
                         {isMainPreview ? (
-                            <div className="w-full p-3 text-sm text-zinc-100 bg-[#0a0a0a] border border-white/5 rounded-xl min-h-[50px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                            <div className="w-full p-3 text-sm text-zinc-100 bg-[#0a0a0a] border border-white/5 rounded-xl min-h-[50px] max-h-[300px] overflow-y-auto custom-scrollbar light:bg-zinc-100/70 light:border-zinc-200 light:text-zinc-900">
                                 <MarkdownPreview
                                     className="post-markdown"
                                     source={newContent}
@@ -721,7 +722,7 @@ export default function PublicBlock({
                                         color: "inherit",
                                     }}
                                     wrapperElement={{
-                                        "data-color-mode": "dark",
+                                        "data-color-mode": resolvedTheme === 'light' ? 'light' : 'dark',
                                     }}
                                     remarkPlugins={[remarkGfm as any, remarkBreaks as any]}
                                     rehypePlugins={[rehypeHighlight as any]}
@@ -734,33 +735,33 @@ export default function PublicBlock({
                                 value={newContent}
                                 onChange={(e) => setContent(e.target.value)}
                                 placeholder={activePlaceholder}
-                                className="w-full p-2 text-sm text-zinc-100 bg-[#0a0a0a] border border-white/5 rounded-xl focus:outline-none transition focus:ring-1 focus:ring-white/20 focus:border-white/20 resize-none [field-sizing:content] min-h-[38px] max-h-[250px]"
+                                className="w-full p-2 text-sm text-zinc-100 bg-[#0a0a0a] border border-white/5 rounded-xl focus:outline-none transition focus:ring-1 focus:ring-white/20 focus:border-white/20 resize-none [field-sizing:content] min-h-[38px] max-h-[250px] light:bg-zinc-100/70 light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:bg-white light:focus:ring-zinc-300 light:focus:border-zinc-300"
                             />
                         )}
                     </div>
                 )}
 
                 {repostTarget && (
-                    <div className="mx-4 mb-3 p-3 rounded-xl border border-white/10 bg-black/40 relative">
+                    <div className="mx-4 mb-3 p-3 rounded-xl border border-white/10 bg-black/40 relative light:bg-zinc-50 light:border-zinc-200/80">
                         <button
                             type="button"
                             onClick={() => setRepostTarget(null)}
-                            className="absolute top-2.5 right-2.5 p-1 rounded-full bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition"
+                            className="absolute top-2.5 right-2.5 p-1 rounded-full bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition light:bg-zinc-200 light:text-zinc-600 light:hover:text-zinc-900 light:hover:bg-zinc-300"
                             title={isRu ? "Отменить репост" : "Cancel repost"}
                         >
                             <X className="w-3.5 h-3.5" />
                         </button>
                         <div className="flex items-center gap-2 mb-1.5">
                             <Repeat2 className="w-3.5 h-3.5 text-green-500" />
-                            <div className="w-5 h-5 rounded-full overflow-hidden bg-zinc-800 shrink-0">
-                                {repostTarget.authorAvatar && (
-                                    <img src={repostTarget.authorAvatar} className="w-full h-full object-cover" alt="" />
-                                )}
-                            </div>
-                            <span className="text-xs font-medium text-zinc-200">{repostTarget.authorName}</span>
-                            <span className="text-xs text-zinc-500">@{repostTarget.authorUsername}</span>
+                            <UserAvatar
+                                src={repostTarget.authorAvatar}
+                                name={repostTarget.authorName || repostTarget.authorUsername}
+                                className="w-5 h-5 text-[9px]"
+                            />
+                            <span className="text-xs font-medium text-zinc-200 light:text-zinc-900">{repostTarget.authorName}</span>
+                            <span className="text-xs text-zinc-500 light:text-zinc-500">@{repostTarget.authorUsername}</span>
                         </div>
-                        <p className="text-xs text-zinc-400 line-clamp-2 pl-5 font-normal">
+                        <p className="text-xs text-zinc-400 line-clamp-2 pl-5 font-normal light:text-zinc-600">
                             {repostTarget.content || (isRu ? "(вложение)" : "(attachment)")}
                         </p>
                     </div>
@@ -771,7 +772,7 @@ export default function PublicBlock({
                         {attachments.map((url, index) => {
                             const isVideo = isVideoUrl(url);
                             return (
-                                <div key={index} className="relative w-28 h-20 rounded-xl overflow-hidden border border-white/10 bg-black group shrink-0">
+                                <div key={index} className="relative w-28 h-20 rounded-xl overflow-hidden border border-white/10 bg-black group shrink-0 light:border-zinc-200 light:bg-zinc-100">
                                     {isVideo ? (
                                         <>
                                             <video src={url} className="w-full h-full object-cover" muted playsInline />
@@ -797,24 +798,24 @@ export default function PublicBlock({
                         })}
 
                         {uploadingMedia && (
-                            <div className="relative w-36 h-20 rounded-xl overflow-hidden border border-white/10 bg-zinc-900/90 flex flex-col items-center justify-center p-2 text-center shrink-0">
+                            <div className="relative w-36 h-20 rounded-xl overflow-hidden border border-white/10 bg-zinc-900/90 flex flex-col items-center justify-center p-2 text-center shrink-0 light:border-zinc-200 light:bg-zinc-100/90">
                                 {uploadingMedia.type === 'video' ? (
                                     <>
-                                        <Video className="w-5 h-5 text-zinc-300 animate-pulse mb-1" />
-                                        <span className="text-[10px] text-zinc-300 font-medium truncate w-full">
+                                        <Video className="w-5 h-5 text-zinc-300 animate-pulse mb-1 light:text-zinc-600" />
+                                        <span className="text-[10px] text-zinc-300 font-medium truncate w-full light:text-zinc-700">
                                             {isRu ? "Загрузка..." : "Uploading..."} {uploadingMedia.progress ?? 0}%
                                         </span>
-                                        <div className="w-full bg-white/10 h-1 rounded-full mt-1.5 overflow-hidden">
+                                        <div className="w-full bg-white/10 h-1 rounded-full mt-1.5 overflow-hidden light:bg-zinc-200">
                                             <div 
-                                                className="bg-white h-full transition-all duration-150" 
+                                                className="bg-white h-full transition-all duration-150 light:bg-zinc-900" 
                                                 style={{ width: `${uploadingMedia.progress ?? 0}%` }} 
                                             />
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <Loader2 className="w-5 h-5 text-zinc-400 animate-spin mb-1" />
-                                        <span className="text-[10px] text-zinc-400">{isRu ? "Загрузка..." : "Uploading..."}</span>
+                                        <Loader2 className="w-5 h-5 text-zinc-400 animate-spin mb-1 light:text-zinc-600" />
+                                        <span className="text-[10px] text-zinc-400 light:text-zinc-600">{isRu ? "Загрузка..." : "Uploading..."}</span>
                                     </>
                                 )}
                             </div>
@@ -828,7 +829,7 @@ export default function PublicBlock({
                             type="button" 
                             disabled={isSaving || Boolean(uploadingMedia)} 
                             onClick={() => fileInputRef.current?.click()} 
-                            className="p-2 w-10 h-10 text-zinc-400 hover:text-white border-white/5 rounded-xl hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40"
+                            className="p-2 w-10 h-10 text-zinc-400 hover:text-white border-white/5 rounded-xl hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                             title={isRu ? "Прикрепить изображение" : "Attach image"}
                         >
                             <ImageIcon className="w-5 h-5"/>
@@ -837,7 +838,7 @@ export default function PublicBlock({
                             type="button" 
                             disabled={isSaving || Boolean(uploadingMedia)} 
                             onClick={() => videoInputRef.current?.click()} 
-                            className="p-2 w-10 h-10 text-zinc-400 hover:text-white border-white/5 rounded-xl hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40"
+                            className="p-2 w-10 h-10 text-zinc-400 hover:text-white border-white/5 rounded-xl hover:bg-white/10 transition flex items-center justify-center cursor-pointer disabled:opacity-40 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                             title={isRu ? "Прикрепить видео (до 60 МБ)" : "Attach video (up to 60 MB)"}
                         >
                             <Video className="w-5 h-5"/>
@@ -851,8 +852,8 @@ export default function PublicBlock({
                             }} 
                             className={`p-2 w-10 h-10 rounded-xl transition flex items-center justify-center cursor-pointer border ${
                                 isCodeMode 
-                                    ? 'bg-white text-black border-white shadow-sm' 
-                                    : 'text-zinc-400 hover:text-white border-white/5 hover:bg-white/10'
+                                    ? 'bg-white text-black border-white shadow-sm light:bg-zinc-900 light:text-white light:border-zinc-900' 
+                                    : 'text-zinc-400 hover:text-white border-white/5 hover:bg-white/10 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100 light:border-transparent'
                             }`}
                             title={isRu ? "Вставить фрагмент кода (с выбором языка и превью)" : "Insert code snippet (with language selection and preview)"}
                         >
@@ -861,12 +862,12 @@ export default function PublicBlock({
                     </div>
                     <div className="flex items-center gap-2 sm:gap-3.5 ml-auto">
                         {ProjectId && (
-                            <label className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 cursor-pointer select-none transition-colors">
+                            <label className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 cursor-pointer select-none transition-colors light:text-zinc-600 light:hover:text-zinc-900">
                                 <input 
                                     type="checkbox" 
                                     checked={showInGeneralFeed} 
                                     onChange={(e) => setShowInGeneralFeed(e.target.checked)} 
-                                    className="w-4 h-4 rounded border-white/20 bg-zinc-900 accent-white shrink-0 cursor-pointer"
+                                    className="w-4 h-4 rounded border-white/20 bg-zinc-900 accent-white shrink-0 cursor-pointer light:border-zinc-300 light:bg-zinc-100 light:accent-zinc-900"
                                 />
                                 <span className="hidden sm:inline">{t.feed.generalFeed}</span>
                             </label>
@@ -874,7 +875,7 @@ export default function PublicBlock({
                         <button 
                             type="submit" 
                             disabled={isSaving || Boolean(uploadingMedia)} 
-                            className="h-9 px-6 text-xs font-semibold bg-white text-black rounded-full hover:bg-zinc-200 transition flex items-center justify-center cursor-pointer disabled:opacity-50 shadow-sm"
+                            className="h-9 px-6 text-xs font-semibold bg-white text-black rounded-full hover:bg-zinc-200 transition flex items-center justify-center cursor-pointer disabled:opacity-50 shadow-sm light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                         >
                             {isSaving ? t.feed.publishing : uploadingMedia ? t.feed.loading : t.feed.publish}
                         </button>

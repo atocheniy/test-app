@@ -11,8 +11,8 @@ export default function HomeLayout({
         
         <Sidebar />
         
-        <main className="flex-1 min-w-0 my-0 h-full lg:my-3 lg:h-[calc(100vh-1.5rem)] border border-white/5 lg:rounded-3xl md:rounded-3xl overflow-y-auto overflow-x-hidden custom-scrollbar relative max-md:pb-24">
-          <div className="text-zinc-100 h-full">
+        <main className="flex-1 min-w-0 my-0 h-full lg:my-3 lg:h-[calc(100vh-1.5rem)] border border-white/5 light:border-zinc-200/80 light:bg-white lg:rounded-3xl md:rounded-3xl overflow-y-auto overflow-x-hidden custom-scrollbar relative max-md:pb-24">
+          <div className="text-zinc-100 light:text-zinc-900 h-full">
             {children}
           </div>
         </main>

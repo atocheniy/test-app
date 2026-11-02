@@ -1,6 +1,7 @@
 'use client';
 
 import { useApplication } from '@/context/ApplicationContext';
+import Avatar from '@/components/Avatar';
 import { useLanguage } from '@/context/LanguageContext';
 import { formatSalary } from '@/libs/format';
 import { PostService } from '@/services/postService';
@@ -131,12 +132,12 @@ export default function RightSidebar() {
     const displayVacancies = liveVacancies.length > 0 ? liveVacancies : fallbackVacancies;
 
     return (
-        <aside className="hidden lg:block w-80 shrink-0 pt-3 p-4 text-zinc-400">
+        <aside className="hidden lg:block w-80 shrink-0 pt-3 p-4 text-zinc-400 light:text-zinc-600">
             <div className="sticky space-y-4">
                 
-                <div className="border border-white/5 p-4 bg-white/[0.02] backdrop-blur-md rounded-2xl">
-                    <div className="flex items-center gap-2 mb-3 text-zinc-100 font-bold text-sm">
-                        <TrendingUp size={16} className="text-blue-400" />
+                <div className="border border-white/5 p-4 bg-white/[0.02] backdrop-blur-md rounded-2xl light:bg-white light:border-zinc-200/80 light:shadow-sm">
+                    <div className="flex items-center gap-2 mb-3 text-zinc-100 font-bold text-sm light:text-zinc-900">
+                        <TrendingUp size={16} className="text-blue-400 light:text-blue-500" />
                         <span>{t.sidebarRight.trending}</span>
                     </div>
 
@@ -146,10 +147,10 @@ export default function RightSidebar() {
                                 {[1, 2, 3, 4].map(n => (
                                     <div key={n} className="flex justify-between items-center py-1">
                                         <div className="space-y-1">
-                                            <div className="w-16 h-2.5 rounded bg-zinc-800" />
-                                            <div className="w-24 h-3.5 rounded bg-zinc-700" />
+                                            <div className="w-16 h-2.5 rounded bg-zinc-800 light:bg-zinc-200" />
+                                            <div className="w-24 h-3.5 rounded bg-zinc-700 light:bg-zinc-300" />
                                         </div>
-                                        <div className="w-14 h-4 rounded-full bg-zinc-800" />
+                                        <div className="w-14 h-4 rounded-full bg-zinc-800 light:bg-zinc-200" />
                                     </div>
                                 ))}
                             </div>
@@ -158,15 +159,15 @@ export default function RightSidebar() {
                                 <Link 
                                     key={item.tag || i} 
                                     href={`/search?q=${encodeURIComponent(item.tag.replace(/^#/, ''))}`}
-                                    className="group flex justify-between items-center hover:bg-white/5 p-1.5 -mx-1.5 rounded-lg transition"
+                                    className="group flex justify-between items-center hover:bg-white/5 p-1.5 -mx-1.5 rounded-lg transition light:hover:bg-zinc-100"
                                 >
                                     <div className="flex flex-col min-w-0">
-                                        <span className="text-[11px] text-zinc-500 truncate">{item.category}</span>
-                                        <span className="text-sm font-medium text-zinc-200 group-hover:text-blue-400 transition truncate">
+                                        <span className="text-[11px] text-zinc-500 truncate light:text-zinc-500">{item.category}</span>
+                                        <span className="text-sm font-medium text-zinc-200 group-hover:text-blue-400 transition truncate light:text-zinc-800 light:group-hover:text-blue-600">
                                             {item.displayTag || item.tag}
                                         </span>
                                     </div>
-                                    <span className="text-[11px] text-zinc-400 bg-white/5 px-2 py-0.5 rounded-full shrink-0 ml-2">
+                                    <span className="text-[11px] text-zinc-400 bg-white/5 px-2 py-0.5 rounded-full shrink-0 ml-2 light:bg-zinc-100 light:text-zinc-600">
                                         {item.postsFormatted || `${item.postCount} ${t.sidebarRight.postsCount}`}
                                     </span>
                                 </Link>
@@ -175,10 +176,10 @@ export default function RightSidebar() {
                     </div>
                 </div>
 
-                <div className="border border-white/5 p-4 bg-white/[0.02] backdrop-blur-md rounded-2xl">
+                <div className="border border-white/5 p-4 bg-white/[0.02] backdrop-blur-md rounded-2xl light:bg-white light:border-zinc-200/80 light:shadow-sm">
                     <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2 text-zinc-100 font-bold text-sm">
-                            <Sparkles size={16} className="text-amber-400" />
+                        <div className="flex items-center gap-2 text-zinc-100 font-bold text-sm light:text-zinc-900">
+                            <Sparkles size={16} className="text-amber-400 light:text-amber-500" />
                             <span>{t.sidebarRight.whoToWatch}</span>
                         </div>
                     </div>
@@ -189,18 +190,18 @@ export default function RightSidebar() {
                                 {[1, 2, 3].map(n => (
                                     <div key={n} className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                            <div className="w-9 h-9 rounded-full bg-zinc-800 shrink-0" />
+                                            <div className="w-9 h-9 rounded-full bg-zinc-800 shrink-0 light:bg-zinc-200" />
                                             <div className="flex-1 space-y-1">
-                                                <div className="w-24 h-3 rounded bg-zinc-800" />
-                                                <div className="w-16 h-2 rounded bg-zinc-900" />
+                                                <div className="w-24 h-3 rounded bg-zinc-800 light:bg-zinc-200" />
+                                                <div className="w-16 h-2 rounded bg-zinc-900 light:bg-zinc-100" />
                                             </div>
                                         </div>
-                                        <div className="w-14 h-6 rounded-full bg-zinc-800/60 shrink-0" />
+                                        <div className="w-14 h-6 rounded-full bg-zinc-800/60 shrink-0 light:bg-zinc-200" />
                                     </div>
                                 ))}
                             </div>
                         ) : suggestedUsers.length === 0 ? (
-                            <div className="text-xs text-zinc-500 py-2 text-center">
+                            <div className="text-xs text-zinc-500 py-2 text-center light:text-zinc-500">
                                 {t.sidebarRight.noSuggestions}
                             </div>
                         ) : (
@@ -214,31 +215,25 @@ export default function RightSidebar() {
                                     <div key={user.id} className="flex items-center justify-between gap-2 group">
                                         <Link href={`/profile/${user.userName}`} className="flex items-center gap-2.5 min-w-0 flex-1">
                                             <div className="relative w-9 h-9 shrink-0">
-                                                {user.avatar ? (
-                                                    <img 
-                                                        src={user.avatar} 
-                                                        className="w-full h-full rounded-full object-cover" 
-                                                        alt={displayName} 
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full rounded-full flex items-center justify-center font-bold text-xs text-zinc-200 bg-gradient-to-br from-indigo-500/30 to-purple-500/20 border border-white/10 select-none">
-                                                        {userInitial}
-                                                    </div>
-                                                )}
+                                                <Avatar
+                                                    src={user.avatar}
+                                                    name={displayName}
+                                                    className="w-full h-full text-xs"
+                                                />
                                                 {isOnline && (
                                                     <span 
-                                                        className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0e0e0e] rounded-full" 
+                                                        className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0e0e0e] rounded-full light:border-white" 
                                                         title={isRu ? 'В сети' : 'Online'}
                                                     />
                                                 )}
                                             </div>
 
                                             <div className="flex flex-col min-w-0 flex-1">
-                                                <span className="text-xs font-bold text-zinc-200 group-hover:text-white truncate">
+                                                <span className="text-xs font-bold text-zinc-200 group-hover:text-white truncate light:text-zinc-900 light:group-hover:text-zinc-950">
                                                     {displayName}
                                                 </span>
-                                                <span className="text-[11px] text-zinc-500 truncate">
-                                                    @{user.userName} · <span className="text-zinc-400">{subtitle}</span>
+                                                <span className="text-[11px] text-zinc-500 truncate light:text-zinc-500">
+                                                    @{user.userName} · <span className="text-zinc-400 light:text-zinc-600">{subtitle}</span>
                                                 </span>
                                             </div>
                                         </Link>
@@ -248,8 +243,8 @@ export default function RightSidebar() {
                                             onClick={(e) => handleToggleWatch(e, user.userName)}
                                             className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition shrink-0 cursor-pointer ${
                                                 user.isWatching 
-                                                    ? 'bg-white/20 text-zinc-100 hover:bg-red-500/20 hover:text-red-300' 
-                                                    : 'bg-white/10 hover:bg-white text-zinc-200 hover:text-black'
+                                                    ? 'bg-white/20 text-zinc-100 hover:bg-red-500/20 hover:text-red-300 light:bg-zinc-200 light:text-zinc-800 light:hover:bg-red-50 light:hover:text-red-600' 
+                                                    : 'bg-white/10 hover:bg-white text-zinc-200 hover:text-black light:bg-zinc-100 light:text-zinc-800 light:hover:bg-zinc-200 light:border light:border-zinc-200/80 light:hover:text-zinc-950'
                                             }`}
                                         >
                                             {user.isWatching ? t.sidebarRight.watching : t.sidebarRight.watch}
@@ -261,31 +256,31 @@ export default function RightSidebar() {
                     </div>
                 </div>
 
-                <div className="border border-white/5 p-4 bg-white/[0.02] backdrop-blur-md rounded-2xl">
+                <div className="border border-white/5 p-4 bg-white/[0.02] backdrop-blur-md rounded-2xl light:bg-white light:border-zinc-200/80 light:shadow-sm">
                     <div className="flex items-center justify-between mb-3 gap-2">
                         <Link 
                             href="/vacancies" 
                             className="flex items-center gap-2 group min-w-0"
                             title={t.sidebarRight.liveVacancies}
                         >
-                            <Briefcase size={16} className="text-emerald-400 shrink-0 group-hover:scale-105 transition-transform" />
-                            <span className="text-sm font-bold text-zinc-100 group-hover:text-white transition whitespace-nowrap">
+                            <Briefcase size={16} className="text-emerald-400 light:text-emerald-600 shrink-0 group-hover:scale-105 transition-transform" />
+                            <span className="text-sm font-bold text-zinc-100 group-hover:text-white transition whitespace-nowrap light:text-zinc-900 light:group-hover:text-zinc-950">
                                 {t.sidebarRight.liveVacancies}
                             </span>
                         </Link>
                         <div className="flex items-center gap-1.5 shrink-0">
                             {liveVacancies.some(v => v.matchPercent) && (
-                                <span className="text-[10px] font-medium text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 whitespace-nowrap leading-none">
+                                <span className="text-[10px] font-medium text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 whitespace-nowrap leading-none light:bg-emerald-50 light:border-emerald-200 light:text-emerald-700">
                                     {t.sidebarRight.forYou || 'Для вас'}
                                 </span>
                             )}
                             <button
                                 type="button"
                                 onClick={handleRefreshVacancies}
-                                className="p-1 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition cursor-pointer"
+                                className="p-1 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition cursor-pointer light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                 title={t.sidebarRight.refresh}
                             >
-                                <RotateCcw size={12} className={isRefreshingVacancies ? "animate-spin text-emerald-400" : ""} />
+                                <RotateCcw size={12} className={isRefreshingVacancies ? "animate-spin text-emerald-400 light:text-emerald-600" : ""} />
                             </button>
                         </div>
                     </div>
@@ -295,20 +290,20 @@ export default function RightSidebar() {
                             <div className="flex flex-col gap-2.5 animate-pulse">
                                 {[1, 2, 3].map(n => (
                                     <div 
-                                        key={n}
-                                        className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col gap-2"
+                                        key={n} 
+                                        className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col gap-2 light:bg-zinc-50 light:border-zinc-200/80"
                                     >
                                         <div className="flex justify-between items-center">
-                                            <div className="w-20 h-2.5 rounded bg-zinc-800" />
-                                            <div className="w-10 h-3 rounded bg-zinc-900" />
+                                            <div className="w-20 h-2.5 rounded bg-zinc-800 light:bg-zinc-200" />
+                                            <div className="w-10 h-3 rounded bg-zinc-900 light:bg-zinc-100" />
                                         </div>
-                                        <div className="w-36 h-3.5 rounded bg-zinc-700" />
-                                        <div className="w-24 h-2.5 rounded bg-zinc-800" />
+                                        <div className="w-36 h-3.5 rounded bg-zinc-700 light:bg-zinc-300" />
+                                        <div className="w-24 h-2.5 rounded bg-zinc-800 light:bg-zinc-200" />
                                     </div>
                                 ))}
                             </div>
                         ) : displayVacancies.length === 0 ? (
-                            <div className="text-xs text-zinc-500 py-2 text-center">
+                            <div className="text-xs text-zinc-500 py-2 text-center light:text-zinc-500">
                                 {isRu ? 'Вакансий пока нет' : 'No vacancies yet'}
                             </div>
                         ) : (
@@ -321,20 +316,20 @@ export default function RightSidebar() {
                                     <Link 
                                         key={job.id || idx} 
                                         href="/vacancies"
-                                        className="group p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/5 border border-white/5 transition flex flex-col gap-1"
+                                        className="group p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/5 border border-white/5 transition flex flex-col gap-1 light:bg-zinc-50/60 light:hover:bg-zinc-100 light:border-zinc-200/80"
                                     >
-                                        <div className="flex items-center justify-between gap-1 text-[11px] text-zinc-400">
-                                            <span className="truncate font-medium text-zinc-300 group-hover:text-zinc-100 transition">
+                                        <div className="flex items-center justify-between gap-1 text-[11px] text-zinc-400 light:text-zinc-500">
+                                            <span className="truncate font-medium text-zinc-300 group-hover:text-zinc-100 transition light:text-zinc-600 light:group-hover:text-zinc-900">
                                                 {companyName}
                                             </span>
                                             <div className="flex items-center gap-1 shrink-0">
                                                 {job.matchPercent && (
-                                                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded light:bg-emerald-50 light:text-emerald-700 light:border light:border-emerald-200/60">
                                                         ✨ {job.matchPercent}%
                                                     </span>
                                                 )}
                                                 {formatName && (
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-zinc-400">
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-zinc-400 light:bg-zinc-100 light:text-zinc-600">
                                                         {formatName}
                                                     </span>
                                                 )}
@@ -342,16 +337,16 @@ export default function RightSidebar() {
                                         </div>
 
                                         <div className="flex items-center justify-between gap-1">
-                                            <span className="text-xs font-semibold text-zinc-100 group-hover:text-emerald-400 transition truncate">
+                                            <span className="text-xs font-semibold text-zinc-100 group-hover:text-emerald-400 transition truncate light:text-zinc-900 light:group-hover:text-emerald-600">
                                                 {job.title}
                                             </span>
-                                            <ExternalLink size={12} className="text-zinc-500 group-hover:text-zinc-300 transition shrink-0 ml-1" />
+                                            <ExternalLink size={12} className="text-zinc-500 group-hover:text-zinc-300 transition shrink-0 ml-1 light:text-zinc-400 light:group-hover:text-zinc-600" />
                                         </div>
 
                                         {salaryText && (
                                             <div 
                                                 suppressHydrationWarning 
-                                                className="text-[11px] text-emerald-400 font-medium pt-0.5"
+                                                className="text-[11px] text-emerald-400 font-medium pt-0.5 light:text-emerald-600"
                                             >
                                                 {salaryText}
                                             </div>
@@ -364,14 +359,14 @@ export default function RightSidebar() {
 
                     <Link 
                         href="/vacancies" 
-                        className="mt-3 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-medium text-zinc-400 hover:text-zinc-100 rounded-xl bg-white/[0.02] hover:bg-white/5 border border-white/5 transition group"
+                        className="mt-3 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-medium text-zinc-400 hover:text-zinc-100 rounded-xl bg-white/[0.02] hover:bg-white/5 border border-white/5 transition group light:bg-zinc-50 light:hover:bg-zinc-100 light:border-zinc-200/80 light:text-zinc-600 light:hover:text-zinc-900"
                     >
                         <span>{t.sidebarRight.allVacancies}</span>
-                        <span className="text-zinc-500 group-hover:translate-x-0.5 transition-transform">→</span>
+                        <span className="text-zinc-500 group-hover:translate-x-0.5 transition-transform light:text-zinc-400">→</span>
                     </Link>
                 </div>
 
-                <div className="px-2 text-[11px] text-zinc-600 flex flex-wrap gap-x-3 gap-y-1">
+                <div className="px-2 text-[11px] text-zinc-600 flex flex-wrap gap-x-3 gap-y-1 light:text-zinc-500">
                     <Link href="/terms" className="hover:underline">{isRu ? 'Условия' : 'Terms'}</Link>
                     <Link href="/privacy" className="hover:underline">{isRu ? 'Конфиденциальность' : 'Privacy'}</Link>
                     <Link href="/about" className="hover:underline">{isRu ? 'О проекте' : 'About'}</Link>

@@ -1,5 +1,7 @@
 'use client';
 
+import Avatar from "@/components/Avatar";
+import ImageCropModal from "@/components/ImageCropModal";
 import Modal from "@/components/Modal";
 import Post from "@/components/post";
 import PublicBlock from "@/components/public_block";
@@ -57,7 +59,6 @@ export default function Profile() {
 
     const [activeTab, setActiveTab] = useState<'posts' | 'vacancies' | 'about' | 'employees'>('posts');
 
-    // Edit modal states
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isSaving, setIsUploading] = useState(false);
     const [editName, setEditName] = useState('');
@@ -71,7 +72,6 @@ export default function Profile() {
     const [editIndustry, setEditIndustry] = useState('');
     const [editCompanySize, setEditCompanySize] = useState('');
 
-    // Vacancies state
     const [companyVacancies, setCompanyVacancies] = useState<Vacancy[]>([]);
     const [isVacanciesLoading, setIsVacanciesLoading] = useState(false);
     const [isCreateVacancyOpen, setIsCreateVacancyOpen] = useState(false);
@@ -80,12 +80,11 @@ export default function Profile() {
     const [vacancySalaryFrom, setVacancySalaryFrom] = useState('');
     const [vacancySalaryTo, setVacancySalaryTo] = useState('');
     const [vacancyCurrency, setVacancyCurrency] = useState('USD');
-    const [vacancyFormat, setVacancyFormat] = useState<number>(0); // 0 Remote, 1 Hybrid, 2 Office
-    const [vacancyLevel, setVacancyLevel] = useState<number>(2); // 0 Intern, 1 Junior, 2 Middle, 3 Senior, 4 Lead
+    const [vacancyFormat, setVacancyFormat] = useState<number>(0);
+    const [vacancyLevel, setVacancyLevel] = useState<number>(2);
     const [vacancyStack, setVacancyStack] = useState('');
     const [isSubmittingVacancy, setIsSubmittingVacancy] = useState(false);
 
-    // Pending employee requests
     const [pendingEmployees, setPendingEmployees] = useState<any[]>([]);
     const [isApplyingVacancyId, setIsApplyingVacancyId] = useState<string | null>(null);
 
@@ -419,40 +418,98 @@ export default function Profile() {
         }
     };
 
-    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [cropModalState, setCropModalState] = useState<{
+        isOpen: boolean;
+        imageSrc: string | null;
+        cropShape: 'round' | 'rect';
+        aspect: number;
+        title: string;
+        maxOutputWidth: number;
+        maxOutputHeight: number;
+        fileName: string;
+        type: 'avatar' | 'banner';
+    }>({
+        isOpen: false,
+        imageSrc: null,
+        cropShape: 'round',
+        aspect: 1,
+        title: '',
+        maxOutputWidth: 512,
+        maxOutputHeight: 512,
+        fileName: 'avatar.webp',
+        type: 'avatar',
+    });
+
+    const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.[0] || !community) return;
         const file = e.target.files[0];
+        const objectUrl = URL.createObjectURL(file);
+        setCropModalState({
+            isOpen: true,
+            imageSrc: objectUrl,
+            cropShape: 'round',
+            aspect: 1,
+            title: isRu ? "Кадрирование аватара сообщества" : "Crop Community Avatar",
+            maxOutputWidth: 512,
+            maxOutputHeight: 512,
+            fileName: (file.name || 'avatar').replace(/\.[^/.]+$/, '') + '.webp',
+            type: 'avatar',
+        });
+        e.target.value = '';
+    };
+
+    const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files?.[0] || !community) return;
+        const file = e.target.files[0];
+        const objectUrl = URL.createObjectURL(file);
+        setCropModalState({
+            isOpen: true,
+            imageSrc: objectUrl,
+            cropShape: 'rect',
+            aspect: 3 / 1,
+            title: isRu ? "Кадрирование баннера сообщества" : "Crop Community Banner",
+            maxOutputWidth: 1600,
+            maxOutputHeight: 533,
+            fileName: (file.name || 'banner').replace(/\.[^/.]+$/, '') + '.webp',
+            type: 'banner',
+        });
+        e.target.value = '';
+    };
+
+    const handleCropSave = async (croppedFile: File) => {
         setIsUploading(true);
         try {
-            const newBlob = await upload(file.name, file, {
-                access: 'public',
-                handleUploadUrl: '/api/avatar/upload',
-            });
-            await CommunityService.updateCommunity(slug, { avatar: newBlob.url });
-            setCommunity((prev: any) => ({ ...prev, avatar: newBlob.url }));
+            if (cropModalState.type === 'avatar') {
+                const newBlob = await upload(croppedFile.name, croppedFile, {
+                    access: 'public',
+                    handleUploadUrl: '/api/avatar/upload',
+                });
+                await CommunityService.updateCommunity(slug, { avatar: newBlob.url });
+                setCommunity((prev: any) => ({ ...prev, avatar: newBlob.url }));
+            } else {
+                const newBlob = await upload(croppedFile.name, croppedFile, {
+                    access: 'public',
+                    handleUploadUrl: '/api/banner/upload',
+                });
+                await CommunityService.updateCommunity(slug, { banner: newBlob.url });
+                setCommunity((prev: any) => ({ ...prev, banner: newBlob.url }));
+            }
         } catch (error) {
             console.error(error);
+            alert(isRu ? "Не удалось сохранить изображение" : "Failed to save image");
         } finally {
             setIsUploading(false);
+            if (cropModalState.imageSrc) {
+                URL.revokeObjectURL(cropModalState.imageSrc);
+            }
         }
     };
 
-    const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files?.[0] || !community) return;
-        const file = e.target.files[0];
-        setIsUploading(true);
-        try {
-            const newBlob = await upload(file.name, file, {
-                access: 'public',
-                handleUploadUrl: '/api/banner/upload',
-            });
-            await CommunityService.updateCommunity(slug, { banner: newBlob.url });
-            setCommunity((prev: any) => ({ ...prev, banner: newBlob.url }));
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsUploading(false);
+    const handleCloseCropModal = () => {
+        if (cropModalState.imageSrc) {
+            URL.revokeObjectURL(cropModalState.imageSrc);
         }
+        setCropModalState(prev => ({ ...prev, isOpen: false, imageSrc: null }));
     };
 
     if (isLoading) {
@@ -501,7 +558,7 @@ export default function Profile() {
             <div>
                 <Titlebar title={isCompany ? (isRu ? "Компания" : "Company") : (isRu ? "Сообщество" : "Community")} />
 
-                <div className="w-full bg-zinc-900 h-48 border-y border-white/5 rounded-b-xl relative overflow-hidden">
+                <div className="w-full bg-zinc-900 h-48 border-y border-white/5 rounded-b-xl relative overflow-hidden light:bg-zinc-100 light:border-zinc-200/80">
                     {community.banner && (
                         <img src={community.banner} className="w-full h-full object-cover" alt="Banner" />
                     )}
@@ -531,21 +588,19 @@ export default function Profile() {
                     )}
 
                     <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 relative z-10">
-                        <div className="relative w-28 h-28 sm:w-40 sm:h-40 rounded-full shrink-0 -mt-14 sm:-mt-16 border-4 border-[#0a0a0a] z-10 shadow-lg">
-                            <div className="block w-full h-full rounded-full overflow-hidden cursor-pointer bg-zinc-800">
-                                {community.avatar ? (
-                                    <img src={community.avatar} className="w-full h-full object-cover" alt="Avatar" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center font-bold text-3xl text-zinc-400">
-                                        {community.name?.[0]?.toUpperCase()}
-                                    </div>
-                                )}
+                        <div className="relative w-28 h-28 sm:w-40 sm:h-40 rounded-full shrink-0 -mt-14 sm:-mt-16 border-4 border-[#0a0a0a] z-10 shadow-lg light:border-white light:shadow-md">
+                            <div className="block w-full h-full rounded-full overflow-hidden cursor-pointer">
+                                <Avatar
+                                    src={community.avatar}
+                                    name={community.name}
+                                    className="w-full h-full text-2xl sm:text-4xl"
+                                />
                             </div>
                         </div>
 
                         <div className="mb-1 sm:mb-2 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                                <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 break-words">{community.name}</h2>
+                                <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 break-words light:text-zinc-900">{community.name}</h2>
                                 {community.isVerified && (
                                     <span title={isRu ? "Верифицировано" : "Verified"} className="flex items-center">
                                         <CheckCircle2 size={20} className="text-blue-400 shrink-0" />
@@ -554,35 +609,35 @@ export default function Profile() {
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2 mt-1">
-                                <p className="text-sm text-zinc-400 font-mono break-all">c/{community.slug}</p>
-                                <span className="text-sm text-zinc-600">•</span>
-                                <p className="text-sm text-zinc-400">{community.watchersCount || 0} {t.profile.watchers}</p>
-                                <span className="text-sm text-zinc-600">•</span>
-                                <p className="text-sm text-zinc-400">
+                                <p className="text-sm text-zinc-400 font-mono break-all light:text-zinc-500">c/{community.slug}</p>
+                                <span className="text-sm text-zinc-600 light:text-zinc-400">•</span>
+                                <p className="text-sm text-zinc-400 light:text-zinc-500">{community.watchersCount || 0} {t.profile.watchers}</p>
+                                <span className="text-sm text-zinc-600 light:text-zinc-400">•</span>
+                                <p className="text-sm text-zinc-400 light:text-zinc-500">
                                     {community.membersCount} {isCompany ? (isRu ? "Сотрудников" : "Employees") : (isRu ? "Участников" : "Members")}
                                 </p>
-                                <span className="text-sm text-zinc-600">•</span>
-                                <p className="text-sm text-zinc-400">{community.postsCount || 0} {t.profile.postsTab}</p>
+                                <span className="text-sm text-zinc-600 light:text-zinc-400">•</span>
+                                <p className="text-sm text-zinc-400 light:text-zinc-500">{community.postsCount || 0} {t.profile.postsTab}</p>
 
                                 {isCompany ? (
-                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200">
                                         <Building2 size={11} />
                                         {isRu ? "Компания" : "Company"}
                                     </span>
                                 ) : (community.type === 1 || community.type === 'Restricted') ? (
-                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 light:bg-amber-50 light:text-amber-700 light:border-amber-200">
                                         <Lock size={10} />
                                         {isRu ? "Закрытое" : "Restricted"}
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200">
                                         <Globe size={10} />
                                         {isRu ? "Публичное" : "Public"}
                                     </span>
                                 )}
 
                                 {isAdminsOnlyPolicy && (
-                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 light:bg-purple-50 light:text-purple-700 light:border-purple-200">
                                         <ShieldAlert size={10} />
                                         {isRu ? "Только админы" : "Admins only"}
                                     </span>
@@ -593,7 +648,7 @@ export default function Profile() {
                         <div className="sm:ml-auto sm:mb-5 flex items-center gap-2 shrink-0 flex-nowrap">
                             {isCanEdit && (
                                 <button
-                                    className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 text-center"
+                                    className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 text-center light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                     onClick={() => {
                                         setEditName(community.name || '');
                                         setEditDescription(community.description || '');
@@ -616,8 +671,8 @@ export default function Profile() {
                                 onClick={handleToggleWatch}
                                 className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 min-w-[90px] sm:min-w-[100px] text-center ${
                                     community?.isWatching
-                                        ? "bg-white/10 text-white border border-white/20 hover:bg-white/15"
-                                        : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white"
+                                        ? "bg-white/10 text-white border border-white/20 hover:bg-white/15 light:bg-zinc-100 light:text-zinc-900 light:border-zinc-300 light:hover:bg-zinc-200"
+                                        : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200 light:hover:bg-zinc-200 light:hover:text-zinc-900"
                                 }`}
                             >
                                 {community?.isWatching ? (isRu ? "Вы читаете" : "Following") : t.profile.watchBtn}
@@ -625,17 +680,17 @@ export default function Profile() {
 
                             {isCompany ? (
                                 community.myMemberStatus === 0 ? (
-                                    <span className="px-4 py-2 text-xs font-semibold rounded-3xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                    <span className="px-4 py-2 text-xs font-semibold rounded-3xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200">
                                         {isRu ? "В штате" : "Employee"}
                                     </span>
                                 ) : community.myMemberStatus === 1 ? (
-                                    <span className="px-4 py-2 text-xs font-semibold rounded-3xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                    <span className="px-4 py-2 text-xs font-semibold rounded-3xl bg-amber-500/15 text-amber-400 border border-amber-500/30 light:bg-amber-50 light:text-amber-700 light:border-amber-200">
                                         {isRu ? "Заявка на рассмотрении" : "Request pending"}
                                     </span>
                                 ) : !isOwner && (
                                     <button
                                         onClick={handleRequestEmployee}
-                                        className="px-4 py-2 text-xs font-semibold rounded-3xl bg-white/10 hover:bg-white text-zinc-200 hover:text-black transition"
+                                        className="px-4 py-2 text-xs font-semibold rounded-3xl bg-white/10 hover:bg-white text-zinc-200 hover:text-black transition light:bg-zinc-100 light:text-zinc-800 light:border light:border-zinc-200 light:hover:bg-zinc-200"
                                     >
                                         {isRu ? "Работаю здесь" : "I work here"}
                                     </button>
@@ -646,8 +701,8 @@ export default function Profile() {
                                         onClick={handleToggleJoin}
                                         className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition ${
                                             community?.isMember
-                                                ? "bg-white/10 text-white hover:bg-red-500/20 hover:text-red-400"
-                                                : "bg-white text-black hover:bg-zinc-200"
+                                                ? "bg-white/10 text-white hover:bg-red-500/20 hover:text-red-400 light:bg-zinc-100 light:text-zinc-900 light:border light:border-zinc-300 light:hover:bg-red-50 light:hover:text-red-600 light:hover:border-red-200"
+                                                : "bg-white text-black hover:bg-zinc-200 light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                         }`}
                                     >
                                         {community?.isMember ? (isRu ? "Вы вступили" : "Joined") : (isRu ? "Вступить" : "Join")}
@@ -658,19 +713,19 @@ export default function Profile() {
                     </div>
 
                     <div className="mt-4">
-                        <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
+                        <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line light:text-zinc-700">
                             {community.description || ""}
                         </p>
                     </div>
 
                     {isCompany && (
-                        <div className="mt-4 flex flex-wrap items-center gap-y-2 gap-x-5 pt-3 border-t border-white/5 text-xs text-zinc-400">
+                        <div className="mt-4 flex flex-wrap items-center gap-y-2 gap-x-5 pt-3 border-t border-white/5 text-xs text-zinc-400 light:border-zinc-200/80 light:text-zinc-600">
                             {community.websiteUrl && (
                                 <a
                                     href={community.websiteUrl.startsWith('http') ? community.websiteUrl : `https://${community.websiteUrl}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-blue-400 hover:underline"
+                                    className="flex items-center gap-1.5 text-blue-400 hover:underline light:text-blue-600"
                                 >
                                     <Globe size={13} />
                                     <span>{community.websiteUrl.replace(/^https?:\/\//, '')}</span>
@@ -678,20 +733,20 @@ export default function Profile() {
                                 </a>
                             )}
                             {community.location && (
-                                <span className="flex items-center gap-1.5 text-zinc-400">
-                                    <MapPin size={13} className="text-zinc-500" />
+                                <span className="flex items-center gap-1.5 text-zinc-400 light:text-zinc-600">
+                                    <MapPin size={13} className="text-zinc-500 light:text-zinc-400" />
                                     {community.location}
                                 </span>
                             )}
                             {community.industry && (
-                                <span className="flex items-center gap-1.5 text-zinc-400">
-                                    <Briefcase size={13} className="text-zinc-500" />
+                                <span className="flex items-center gap-1.5 text-zinc-400 light:text-zinc-600">
+                                    <Briefcase size={13} className="text-zinc-500 light:text-zinc-400" />
                                     {community.industry}
                                 </span>
                             )}
                             {community.companySize && (
-                                <span className="flex items-center gap-1.5 text-zinc-400">
-                                    <Users size={13} className="text-zinc-500" />
+                                <span className="flex items-center gap-1.5 text-zinc-400 light:text-zinc-600">
+                                    <Users size={13} className="text-zinc-500 light:text-zinc-400" />
                                     {community.companySize} {isRu ? "сотрудников" : "employees"}
                                 </span>
                             )}
@@ -699,60 +754,58 @@ export default function Profile() {
                     )}
                 </div>
 
-                {/* Tabs */}
-                <div className="flex items-center gap-4 sm:gap-6 border-b border-white/5 px-10 max-sm:px-5 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-4 sm:gap-6 border-b border-white/5 px-10 max-sm:px-5 overflow-x-auto no-scrollbar light:border-zinc-200/80">
                     <button
                         onClick={() => setActiveTab('posts')}
                         className={`pb-3 text-sm font-semibold transition relative cursor-pointer shrink-0 whitespace-nowrap ${
-                            activeTab === 'posts' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                            activeTab === 'posts' ? 'text-white light:text-zinc-950' : 'text-zinc-500 hover:text-zinc-300 light:text-zinc-500 light:hover:text-zinc-900'
                         }`}
                     >
                         {t.profile.postsTab}
-                        {activeTab === 'posts' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />}
+                        {activeTab === 'posts' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white light:bg-zinc-950 rounded-full" />}
                     </button>
 
                     {isCompany && (
                         <button
                             onClick={() => setActiveTab('vacancies')}
                             className={`pb-3 text-sm font-semibold transition relative flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                                activeTab === 'vacancies' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                                activeTab === 'vacancies' ? 'text-white light:text-zinc-950' : 'text-zinc-500 hover:text-zinc-300 light:text-zinc-500 light:hover:text-zinc-900'
                             }`}
                         >
                             {t.nav.vacancies}
                             {companyVacancies.length > 0 && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-mono">
+                                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-mono light:bg-emerald-50 light:text-emerald-700 light:border light:border-emerald-200">
                                     {companyVacancies.length}
                                 </span>
                             )}
-                            {activeTab === 'vacancies' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />}
+                            {activeTab === 'vacancies' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white light:bg-zinc-950 rounded-full" />}
                         </button>
                     )}
 
                     <button
                         onClick={() => setActiveTab('about')}
                         className={`pb-3 text-sm font-semibold transition relative cursor-pointer shrink-0 whitespace-nowrap ${
-                            activeTab === 'about' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                            activeTab === 'about' ? 'text-white light:text-zinc-950' : 'text-zinc-500 hover:text-zinc-300 light:text-zinc-500 light:hover:text-zinc-900'
                         }`}
                     >
                         {isCompany ? (isRu ? 'О компании' : 'About Company') : (isRu ? 'О сообществе' : 'About Community')}
-                        {activeTab === 'about' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />}
+                        {activeTab === 'about' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white light:bg-zinc-950 rounded-full" />}
                     </button>
 
                     <button
                         onClick={() => setActiveTab('employees')}
                         className={`pb-3 text-sm font-semibold transition relative flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                            activeTab === 'employees' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                            activeTab === 'employees' ? 'text-white light:text-zinc-950' : 'text-zinc-500 hover:text-zinc-300 light:text-zinc-500 light:hover:text-zinc-900'
                         }`}
                     >
                         {isCompany ? (isRu ? 'Сотрудники' : 'Employees') : (isRu ? 'Участники' : 'Members')}
-                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-zinc-400 font-mono">
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-zinc-400 font-mono light:bg-zinc-100 light:text-zinc-600">
                             {community.membersCount}
                         </span>
-                        {activeTab === 'employees' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />}
+                        {activeTab === 'employees' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white light:bg-zinc-950 rounded-full" />}
                     </button>
                 </div>
 
-                {/* Tab: POSTS */}
                 {activeTab === 'posts' && (
                     <div>
                         {canPost ? (
@@ -763,31 +816,31 @@ export default function Profile() {
                                 placeholder={isRu ? `Что нового в ${community.name}?` : `What's new in ${community.name}?`}
                             />
                         ) : !isLoggedIn ? (
-                            <div className="m-4 lg:mx-8 md:mx-11 p-5 rounded-2xl border border-white/5 bg-white/[0.02] flex items-center justify-between gap-4">
+                            <div className="m-4 lg:mx-8 md:mx-11 p-5 rounded-2xl border border-white/5 bg-white/[0.02] flex items-center justify-between gap-4 light:bg-white light:border-zinc-200/80 light:shadow-sm">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-zinc-400 shrink-0">
+                                    <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-zinc-400 shrink-0 light:bg-zinc-100 light:text-zinc-600">
                                         <Lock size={16} />
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-semibold text-zinc-200">{isRu ? "Публикация записей" : "Posting"}</h4>
-                                        <p className="text-xs text-zinc-400">{isRu ? "Войдите в аккаунт, чтобы писать в сообществе." : "Sign in to post in this community."}</p>
+                                        <h4 className="text-sm font-semibold text-zinc-200 light:text-zinc-900">{isRu ? "Публикация записей" : "Posting"}</h4>
+                                        <p className="text-xs text-zinc-400 light:text-zinc-600">{isRu ? "Войдите в аккаунт, чтобы писать в сообществе." : "Sign in to post in this community."}</p>
                                     </div>
                                 </div>
-                                <Link href="/login" className="px-4 py-2 text-xs font-semibold rounded-xl bg-white text-black hover:bg-zinc-200 transition">
+                                <Link href="/login" className="px-4 py-2 text-xs font-semibold rounded-xl bg-white text-black hover:bg-zinc-200 transition light:bg-zinc-900 light:text-white light:hover:bg-zinc-800">
                                     {isRu ? "Войти" : "Sign In"}
                                 </Link>
                             </div>
                         ) : !isMember ? (
-                            <div className="m-4 lg:mx-8 md:mx-11 p-5 rounded-2xl border border-white/5 bg-white/[0.02] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="m-4 lg:mx-8 md:mx-11 p-5 rounded-2xl border border-white/5 bg-white/[0.02] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 light:bg-white light:border-zinc-200/80 light:shadow-sm">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0 light:bg-blue-50 light:text-blue-600">
                                         <Users size={16} />
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-semibold text-zinc-200">
+                                        <h4 className="text-sm font-semibold text-zinc-200 light:text-zinc-900">
                                             {isCompany ? (isRu ? "Публикации компании" : "Company Posts") : (isRu ? "Только для участников" : "Members Only")}
                                         </h4>
-                                        <p className="text-xs text-zinc-400">
+                                        <p className="text-xs text-zinc-400 light:text-zinc-600">
                                             {isCompany
                                                 ? (isRu ? "Публиковать новости в профиле компании могут только сотрудники и руководство." : "Only employees and management can publish news on the company profile.")
                                                 : (isRu ? "Вступите в сообщество, чтобы создавать публикации." : "Join the community to create posts.")}
@@ -797,15 +850,15 @@ export default function Profile() {
                                 {!isCompany && (
                                     <button
                                         onClick={handleToggleJoin}
-                                        className="px-5 py-2 text-xs font-semibold rounded-xl bg-white text-black hover:bg-zinc-200 transition shrink-0 cursor-pointer"
+                                        className="px-5 py-2 text-xs font-semibold rounded-xl bg-white text-black hover:bg-zinc-200 transition shrink-0 cursor-pointer light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                     >
                                         {isRu ? "Вступить в сообщество" : "Join Community"}
                                     </button>
                                 )}
                             </div>
                         ) : (
-                            <div className="m-4 lg:mx-8 md:mx-11 p-4 rounded-xl border border-white/5 bg-white/[0.01] flex items-center gap-3 text-zinc-400 text-xs">
-                                <ShieldAlert size={16} className="text-amber-400/80 shrink-0" />
+                            <div className="m-4 lg:mx-8 md:mx-11 p-4 rounded-xl border border-white/5 bg-white/[0.01] flex items-center gap-3 text-zinc-400 text-xs light:bg-amber-50/60 light:border-amber-200 light:text-amber-800">
+                                <ShieldAlert size={16} className="text-amber-400/80 shrink-0 light:text-amber-600" />
                                 <span>{isRu ? "Публикация записей в этом сообществе доступна только администраторам и модераторам." : "Posting in this community is restricted to administrators and moderators."}</span>
                             </div>
                         )}
@@ -817,7 +870,7 @@ export default function Profile() {
                                     <PostSkeleton />
                                 </>
                             ) : communityPosts.length === 0 ? (
-                                <p className="text-xs text-zinc-500 text-center py-8 select-none">{isRu ? "Публикаций пока нет" : "No posts yet"}</p>
+                                <p className="text-xs text-zinc-500 text-center py-8 select-none light:text-zinc-500">{isRu ? "Публикаций пока нет" : "No posts yet"}</p>
                             ) : (
                                 communityPosts.map((p) => (
                                     <div key={p.id} className="animate-fade-in">
@@ -844,7 +897,6 @@ export default function Profile() {
                                 ))
                             )}
 
-                            {/* Progressive load sentinel & loading indicator */}
                             {hasMoreCommunityPosts && (
                                 <div ref={communityPostsSentinelRef} className="py-4 flex justify-center items-center">
                                     {isLoadingMorePosts && (
@@ -856,7 +908,7 @@ export default function Profile() {
                             )}
 
                             {!hasMoreCommunityPosts && communityPosts.length > 0 && (
-                                <div className="py-6 text-center text-xs text-zinc-600 select-none">
+                                <div className="py-6 text-center text-xs text-zinc-600 select-none light:text-zinc-400">
                                     {isRu ? "Вы просмотрели все публикации" : "You've viewed all posts"}
                                 </div>
                             )}
@@ -864,18 +916,17 @@ export default function Profile() {
                     </div>
                 )}
 
-                {/* Tab: VACANCIES (Company only) */}
                 {activeTab === 'vacancies' && isCompany && (
                     <div className="p-6 md:p-8 space-y-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <h3 className="text-base font-bold text-zinc-100">{isRu ? "Открытые вакансии" : "Open Vacancies"}</h3>
-                                <p className="text-xs text-zinc-400">{isRu ? `Карьерные возможности в ${community.name}` : `Career opportunities at ${community.name}`}</p>
+                                <h3 className="text-base font-bold text-zinc-100 light:text-zinc-900">{isRu ? "Открытые вакансии" : "Open Vacancies"}</h3>
+                                <p className="text-xs text-zinc-400 light:text-zinc-600">{isRu ? `Карьерные возможности в ${community.name}` : `Career opportunities at ${community.name}`}</p>
                             </div>
                             {isCanEdit && (
                                 <button
                                     onClick={() => setIsCreateVacancyOpen(true)}
-                                    className="px-4 py-2 rounded-2xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition flex items-center gap-1.5 cursor-pointer"
+                                    className="px-4 py-2 rounded-2xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition flex items-center gap-1.5 cursor-pointer light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                 >
                                     <Plus size={14} />
                                     {isRu ? "Опубликовать вакансию" : "Post a Vacancy"}
@@ -884,46 +935,46 @@ export default function Profile() {
                         </div>
 
                         {isVacanciesLoading ? (
-                            <div className="p-8 text-center text-xs text-zinc-500">{isRu ? "Загрузка вакансий..." : "Loading vacancies..."}</div>
+                            <div className="p-8 text-center text-xs text-zinc-500 light:text-zinc-500">{isRu ? "Загрузка вакансий..." : "Loading vacancies..."}</div>
                         ) : companyVacancies.length === 0 ? (
-                            <div className="p-10 text-center rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col items-center gap-2">
-                                <Briefcase size={24} className="text-zinc-600" />
-                                <p className="text-sm font-medium text-zinc-300">{isRu ? "Сейчас нет открытых вакансий" : "No open vacancies right now"}</p>
-                                <p className="text-xs text-zinc-500">{isRu ? "Следите за обновлениями компании или подпишитесь на уведомления" : "Follow the company updates or subscribe to notifications"}</p>
+                            <div className="p-10 text-center rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col items-center gap-2 light:bg-white light:border-zinc-200/80 light:shadow-sm">
+                                <Briefcase size={24} className="text-zinc-600 light:text-zinc-400" />
+                                <p className="text-sm font-medium text-zinc-300 light:text-zinc-800">{isRu ? "Сейчас нет открытых вакансий" : "No open vacancies right now"}</p>
+                                <p className="text-xs text-zinc-500 light:text-zinc-500">{isRu ? "Следите за обновлениями компании или подпишитесь на уведомления" : "Follow the company updates or subscribe to notifications"}</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 gap-4">
                                 {companyVacancies.map((v) => (
                                     <div
                                         key={v.id}
-                                        className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition space-y-3"
+                                        className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition space-y-3 light:bg-white light:border-zinc-200/80 light:shadow-sm light:hover:border-zinc-300"
                                     >
                                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                                             <div>
                                                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 light:bg-blue-50 light:text-blue-700 light:border-blue-200">
                                                         {formatLevelText(v.level)}
                                                     </span>
-                                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/5 text-zinc-300 border border-white/10">
+                                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/5 text-zinc-300 border border-white/10 light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200">
                                                         {formatWorkTypeText(v.format)}
                                                     </span>
                                                     {(v.salaryFrom || v.salaryTo) && (
                                                         <span 
                                                             suppressHydrationWarning
-                                                            className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                                            className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200"
                                                         >
                                                             {formatSalary(v.salaryFrom, v.salaryTo, v.currency)}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <h4 className="text-base font-bold text-zinc-100">{v.title}</h4>
+                                                <h4 className="text-base font-bold text-zinc-100 light:text-zinc-900">{v.title}</h4>
                                             </div>
 
                                             <div className="flex items-center gap-2">
                                                 {isCanEdit && (
                                                     <button
                                                         onClick={() => handleDeleteVacancy(v.id)}
-                                                        className="p-2 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition"
+                                                        className="p-2 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition light:text-zinc-400 light:hover:text-red-600 light:hover:bg-red-50"
                                                         title={isRu ? "Удалить вакансию" : "Delete vacancy"}
                                                     >
                                                         <Trash2 size={16} />
@@ -932,14 +983,14 @@ export default function Profile() {
                                                 <button
                                                     onClick={() => handleApplyVacancy(v.id)}
                                                     disabled={isApplyingVacancyId === v.id}
-                                                    className="px-4 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer"
+                                                    className="px-4 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                                 >
                                                     {isApplyingVacancyId === v.id ? (isRu ? "Отправка..." : "Sending...") : t.vacancies.apply}
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <p className="text-xs text-zinc-300 whitespace-pre-line leading-relaxed">
+                                        <p className="text-xs text-zinc-300 whitespace-pre-line leading-relaxed light:text-zinc-700">
                                             {v.description}
                                         </p>
 
@@ -948,7 +999,7 @@ export default function Profile() {
                                                 {v.stack.map((tech, i) => (
                                                     <span
                                                         key={i}
-                                                        className="px-2 py-0.5 text-[11px] font-mono rounded-md bg-white/5 text-zinc-400 border border-white/5"
+                                                        className="px-2 py-0.5 text-[11px] font-mono rounded-md bg-white/5 text-zinc-400 border border-white/5 light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200"
                                                     >
                                                         {tech}
                                                     </span>
@@ -962,56 +1013,55 @@ export default function Profile() {
                     </div>
                 )}
 
-                {/* Tab: ABOUT */}
                 {activeTab === 'about' && (
                     <div className="p-6 md:p-8 space-y-6">
-                        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
-                            <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                                <FileText size={13} className="text-zinc-400" />
+                        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2 light:bg-white light:border-zinc-200/80 light:shadow-sm">
+                            <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 light:text-zinc-600">
+                                <FileText size={13} className="text-zinc-400 light:text-zinc-600" />
                                 {isCompany ? (isRu ? "Описание компании" : "Company Description") : (isRu ? "О сообществе" : "About Community")}
                             </h4>
-                            <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-line">
+                            <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-line light:text-zinc-800">
                                 {community.description || (isRu ? "Описание отсутствует" : "No description provided")}
                             </p>
                         </div>
 
                         {community.rules && (
-                            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
-                                <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                                    <ShieldAlert size={13} className="text-amber-400" />
+                            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2 light:bg-white light:border-zinc-200/80 light:shadow-sm">
+                                <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 light:text-zinc-600">
+                                    <ShieldAlert size={13} className="text-amber-400 light:text-amber-600" />
                                     {isCompany ? (isRu ? "Культура и регламент" : "Culture & Guidelines") : (isRu ? "Правила сообщества" : "Community Rules")}
                                 </h4>
-                                <p className="text-xs text-zinc-300 whitespace-pre-line leading-relaxed">
+                                <p className="text-xs text-zinc-300 whitespace-pre-line leading-relaxed light:text-zinc-700">
                                     {community.rules}
                                 </p>
                             </div>
                         )}
 
-                        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
-                            <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3 light:bg-white light:border-zinc-200/80 light:shadow-sm">
+                            <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider light:text-zinc-600">
                                 {isRu ? "Информация" : "Information"}
                             </h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                 <div>
-                                    <span className="text-zinc-500">{isRu ? "Создатель: " : "Creator: "}</span>
-                                    <Link href={`/profile/${community.creatorUsername}`} className="text-zinc-200 hover:underline font-medium">
+                                    <span className="text-zinc-500 light:text-zinc-500">{isRu ? "Создатель: " : "Creator: "}</span>
+                                    <Link href={`/profile/${community.creatorUsername}`} className="text-zinc-200 hover:underline font-medium light:text-zinc-900 light:hover:text-blue-600">
                                         {community.creatorName || community.creatorUsername}
                                     </Link>
                                 </div>
                                 <div>
-                                    <span className="text-zinc-500">{isRu ? "Дата основания: " : "Founded: "}</span>
-                                    <span className="text-zinc-200">{new Date(community.created).toLocaleDateString(isRu ? 'ru-RU' : 'en-US')}</span>
+                                    <span className="text-zinc-500 light:text-zinc-500">{isRu ? "Дата основания: " : "Founded: "}</span>
+                                    <span className="text-zinc-200 light:text-zinc-800">{new Date(community.created).toLocaleDateString(isRu ? 'ru-RU' : 'en-US')}</span>
                                 </div>
                                 {community.location && (
                                     <div>
-                                        <span className="text-zinc-500">{isRu ? "Локация: " : "Location: "}</span>
-                                        <span className="text-zinc-200">{community.location}</span>
+                                        <span className="text-zinc-500 light:text-zinc-500">{isRu ? "Локация: " : "Location: "}</span>
+                                        <span className="text-zinc-200 light:text-zinc-800">{community.location}</span>
                                     </div>
                                 )}
                                 {community.industry && (
                                     <div>
-                                        <span className="text-zinc-500">{isRu ? "Сфера: " : "Industry: "}</span>
-                                        <span className="text-zinc-200">{community.industry}</span>
+                                        <span className="text-zinc-500 light:text-zinc-500">{isRu ? "Сфера: " : "Industry: "}</span>
+                                        <span className="text-zinc-200 light:text-zinc-800">{community.industry}</span>
                                     </div>
                                 )}
                             </div>
@@ -1019,14 +1069,12 @@ export default function Profile() {
                     </div>
                 )}
 
-                {/* Tab: EMPLOYEES / MEMBERS */}
                 {activeTab === 'employees' && (
                     <div className="p-6 md:p-8 space-y-6">
-                        {/* Pending approvals section for Owner/Admin */}
                         {isCanEdit && isCompany && pendingEmployees.length > 0 && (
-                            <div className="p-5 rounded-2xl bg-amber-500/[0.03] border border-amber-500/20 space-y-3">
+                            <div className="p-5 rounded-2xl bg-amber-500/[0.03] border border-amber-500/20 space-y-3 light:bg-amber-50/50 light:border-amber-200">
                                 <div className="flex items-center justify-between">
-                                    <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 light:text-amber-700">
                                         <Users size={14} />
                                         {isRu ? `Заявки на подтверждение работы (${pendingEmployees.length})` : `Employment Verification Requests (${pendingEmployees.length})`}
                                     </h4>
@@ -1036,35 +1084,31 @@ export default function Profile() {
                                     {pendingEmployees.map((cand) => (
                                         <div
                                             key={cand.id}
-                                            className="p-3 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3"
+                                            className="p-3 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3 light:bg-white light:border-zinc-200 light:shadow-xs"
                                         >
                                             <div className="flex items-center gap-2.5 min-w-0">
-                                                <div className="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden shrink-0">
-                                                    {cand.avatar ? (
-                                                        <img src={cand.avatar} className="w-full h-full object-cover" alt="" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center font-bold text-xs text-zinc-300">
-                                                            {cand.name?.[0]?.toUpperCase() || 'U'}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <Avatar
+                                                    src={cand.avatar}
+                                                    name={cand.name || cand.username}
+                                                    className="w-8 h-8 text-[10px]"
+                                                />
                                                 <div className="flex flex-col truncate">
-                                                    <span className="text-xs font-semibold text-zinc-100 truncate">{cand.name}</span>
-                                                    <span className="text-[10px] text-zinc-500 truncate">@{cand.username}</span>
+                                                    <span className="text-xs font-semibold text-zinc-100 truncate light:text-zinc-900">{cand.name}</span>
+                                                    <span className="text-[10px] text-zinc-500 truncate light:text-zinc-500">@{cand.username}</span>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center gap-1.5 shrink-0">
                                                 <button
                                                     onClick={() => handleAcceptEmployee(cand.id)}
-                                                    className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition text-xs font-semibold"
+                                                    className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition text-xs font-semibold light:bg-emerald-50 light:text-emerald-700 light:hover:bg-emerald-100"
                                                     title={isRu ? "Принять в штат" : "Approve employee"}
                                                 >
                                                     <Check size={14} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleRejectEmployee(cand.id)}
-                                                    className="p-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/30 transition text-xs font-semibold"
+                                                    className="p-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/30 transition text-xs font-semibold light:bg-red-50 light:text-red-600 light:hover:bg-red-100"
                                                     title={isRu ? "Отклонить" : "Reject"}
                                                 >
                                                     <X size={14} />
@@ -1078,10 +1122,10 @@ export default function Profile() {
 
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider light:text-zinc-600">
                                     {isCompany ? (isRu ? "Команда и руководство" : "Team & Leadership") : (isRu ? "Участники сообщества" : "Community Members")}
                                 </h3>
-                                <span className="text-xs text-zinc-500 font-mono">
+                                <span className="text-xs text-zinc-500 font-mono light:text-zinc-500">
                                     {community.membersCount} {isCompany ? (isRu ? "в штате" : "employees") : (isRu ? "участников" : "members")}
                                 </span>
                             </div>
@@ -1106,43 +1150,41 @@ export default function Profile() {
                                         <Link
                                             key={m.id}
                                             href={isMe ? "/profile" : `/profile/${m.username?.replace("@", "")}`}
-                                            className="flex items-center gap-2.5 p-2 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/10 transition group"
+                                            className="flex items-center gap-2.5 p-2 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/10 transition group light:border-zinc-200/80 light:bg-zinc-50/60 light:hover:bg-zinc-100/80 light:hover:border-zinc-300"
                                         >
-                                            <div className="relative w-8 h-8 rounded-full shrink-0 overflow-hidden bg-zinc-800">
-                                                {m.avatar ? (
-                                                    <img src={m.avatar} className="w-full h-full object-cover" alt="" />
-                                                ) : (
-                                                    <div className="w-full h-full bg-zinc-700 flex items-center justify-center font-bold text-xs text-zinc-300">
-                                                        {m.name?.[0]?.toUpperCase() || "U"}
-                                                    </div>
-                                                )}
+                                            <div className="relative w-8 h-8 rounded-full shrink-0">
+                                                <Avatar
+                                                    src={m.avatar}
+                                                    name={m.name || m.username}
+                                                    className="w-full h-full text-[10px]"
+                                                />
                                                 {isOnline && (
                                                     <span
-                                                        className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0a0a0a] rounded-full"
+                                                        className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0a0a0a] rounded-full light:border-white"
                                                         title={isRu ? "В сети" : "Online"}
                                                     />
                                                 )}
                                             </div>
 
                                             <div className="flex flex-col truncate">
-                                                <span className="text-xs font-medium text-zinc-200 group-hover:text-sky-400 transition truncate">
+                                                <span className="text-xs font-medium text-zinc-200 group-hover:text-sky-400 transition truncate light:text-zinc-900 light:group-hover:text-blue-600">
                                                     {m.name || m.username}
                                                 </span>
 
                                                 {isOwner ? (
-                                                    <span className="text-[9px] text-purple-400 font-semibold uppercase tracking-wider">
+                                                    <span className="text-[9px] text-purple-400 font-semibold uppercase tracking-wider light:text-purple-700">
                                                         {isCompany ? (isRu ? "Основатель" : "Founder") : (isRu ? "Владелец" : "Owner")}
                                                     </span>
                                                 ) : isAdmin ? (
-                                                    <span className="text-[9px] text-blue-400 font-semibold uppercase tracking-wider">
+                                                    <span className="text-[9px] text-blue-400 font-semibold uppercase tracking-wider light:text-blue-700">
                                                         {isCompany ? (isRu ? "Руководитель" : "Executive") : (isRu ? "Админ" : "Admin")}
                                                     </span>
                                                 ) : isMod ? (
-                                                    <span className="text-[9px] text-emerald-400 font-semibold uppercase tracking-wider">
+                                                    <span className="text-[9px] text-emerald-400 font-semibold uppercase tracking-wider light:text-emerald-700">
                                                         {isRu ? "Модератор" : "Moderator"}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[10px] text-zinc-500 truncate">
+                                                    <span className="text-[10px] text-zinc-500 truncate light:text-zinc-500">
                                                         {isCompany ? (isRu ? "Сотрудник" : "Employee") : `@${m.username}`}
                                                     </span>
                                                 )}
@@ -1159,39 +1201,39 @@ export default function Profile() {
             <Modal
                 isOpen={isCreateVacancyOpen}
                 onClose={() => setIsCreateVacancyOpen(false)}
-                className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative"
+                className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
             >
-                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-4">
+                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-4 light:bg-zinc-50/80 light:border-zinc-200">
                             <div className="space-y-3">
-                                <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+                                <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
                                     {isRu ? "Превью вакансии" : "Vacancy Preview"}
                                 </span>
-                                <div className="p-4 rounded-2xl border border-white/10 bg-[#050505]/90 space-y-3 shadow-xl">
+                                <div className="p-4 rounded-2xl border border-white/10 bg-[#050505]/90 space-y-3 shadow-xl light:bg-white light:border-zinc-200 light:shadow-md">
                                     <div className="flex flex-wrap gap-1.5">
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-neutral-200 border border-white/15">
+                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-neutral-200 border border-white/15 light:bg-blue-50 light:text-blue-700 light:border-blue-200">
                                             {formatLevelText(vacancyLevel)}
                                         </span>
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-neutral-300 border border-white/10">
+                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-neutral-300 border border-white/10 light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200">
                                             {formatWorkTypeText(vacancyFormat)}
                                         </span>
                                     </div>
                                     <div>
-                                        <div className="text-sm font-bold text-neutral-100 truncate">
+                                        <div className="text-sm font-bold text-neutral-100 truncate light:text-zinc-900">
                                             {vacancyTitle || (isRu ? "Название должности" : "Job Title")}
                                         </div>
-                                        <div className="text-xs text-neutral-500 truncate mt-0.5">
+                                        <div className="text-xs text-neutral-500 truncate mt-0.5 light:text-zinc-500">
                                             {community.name}
                                         </div>
                                     </div>
                                     {(vacancySalaryFrom || vacancySalaryTo) && (
-                                        <div className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                        <div className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200">
                                             {vacancySalaryFrom || "..."} – {vacancySalaryTo || "..."} {vacancyCurrency}
                                         </div>
                                     )}
                                     {vacancyStack && (
-                                        <div className="flex flex-wrap gap-1 pt-2 border-t border-white/5">
+                                        <div className="flex flex-wrap gap-1 pt-2 border-t border-white/5 light:border-zinc-100">
                                             {vacancyStack.split(',').map(s => s.trim()).filter(Boolean).slice(0, 6).map((tech, i) => (
-                                                <span key={i} className="px-2 py-0.5 text-[10px] font-mono rounded-md bg-white/5 text-neutral-300 border border-white/5">
+                                                <span key={i} className="px-2 py-0.5 text-[10px] font-mono rounded-md bg-white/5 text-neutral-300 border border-white/5 light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200">
                                                     {tech}
                                                 </span>
                                             ))}
@@ -1199,21 +1241,21 @@ export default function Profile() {
                                     )}
                                 </div>
                             </div>
-                            <p className="text-[11px] text-neutral-500 hidden md:block leading-relaxed">
+                            <p className="text-[11px] text-neutral-500 hidden md:block leading-relaxed light:text-zinc-500">
                                 {isRu ? "Вакансия появится в общем разделе «Вакансии» и во вкладке вашей компании." : "This vacancy will appear in the main Jobs board and your company tab."}
                             </p>
                         </div>
 
                         <div className="md:col-span-8 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh]">
-                            <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10">
+                            <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10 light:border-zinc-200">
                                 <div>
-                                    <h3 className="text-lg font-bold text-neutral-100 tracking-tight">{isRu ? "Создать вакансию" : "Create Vacancy"}</h3>
-                                    <p className="text-xs text-neutral-400 mt-0.5">{community.name}</p>
+                                    <h3 className="text-lg font-bold text-neutral-100 tracking-tight light:text-zinc-900">{isRu ? "Создать вакансию" : "Create Vacancy"}</h3>
+                                    <p className="text-xs text-neutral-400 mt-0.5 light:text-zinc-500">{community.name}</p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setIsCreateVacancyOpen(false)}
-                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0"
+                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                 >
                                     <X size={16} />
                                 </button>
@@ -1221,7 +1263,7 @@ export default function Profile() {
 
                             <form onSubmit={handleCreateVacancy} className="space-y-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                         {isRu ? "Название должности" : "Job Title"}
                                     </label>
                                     <input
@@ -1230,19 +1272,19 @@ export default function Profile() {
                                         onChange={(e) => setVacancyTitle(e.target.value)}
                                         placeholder="e.g. Senior Backend Engineer"
                                         required
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:border-zinc-400"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                             {isRu ? "Уровень" : "Level"}
                                         </label>
                                         <select
                                             value={vacancyLevel}
                                             onChange={(e) => setVacancyLevel(parseInt(e.target.value))}
-                                            className="w-full px-3.5 py-2.5 rounded-xl bg-[#050505]/90 text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-[#050505]/90 text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:focus:border-zinc-400"
                                         >
                                             <option value={0}>Intern</option>
                                             <option value={1}>Junior</option>
@@ -1252,13 +1294,13 @@ export default function Profile() {
                                         </select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                             {isRu ? "Формат работы" : "Work Format"}
                                         </label>
                                         <select
                                             value={vacancyFormat}
                                             onChange={(e) => setVacancyFormat(parseInt(e.target.value))}
-                                            className="w-full px-3.5 py-2.5 rounded-xl bg-[#050505]/90 text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-[#050505]/90 text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:focus:border-zinc-400"
                                         >
                                             <option value={0}>{isRu ? "Удаленно (Remote)" : "Remote"}</option>
                                             <option value={1}>{isRu ? "Гибрид (Hybrid)" : "Hybrid"}</option>
@@ -1269,7 +1311,7 @@ export default function Profile() {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                             {isRu ? "Зарплата от" : "Salary from"}
                                         </label>
                                         <input
@@ -1277,11 +1319,11 @@ export default function Profile() {
                                             value={vacancySalaryFrom}
                                             onChange={(e) => setVacancySalaryFrom(e.target.value)}
                                             placeholder="3000"
-                                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:border-zinc-400"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                             {t.vacancies.salaryTo}
                                         </label>
                                         <input
@@ -1289,17 +1331,17 @@ export default function Profile() {
                                             value={vacancySalaryTo}
                                             onChange={(e) => setVacancySalaryTo(e.target.value)}
                                             placeholder="5000"
-                                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:border-zinc-400"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                             {isRu ? "Валюта" : "Currency"}
                                         </label>
                                         <select
                                             value={vacancyCurrency}
                                             onChange={(e) => setVacancyCurrency(e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl bg-[#050505]/90 text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-[#050505]/90 text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:focus:border-zinc-400"
                                         >
                                             <option value="USD">USD ($)</option>
                                             <option value="EUR">EUR (€)</option>
@@ -1309,7 +1351,7 @@ export default function Profile() {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                         {isRu ? "Стек технологий (через запятую)" : "Tech Stack (comma-separated)"}
                                     </label>
                                     <input
@@ -1317,12 +1359,12 @@ export default function Profile() {
                                         value={vacancyStack}
                                         onChange={(e) => setVacancyStack(e.target.value)}
                                         placeholder=".NET, C#, PostgreSQL, Docker"
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:border-zinc-400"
                                     />
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                         {isRu ? "Описание вакансии и требования" : "Job Description & Requirements"}
                                     </label>
                                     <textarea
@@ -1331,22 +1373,22 @@ export default function Profile() {
                                         placeholder={isRu ? "Обязанности, стек, условия работы, стек технологий..." : "Responsibilities, stack, working conditions, requirements..."}
                                         rows={5}
                                         required
-                                        className="w-full min-h-[120px] px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm leading-relaxed border border-white/10 focus:outline-none focus:border-white/25 resize-y"
+                                        className="w-full min-h-[120px] px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm leading-relaxed border border-white/10 focus:outline-none focus:border-white/25 resize-y light:bg-white light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:border-zinc-400"
                                     />
                                 </div>
 
-                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 light:border-zinc-200">
                                     <button
                                         type="button"
                                         onClick={() => setIsCreateVacancyOpen(false)}
-                                        className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-semibold transition cursor-pointer"
+                                        className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-semibold transition cursor-pointer light:bg-zinc-100 light:text-zinc-700 light:hover:bg-zinc-200"
                                     >
                                         {t.common.cancel}
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={isSubmittingVacancy}
-                                        className="px-6 py-2.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                                        className="px-6 py-2.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition active:scale-[0.98] disabled:opacity-50 cursor-pointer light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                     >
                                         {isSubmittingVacancy ? (isRu ? "Публикация..." : "Publishing...") : (isRu ? "Опубликовать вакансию" : "Publish Vacancy")}
                                     </button>
@@ -1358,31 +1400,31 @@ export default function Profile() {
             <Modal
                 isOpen={isEditOpen}
                 onClose={() => setIsEditOpen(false)}
-                className="w-full max-w-[920px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative"
+                className="w-full max-w-[920px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
             >
-                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-5">
+                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-5 light:bg-zinc-50/80 light:border-zinc-200">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+                                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
                                         {isRu ? "Превью карточки" : "Live Card Preview"}
                                     </span>
                                     {isSaving && (
-                                        <span className="inline-flex items-center gap-1.5 text-xs text-neutral-400">
-                                            <Loader2 size={12} className="animate-spin text-white" />
+                                        <span className="inline-flex items-center gap-1.5 text-xs text-neutral-400 light:text-zinc-500">
+                                            <Loader2 size={12} className="animate-spin text-white light:text-zinc-900" />
                                             <span>{isRu ? "Загрузка..." : "Saving..."}</span>
                                         </span>
                                     )}
                                 </div>
 
-                                <div className="rounded-2xl border border-white/10 bg-[#050505]/90 overflow-hidden shadow-xl">
-                                    <div className="relative h-24 w-full bg-neutral-900 overflow-hidden">
+                                <div className="rounded-2xl border border-white/10 bg-[#050505]/90 overflow-hidden shadow-xl light:bg-white light:border-zinc-200 light:shadow-md">
+                                    <div className="relative h-24 w-full bg-neutral-900 overflow-hidden light:bg-zinc-100">
                                         {community.banner ? (
                                             <img src={community.banner} alt="" className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-neutral-800 via-neutral-950 to-black" />
+                                            <div className="w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-neutral-800 via-neutral-950 to-black light:from-zinc-100 light:via-zinc-200 light:to-zinc-300" />
                                         )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
-                                        <label className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/15 text-[11px] font-medium text-neutral-100 flex items-center gap-1 cursor-pointer transition">
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 light:from-black/30" />
+                                        <label className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/15 text-[11px] font-medium text-neutral-100 flex items-center gap-1 cursor-pointer transition light:bg-white/90 light:text-zinc-900 light:border-zinc-200 light:hover:bg-white light:shadow-sm">
                                             <ImageIcon size={12} />
                                             <span>{isRu ? "Баннер" : "Banner"}</span>
                                             <input
@@ -1397,14 +1439,13 @@ export default function Profile() {
 
                                     <div className="p-4 pt-0">
                                         <div className="flex items-end justify-between gap-2 -mt-8 mb-3 relative z-10">
-                                            <label className="relative w-16 h-16 rounded-2xl ring-4 ring-[#050505] bg-neutral-800 overflow-hidden cursor-pointer group/avatar shrink-0 shadow-lg">
-                                                {community.avatar ? (
-                                                    <img src={community.avatar} alt="" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-lg font-bold text-neutral-200">
-                                                        {editName?.[0]?.toUpperCase() || "C"}
-                                                    </div>
-                                                )}
+                                            <label className="relative w-16 h-16 rounded-2xl ring-4 ring-[#050505] bg-neutral-800 overflow-hidden cursor-pointer group/avatar shrink-0 shadow-lg light:ring-white light:bg-zinc-100">
+                                                <Avatar
+                                                    src={community.avatar}
+                                                    name={editName || community.name}
+                                                    shape="rounded"
+                                                    className="w-full h-full text-base"
+                                                />
                                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/avatar:opacity-100 transition flex items-center justify-center text-white">
                                                     <ImageIcon size={15} />
                                                 </div>
@@ -1416,22 +1457,22 @@ export default function Profile() {
                                                     className="hidden"
                                                 />
                                             </label>
-                                            <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-medium text-neutral-300">
+                                            <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-medium text-neutral-300 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-700">
                                                 {editKind === 1 ? (isRu ? "Компания" : "Company") : (isRu ? "Сообщество" : "Community")}
                                             </span>
                                         </div>
 
                                         <div className="space-y-0.5">
-                                            <div className="text-sm font-bold text-neutral-100 truncate">
+                                            <div className="text-sm font-bold text-neutral-100 truncate light:text-zinc-900">
                                                 {editName || community.name}
                                             </div>
-                                            <div className="text-xs text-neutral-500 font-mono truncate">
+                                            <div className="text-xs text-neutral-500 font-mono truncate light:text-zinc-500">
                                                 /c/{community.slug}
                                             </div>
                                         </div>
 
                                         {editDescription && (
-                                            <p className="text-xs text-neutral-400 mt-2 line-clamp-2 leading-relaxed">
+                                            <p className="text-xs text-neutral-400 mt-2 line-clamp-2 leading-relaxed light:text-zinc-600">
                                                 {editDescription}
                                             </p>
                                         )}
@@ -1439,8 +1480,8 @@ export default function Profile() {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2">
-                                    <label className="py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-medium text-neutral-200 flex items-center justify-center gap-1.5 cursor-pointer transition text-center">
-                                        <ImageIcon size={13} className="text-neutral-400 shrink-0" />
+                                    <label className="py-2 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[11px] font-medium text-neutral-200 flex items-center justify-center gap-1.5 cursor-pointer transition text-center whitespace-nowrap light:bg-white light:border-zinc-200 light:text-zinc-700 light:hover:bg-zinc-100">
+                                        <ImageIcon size={13} className="text-neutral-400 light:text-zinc-500 shrink-0" />
                                         <span className="truncate">{isRu ? "Сменить фото" : "Change Logo"}</span>
                                         <input
                                             type="file"
@@ -1450,8 +1491,8 @@ export default function Profile() {
                                             className="hidden"
                                         />
                                     </label>
-                                    <label className="py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-medium text-neutral-200 flex items-center justify-center gap-1.5 cursor-pointer transition text-center">
-                                        <ImageIcon size={13} className="text-neutral-400 shrink-0" />
+                                    <label className="py-2 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[11px] font-medium text-neutral-200 flex items-center justify-center gap-1.5 cursor-pointer transition text-center whitespace-nowrap light:bg-white light:border-zinc-200 light:text-zinc-700 light:hover:bg-zinc-100">
+                                        <ImageIcon size={13} className="text-neutral-400 light:text-zinc-500 shrink-0" />
                                         <span className="truncate">{isRu ? "Сменить фон" : "Change Cover"}</span>
                                         <input
                                             type="file"
@@ -1464,23 +1505,23 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            <p className="text-[11px] text-neutral-500 hidden md:block leading-relaxed">
+                            <p className="text-[11px] text-neutral-500 hidden md:block leading-relaxed light:text-zinc-500">
                                 {isRu ? "Все изменения мгновенно отображаются на превью карточки слева." : "All updates are previewed live on the card above."}
                             </p>
                         </div>
 
                         <div className="md:col-span-8 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh]">
-                            <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10">
+                            <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10 light:border-zinc-200">
                                 <div>
-                                    <h3 className="text-lg font-bold text-neutral-100 tracking-tight">
+                                    <h3 className="text-lg font-bold text-neutral-100 tracking-tight light:text-zinc-900">
                                         {editKind === 1 ? (isRu ? "Редактировать компанию" : "Edit Company") : (isRu ? "Редактировать сообщество" : "Edit Community")}
                                     </h3>
-                                    <p className="text-xs text-neutral-400 mt-0.5">{isRu ? "Управление визуальным оформлением, правилами и профилем" : "Manage visual identity, rules and profile"}</p>
+                                    <p className="text-xs text-neutral-400 mt-0.5 light:text-zinc-500">{isRu ? "Управление визуальным оформлением, правилами и профилем" : "Manage visual identity, rules and profile"}</p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setIsEditOpen(false)}
-                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0"
+                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                 >
                                     <X size={16} />
                                 </button>
@@ -1489,7 +1530,7 @@ export default function Profile() {
                             <form onSubmit={handleSaveCommunity} className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                             {editKind === 1 ? (isRu ? "Название компании" : "Company Name") : (isRu ? "Название сообщества" : "Community Name")}
                                         </label>
                                         <input
@@ -1497,20 +1538,20 @@ export default function Profile() {
                                             value={editName}
                                             onChange={(e) => setEditName(e.target.value)}
                                             required
-                                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25 light:bg-zinc-50 light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:bg-white light:focus:border-zinc-400"
                                         />
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Тип пространства" : "Space Type"}</label>
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">{isRu ? "Тип пространства" : "Space Type"}</label>
                                         <div className="grid grid-cols-2 gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => setEditKind(0)}
                                                 className={`py-2.5 px-3 rounded-xl border text-left transition cursor-pointer flex items-center gap-2 ${
                                                     editKind === 0
-                                                        ? "border-white/30 bg-white/10 text-white"
-                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                        ? "border-white/30 bg-white/10 text-white light:border-zinc-900 light:bg-zinc-900 light:text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 light:border-zinc-200 light:bg-zinc-50 light:text-zinc-600 light:hover:bg-zinc-100"
                                                 }`}
                                             >
                                                 <Users size={14} className="shrink-0" />
@@ -1521,8 +1562,8 @@ export default function Profile() {
                                                 onClick={() => setEditKind(1)}
                                                 className={`py-2.5 px-3 rounded-xl border text-left transition cursor-pointer flex items-center gap-2 ${
                                                     editKind === 1
-                                                        ? "border-white/30 bg-white/10 text-white"
-                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                        ? "border-white/30 bg-white/10 text-white light:border-zinc-900 light:bg-zinc-900 light:text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 light:border-zinc-200 light:bg-zinc-50 light:text-zinc-600 light:hover:bg-zinc-100"
                                                 }`}
                                             >
                                                 <Building2 size={14} className="shrink-0" />
@@ -1533,57 +1574,57 @@ export default function Profile() {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Описание" : "Description"}</label>
+                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">{isRu ? "Описание" : "Description"}</label>
                                     <textarea
                                         value={editDescription}
                                         onChange={(e) => setEditDescription(e.target.value)}
                                         rows={4}
-                                        className="w-full min-h-[116px] px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm leading-relaxed border border-white/10 focus:outline-none focus:border-white/25 resize-y"
+                                        className="w-full min-h-[116px] px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm leading-relaxed border border-white/10 focus:outline-none focus:border-white/25 resize-y light:bg-zinc-50 light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:bg-white light:focus:border-zinc-400"
                                     />
                                 </div>
 
                                 {editKind === 1 && (
-                                    <div className="p-4 rounded-2xl bg-white/[0.015] border border-white/5 space-y-3">
+                                    <div className="p-4 rounded-2xl bg-white/[0.015] border border-white/5 space-y-3 light:bg-zinc-50/70 light:border-zinc-200">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <div className="space-y-1.5">
-                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Сайт" : "Website"}</label>
+                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">{isRu ? "Сайт" : "Website"}</label>
                                                 <input
                                                     type="url"
                                                     value={editWebsiteUrl}
                                                     onChange={(e) => setEditWebsiteUrl(e.target.value)}
                                                     placeholder="https://company.com"
-                                                    className="w-full px-3.5 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
+                                                    className="w-full px-3.5 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:focus:border-zinc-400"
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Локация" : "Location"}</label>
+                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">{isRu ? "Локация" : "Location"}</label>
                                                 <input
                                                     type="text"
                                                     value={editLocation}
                                                     onChange={(e) => setEditLocation(e.target.value)}
                                                     placeholder={isRu ? "Москва / Remote" : "Moscow / Remote"}
-                                                    className="w-full px-3.5 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
+                                                    className="w-full px-3.5 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:focus:border-zinc-400"
                                                 />
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <div className="space-y-1.5">
-                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Сфера" : "Industry"}</label>
+                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">{isRu ? "Сфера" : "Industry"}</label>
                                                 <input
                                                     type="text"
                                                     value={editIndustry}
                                                     onChange={(e) => setEditIndustry(e.target.value)}
                                                     placeholder={isRu ? "IT, Финтех" : "IT, Fintech"}
-                                                    className="w-full px-3.5 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
+                                                    className="w-full px-3.5 py-2 rounded-xl bg-white/[0.02] text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:focus:border-zinc-400"
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Размер" : "Size"}</label>
+                                                <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">{isRu ? "Размер" : "Size"}</label>
                                                 <select
                                                     value={editCompanySize}
                                                     onChange={(e) => setEditCompanySize(e.target.value)}
-                                                    className="w-full px-3.5 py-2 rounded-xl bg-[#050505]/90 text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25"
+                                                    className="w-full px-3.5 py-2 rounded-xl bg-[#050505]/90 text-neutral-100 text-xs border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:focus:border-zinc-400"
                                                 >
                                                     <option value="">{isRu ? "Не указано" : "Not specified"}</option>
                                                     <option value="1-10">{isRu ? "1-10 сотрудников" : "1-10 employees"}</option>
@@ -1598,7 +1639,7 @@ export default function Profile() {
                                 )}
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                                    <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                         {editKind === 1 ? (isRu ? "Культура и правила" : "Culture & Rules") : (isRu ? "Правила" : "Rules")}
                                     </label>
                                     <textarea
@@ -1606,84 +1647,84 @@ export default function Profile() {
                                         onChange={(e) => setEditRules(e.target.value)}
                                         rows={4}
                                         placeholder={isRu ? "Правила сообщества, формат общения, требования..." : "Community rules, communication format, guidelines..."}
-                                        className="w-full min-h-[116px] px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm leading-relaxed border border-white/10 focus:outline-none focus:border-white/25 resize-y"
+                                        className="w-full min-h-[116px] px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm leading-relaxed border border-white/10 focus:outline-none focus:border-white/25 resize-y light:bg-zinc-50 light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:bg-white light:focus:border-zinc-400"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Кто может публиковать" : "Who can post"}</label>
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">{isRu ? "Кто может публиковать" : "Who can post"}</label>
                                         <div className="grid grid-cols-2 gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => setEditPostingPolicy(0)}
                                                 className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
                                                     editPostingPolicy === 0
-                                                        ? "border-white/30 bg-white/10 text-white"
-                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                        ? "border-white/30 bg-white/10 text-white light:border-zinc-900 light:bg-zinc-900 light:text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 light:border-zinc-200 light:bg-zinc-50 light:text-zinc-600 light:hover:bg-zinc-100"
                                                 }`}
                                             >
                                                 <div className="text-xs font-semibold">{isRu ? "Все участники" : "All Members"}</div>
-                                                <div className="text-[10px] text-neutral-500 mt-0.5">{isRu ? "Любой участник" : "Any member"}</div>
+                                                <div className={`text-[10px] mt-0.5 ${editPostingPolicy === 0 ? "text-neutral-400 light:text-zinc-300" : "text-neutral-500 light:text-zinc-500"}`}>{isRu ? "Любой участник" : "Any member"}</div>
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setEditPostingPolicy(1)}
                                                 className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
                                                     editPostingPolicy === 1
-                                                        ? "border-white/30 bg-white/10 text-white"
-                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                        ? "border-white/30 bg-white/10 text-white light:border-zinc-900 light:bg-zinc-900 light:text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 light:border-zinc-200 light:bg-zinc-50 light:text-zinc-600 light:hover:bg-zinc-100"
                                                 }`}
                                             >
                                                 <div className="text-xs font-semibold">{isRu ? "Администрация" : "Admins Only"}</div>
-                                                <div className="text-[10px] text-neutral-500 mt-0.5">{isRu ? "Админы и модеры" : "Admins & mods"}</div>
+                                                <div className={`text-[10px] mt-0.5 ${editPostingPolicy === 1 ? "text-neutral-400 light:text-zinc-300" : "text-neutral-500 light:text-zinc-500"}`}>{isRu ? "Админы и модеры" : "Admins & mods"}</div>
                                             </button>
                                         </div>
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{isRu ? "Доступ к сообществу" : "Community Access"}</label>
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">{isRu ? "Доступ к сообществу" : "Community Access"}</label>
                                         <div className="grid grid-cols-2 gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => setEditType(0)}
                                                 className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
                                                     editType === 0
-                                                        ? "border-white/30 bg-white/10 text-white"
-                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                        ? "border-white/30 bg-white/10 text-white light:border-zinc-900 light:bg-zinc-900 light:text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 light:border-zinc-200 light:bg-zinc-50 light:text-zinc-600 light:hover:bg-zinc-100"
                                                 }`}
                                             >
                                                 <div className="text-xs font-semibold">{isRu ? "Публичное" : "Public"}</div>
-                                                <div className="text-[10px] text-neutral-500 mt-0.5">{isRu ? "Вход свободный" : "Open to join"}</div>
+                                                <div className={`text-[10px] mt-0.5 ${editType === 0 ? "text-neutral-400 light:text-zinc-300" : "text-neutral-500 light:text-zinc-500"}`}>{isRu ? "Вход свободный" : "Open to join"}</div>
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setEditType(1)}
                                                 className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
                                                     editType === 1
-                                                        ? "border-white/30 bg-white/10 text-white"
-                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20"
+                                                        ? "border-white/30 bg-white/10 text-white light:border-zinc-900 light:bg-zinc-900 light:text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 light:border-zinc-200 light:bg-zinc-50 light:text-zinc-600 light:hover:bg-zinc-100"
                                                 }`}
                                             >
                                                 <div className="text-xs font-semibold">{isRu ? "Ограниченное" : "Restricted"}</div>
-                                                <div className="text-[10px] text-neutral-500 mt-0.5">{isRu ? "По заявкам" : "By request"}</div>
+                                                <div className={`text-[10px] mt-0.5 ${editType === 1 ? "text-neutral-400 light:text-zinc-300" : "text-neutral-500 light:text-zinc-500"}`}>{isRu ? "По заявкам" : "By request"}</div>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 light:border-zinc-200">
                                     <button
                                         type="button"
                                         onClick={() => setIsEditOpen(false)}
-                                        className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-semibold transition cursor-pointer"
+                                        className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-semibold transition cursor-pointer light:bg-zinc-100 light:text-zinc-700 light:hover:bg-zinc-200"
                                     >
                                         {t.common.cancel}
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={isSaving}
-                                        className="px-6 py-2.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-neutral-200 active:scale-[0.98] transition disabled:opacity-50 cursor-pointer"
+                                        className="px-6 py-2.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-neutral-200 active:scale-[0.98] transition disabled:opacity-50 cursor-pointer light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                     >
                                         {isSaving ? (isRu ? "Сохранение..." : "Saving...") : (isRu ? "Сохранить изменения" : "Save Changes")}
                                     </button>
@@ -1691,6 +1732,19 @@ export default function Profile() {
                             </form>
                         </div>
                     </Modal>
+
+            <ImageCropModal
+                isOpen={cropModalState.isOpen}
+                imageSrc={cropModalState.imageSrc}
+                cropShape={cropModalState.cropShape}
+                aspect={cropModalState.aspect}
+                title={cropModalState.title}
+                maxOutputWidth={cropModalState.maxOutputWidth}
+                maxOutputHeight={cropModalState.maxOutputHeight}
+                fileName={cropModalState.fileName}
+                onClose={handleCloseCropModal}
+                onCropComplete={handleCropSave}
+            />
         </div>
     );
 }

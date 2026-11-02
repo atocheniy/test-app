@@ -1,5 +1,6 @@
 'use client';
 
+import Avatar from "@/components/Avatar";
 import Post1 from "@/components/post";
 import Titlebar from "@/components/titlebar";
 import { useApplication } from "@/context/ApplicationContext";
@@ -178,27 +179,27 @@ function SearchContent() {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder={isRu ? 'Поиск людей, кода, тегов, вакансий...' : 'Search people, code snippets, tags, jobs...'}
-                        className="w-full h-13 pl-4 pr-10 rounded-2xl bg-white/[0.03] border border-white/10 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-md transition-all text-sm sm:text-base shadow-inner"
+                        className="w-full h-13 pl-4 pr-10 rounded-2xl bg-white/[0.03] border border-white/10 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-md transition-all text-sm sm:text-base shadow-inner light:bg-zinc-100/80 light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:shadow-none"
                     />
                     {query && (
                         <button 
                             onClick={() => setQuery('')}
-                            className="absolute right-3 p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition cursor-pointer"
+                            className="absolute right-3 p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition cursor-pointer light:hover:bg-zinc-200 light:text-zinc-500 light:hover:text-zinc-900"
                         >
                             <X size={16} />
                         </button>
                     )}
                 </div>
 
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-white/5 pb-3 max-w-full">
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-white/5 light:border-zinc-200/80 pb-3 max-w-full">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                                 activeTab === tab.id
-                                    ? 'bg-white text-black shadow-md'
-                                    : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200'
+                                    ? 'bg-white text-black shadow-md light:bg-zinc-900 light:text-white light:shadow-sm'
+                                    : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200 light:bg-zinc-100/80 light:border light:border-zinc-200 light:text-zinc-600 light:hover:bg-zinc-200/70 light:hover:text-zinc-900'
                             }`}
                         >
                             {tab.label}
@@ -209,19 +210,19 @@ function SearchContent() {
                 {query.trim().length > 0 ? (
                     <div className="space-y-8">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs text-zinc-400 font-medium">
-                                {isRu ? 'Результаты для' : 'Results for'} <span className="text-white font-bold">"{query}"</span>
+                            <span className="text-xs text-zinc-400 light:text-zinc-600 font-medium">
+                                {isRu ? 'Результаты для' : 'Results for'} <span className="text-white light:text-zinc-900 font-bold">"{query}"</span>
                             </span>
                         </div>
 
                         {(activeTab === 'all' || activeTab === 'communities') && (
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{isRu ? 'Сообщества' : 'Communities'}</h3>
+                                <h3 className="text-xs font-bold text-zinc-500 light:text-zinc-500 uppercase tracking-wider">{isRu ? 'Сообщества' : 'Communities'}</h3>
 
                                 {isLoading && communities.length === 0 ? (
-                                    <div className="p-4 text-center text-xs text-zinc-500">{isRu ? 'Поиск сообществ...' : 'Searching communities...'}</div>
+                                    <div className="p-4 text-center text-xs text-zinc-500 light:text-zinc-500">{isRu ? 'Поиск сообществ...' : 'Searching communities...'}</div>
                                 ) : communities.length === 0 ? (
-                                    <div className="p-4 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01]">
+                                    <div className="p-4 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01] light:bg-zinc-50 light:border-zinc-200 light:text-zinc-500">
                                         {isRu ? 'Сообщества не найдены' : 'No communities found'}
                                     </div>
                                 ) : (
@@ -230,35 +231,32 @@ function SearchContent() {
                                             <Link 
                                                 key={comm.id} 
                                                 href={`/c/${comm.slug}`}
-                                                className="group p-3.5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15 transition flex items-center justify-between gap-3"
+                                                className="group p-3.5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15 transition flex items-center justify-between gap-3 light:bg-white light:border-zinc-200/80 light:shadow-sm light:hover:border-zinc-300"
                                             >
                                                 <div className="flex items-center gap-3 overflow-hidden min-w-0">
-                                                    <div className="relative w-11 h-11 shrink-0 rounded-2xl overflow-hidden bg-zinc-800 border border-white/10">
-                                                        {comm.avatar ? (
-                                                            <img src={comm.avatar} className="w-full h-full object-cover" alt="" />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center font-bold text-zinc-400">
-                                                                {comm.name?.[0]?.toUpperCase() || "C"}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                    <Avatar
+                                                        src={comm.avatar}
+                                                        name={comm.name}
+                                                        shape="rounded"
+                                                        className="w-11 h-11 text-xs shrink-0"
+                                                    />
 
                                                     <div className="flex flex-col truncate min-w-0">
-                                                        <span className="text-sm font-bold text-zinc-100 group-hover:text-blue-400 transition truncate">
+                                                        <span className="text-sm font-bold text-zinc-100 group-hover:text-blue-400 transition truncate light:text-zinc-900 light:group-hover:text-blue-600">
                                                             {comm.name}
                                                         </span>
-                                                        <span className="text-xs text-zinc-500 truncate font-mono">
-                                                            c/{comm.slug} · <span className="text-zinc-400 font-sans">{comm.membersCount} {isRu ? 'участников' : 'members'}</span>
+                                                        <span className="text-xs text-zinc-500 light:text-zinc-500 truncate font-mono">
+                                                            c/{comm.slug} · <span className="text-zinc-400 light:text-zinc-600 font-sans">{comm.membersCount} {isRu ? 'участников' : 'members'}</span>
                                                         </span>
                                                         {comm.description && (
-                                                            <span className="text-[11px] text-zinc-400 truncate mt-0.5">
+                                                            <span className="text-[11px] text-zinc-400 light:text-zinc-600 truncate mt-0.5">
                                                                 {comm.description}
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                <div className="p-2 rounded-full text-zinc-600 group-hover:text-white transition shrink-0">
+                                                <div className="p-2 rounded-full text-zinc-600 group-hover:text-white transition shrink-0 light:text-zinc-400 light:group-hover:text-zinc-900">
                                                     <ArrowUpRight size={16} />
                                                 </div>
                                             </Link>
@@ -270,12 +268,12 @@ function SearchContent() {
 
                         {(activeTab === 'all' || activeTab === 'people') && (
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{isRu ? 'Люди' : 'People'}</h3>
+                                <h3 className="text-xs font-bold text-zinc-500 light:text-zinc-500 uppercase tracking-wider">{isRu ? 'Люди' : 'People'}</h3>
 
                                 {isLoading && users.length === 0 ? (
-                                    <div className="p-4 text-center text-xs text-zinc-500">{isRu ? 'Поиск людей...' : 'Searching people...'}</div>
+                                    <div className="p-4 text-center text-xs text-zinc-500 light:text-zinc-500">{isRu ? 'Поиск людей...' : 'Searching people...'}</div>
                                 ) : users.length === 0 ? (
-                                    <div className="p-4 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01]">
+                                    <div className="p-4 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01] light:bg-zinc-50 light:border-zinc-200 light:text-zinc-500">
                                         {isRu ? 'Пользователи не найдены' : 'No users found'}
                                     </div>
                                 ) : (
@@ -290,40 +288,38 @@ function SearchContent() {
                                                 <Link 
                                                     key={user.id} 
                                                     href={`/profile/${cleanUser}`}
-                                                    className="group p-3.5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15 transition flex items-center justify-between gap-3"
+                                                    className="group p-3.5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15 transition flex items-center justify-between gap-3 light:bg-white light:border-zinc-200/80 light:shadow-sm light:hover:border-zinc-300"
                                                 >
                                                     <div className="flex items-center gap-3 overflow-hidden min-w-0">
-                                                        <div className="relative w-11 h-11 shrink-0 rounded-full overflow-hidden bg-zinc-800 border border-white/10">
-                                                            {user.avatar ? (
-                                                                <img src={user.avatar} className="w-full h-full object-cover" alt="" />
-                                                            ) : (
-                                                                <div className="w-full h-full bg-zinc-800 flex items-center justify-center font-bold text-zinc-400">
-                                                                    {user.fullName?.[0]?.toUpperCase() || cleanUser[0]?.toUpperCase() || "U"}
-                                                                </div>
-                                                            )}
+                                                        <div className="relative w-11 h-11 shrink-0 rounded-full">
+                                                            <Avatar
+                                                                src={user.avatar}
+                                                                name={user.fullName || cleanUser}
+                                                                className="w-full h-full text-xs"
+                                                            />
                                                             {isOnline && (
-                                                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0a0a0a] rounded-full" />
+                                                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0a0a0a] light:border-white rounded-full" />
                                                             )}
                                                         </div>
 
                                                         <div className="flex flex-col truncate min-w-0">
                                                             <div className="flex items-center gap-1.5">
-                                                                <span className="text-sm font-bold text-zinc-100 group-hover:text-blue-400 transition truncate">
+                                                                <span className="text-sm font-bold text-zinc-100 group-hover:text-blue-400 transition truncate light:text-zinc-900 light:group-hover:text-blue-600">
                                                                     {user.fullName || cleanUser}
                                                                 </span>
                                                             </div>
-                                                            <span className="text-xs text-zinc-500 truncate">
+                                                            <span className="text-xs text-zinc-500 light:text-zinc-500 truncate">
                                                                 @{cleanUser} {user.followers ? `· ${user.followers} ${isRu ? 'подписчиков' : 'followers'}` : ''}
                                                             </span>
                                                             {user.bio_FirstLine && (
-                                                                <span className="text-[11px] text-zinc-400 truncate mt-0.5">
+                                                                <span className="text-[11px] text-zinc-400 light:text-zinc-600 truncate mt-0.5">
                                                                     {user.bio_FirstLine}
                                                                 </span>
                                                             )}
                                                         </div>
                                                     </div>
 
-                                                    <div className="p-2 rounded-full text-zinc-600 group-hover:text-white transition shrink-0">
+                                                    <div className="p-2 rounded-full text-zinc-600 group-hover:text-white transition shrink-0 light:text-zinc-400 light:group-hover:text-zinc-900">
                                                         <ArrowUpRight size={16} />
                                                     </div>
                                                 </Link>
@@ -336,12 +332,12 @@ function SearchContent() {
 
                         {(activeTab === 'all' || activeTab === 'posts') && (
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{isRu ? 'Публикации и код' : 'Posts & Code'}</h3>
+                                <h3 className="text-xs font-bold text-zinc-500 light:text-zinc-500 uppercase tracking-wider">{isRu ? 'Публикации и код' : 'Posts & Code'}</h3>
 
                                 {isLoading && posts.length === 0 ? (
-                                    <div className="p-4 text-center text-xs text-zinc-500">{isRu ? 'Поиск публикаций...' : 'Searching posts...'}</div>
+                                    <div className="p-4 text-center text-xs text-zinc-500 light:text-zinc-500">{isRu ? 'Поиск публикаций...' : 'Searching posts...'}</div>
                                 ) : posts.length === 0 ? (
-                                    <div className="p-4 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01]">
+                                    <div className="p-4 text-center text-xs text-zinc-500 rounded-2xl border border-white/5 bg-white/[0.01] light:bg-zinc-50 light:border-zinc-200 light:text-zinc-500">
                                         {isRu ? 'Публикации не найдены' : 'No posts found'}
                                     </div>
                                 ) : (
@@ -377,7 +373,7 @@ function SearchContent() {
                             <div>
                                 <div className="flex items-center gap-2 mb-4">
                                     <TrendingUp size={18} className="text-blue-400" />
-                                    <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+                                    <h2 className="text-sm font-bold text-zinc-200 light:text-zinc-800 uppercase tracking-wider">
                                         {isRu ? 'Актуальные темы и обсуждения' : 'Trending Topics & Discussions'}
                                     </h2>
                                 </div>
@@ -387,18 +383,18 @@ function SearchContent() {
                                         <div 
                                             key={item.tag || idx}
                                             onClick={() => setQuery(item.tag)}
-                                            className="group p-3.5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15 transition cursor-pointer flex items-center justify-between"
+                                            className="group p-3.5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15 transition cursor-pointer flex items-center justify-between light:bg-white light:border-zinc-200/80 light:shadow-sm light:hover:border-zinc-300"
                                         >
                                             <div className="flex flex-col">
-                                                <span className="text-[11px] text-zinc-500">{item.category}</span>
-                                                <span className="text-sm font-bold text-zinc-100 group-hover:text-blue-400 transition mt-0.5">
+                                                <span className="text-[11px] text-zinc-500 light:text-zinc-500">{item.category}</span>
+                                                <span className="text-sm font-bold text-zinc-100 group-hover:text-blue-400 transition mt-0.5 light:text-zinc-900 light:group-hover:text-blue-600">
                                                     {item.displayTag || item.tag}
                                                 </span>
-                                                <span className="text-xs text-zinc-500 mt-1">
+                                                <span className="text-xs text-zinc-500 light:text-zinc-500 mt-1">
                                                     {item.postsFormatted || item.count || `${item.postCount || 0} ${isRu ? 'постов' : 'posts'}`}
                                                 </span>
                                             </div>
-                                            <div className="p-2 rounded-full text-zinc-600 group-hover:text-white transition">
+                                            <div className="p-2 rounded-full text-zinc-600 group-hover:text-white transition light:text-zinc-400 light:group-hover:text-zinc-900">
                                                 <ArrowUpRight size={16} />
                                             </div>
                                         </div>
@@ -411,7 +407,7 @@ function SearchContent() {
                             <div>
                                 <div className="flex items-center gap-2 mb-4">
                                     <Sparkles size={18} className="text-amber-400" />
-                                    <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+                                    <h2 className="text-sm font-bold text-zinc-200 light:text-zinc-800 uppercase tracking-wider">
                                         {isRu ? 'Обзор по направлениям' : 'Explore by Ecosystem'}
                                     </h2>
                                 </div>
@@ -424,7 +420,7 @@ function SearchContent() {
                                         <button
                                             key={idx}
                                             onClick={() => setQuery(category)}
-                                            className="px-3.5 py-2 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/20 hover:bg-white/5 text-xs font-medium text-zinc-300 transition active:scale-95 cursor-pointer"
+                                            className="px-3.5 py-2 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/20 hover:bg-white/5 text-xs font-medium text-zinc-300 transition active:scale-95 cursor-pointer light:bg-zinc-100/80 light:border-zinc-200 light:text-zinc-800 light:hover:bg-zinc-200/70 light:hover:border-zinc-300"
                                         >
                                             {category}
                                         </button>
@@ -489,20 +485,14 @@ function SearchContent() {
                                                             className="flex items-center gap-3 min-w-0 flex-1"
                                                         >
                                                             <div className="relative w-11 h-11 shrink-0 rounded-full">
-                                                                {user.avatar ? (
-                                                                    <img 
-                                                                        src={user.avatar} 
-                                                                        alt={user.userName}
-                                                                        className="w-full h-full rounded-full object-cover border border-white/10"
-                                                                    />
-                                                                ) : (
-                                                                    <div className="w-full h-full rounded-full flex items-center justify-center font-bold text-sm text-zinc-200 bg-gradient-to-br from-indigo-500/30 to-purple-500/20 border border-white/10 select-none">
-                                                                        {userInitial}
-                                                                    </div>
-                                                                )}
+                                                                <Avatar
+                                                                    src={user.avatar}
+                                                                    name={displayName}
+                                                                    className="w-full h-full text-xs"
+                                                                />
                                                                 {isOnline && (
                                                                     <span 
-                                                                        className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0a0a0a] rounded-full" 
+                                                                        className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0a0a0a] rounded-full light:border-white" 
                                                                         title={isRu ? 'В сети' : 'Online'}
                                                                     />
                                                                 )}

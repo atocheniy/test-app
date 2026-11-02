@@ -1,8 +1,23 @@
 @import "tailwindcss";
 
+@custom-variant light (&:where(.light, .light *));
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #000000;
+  --foreground: #ededed;
+}
+
+html.light,
+html[data-theme="light"] {
+  --background: #f8fafc;
+  --foreground: #09090b;
+}
+
+html.dark,
+html[data-theme="dark"] {
+  --background: #000000;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -10,13 +25,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #000000;
-    --foreground: #ededed;
-  }
 }
 
 @layer utilities {
@@ -38,6 +46,18 @@
   .custom-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: #3f3f46 transparent;
+  }
+
+  html.light .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+  }
+
+  html.light .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+
+  html.light .custom-scrollbar {
+    scrollbar-color: #cbd5e1 transparent;
   }
 }
 
@@ -144,6 +164,54 @@ body {
     90deg, 
     transparent 0%, 
     rgba(255, 255, 255, 0.15) 50%, 
+    transparent 100%
+  ) !important;
+}
+
+html.light .post-markdown.wmde-markdown {
+  color: #1e293b !important;
+}
+
+html.light .post-markdown.wmde-markdown h1,
+html.light .post-markdown.wmde-markdown h2,
+html.light .post-markdown.wmde-markdown h3 {
+  color: #0f172a !important;
+}
+
+html.light .post-markdown.wmde-markdown p {
+  color: #334155 !important;
+}
+
+html.light .post-markdown.wmde-markdown a {
+  color: #0284c7 !important;
+}
+
+html.light .post-markdown.wmde-markdown blockquote {
+  border-left-color: rgba(2, 132, 199, 0.6) !important;
+  background: rgba(0, 0, 0, 0.03) !important;
+  color: #475569 !important;
+}
+
+html.light .post-markdown.wmde-markdown pre {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light .post-markdown.wmde-markdown pre code {
+  color: #0f172a !important;
+}
+
+html.light .post-markdown.wmde-markdown code:not(pre code) {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+html.light .post-markdown.wmde-markdown hr {
+  background: linear-gradient(
+    90deg, 
+    transparent 0%, 
+    rgba(0, 0, 0, 0.12) 50%, 
     transparent 100%
   ) !important;
 }

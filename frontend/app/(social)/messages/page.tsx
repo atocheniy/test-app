@@ -389,28 +389,28 @@ function MessagesContent() {
         : false;
 
     return (
-          <div className="flex flex-row h-full w-full min-w-0 overflow-hidden" >
-               <div className={`flex-col w-full md:w-80 lg:w-96 border-r border-white/5 overflow-y-auto no-scrollbar max-md:border-r-0 min-h-full ${activeChat ? 'hidden md:flex' : 'flex'}`}>
+          <div className="flex flex-row h-full w-full min-w-0 overflow-hidden light:bg-white" >
+               <div className={`flex-col w-full md:w-80 lg:w-96 border-r border-white/5 overflow-y-auto no-scrollbar max-md:border-r-0 min-h-full light:bg-white light:border-zinc-200/80 ${activeChat ? 'hidden md:flex' : 'flex'}`}>
                     <TitlebarMessages title={isRu ? 'Сообщения' : 'Messages'}></TitlebarMessages>
 
                     <div className="flex flex-col">
                          {isChatsLoading ? (
                             <div className="flex flex-col">
                                 {[1, 2, 3, 4, 5].map((i) => (
-                                    <div key={i} className="flex items-center gap-3 p-3.5 px-4 border-b border-white/[0.02] animate-pulse">
-                                        <div className="w-10 h-10 rounded-full bg-white/5 shrink-0" />
+                                    <div key={i} className="flex items-center gap-3 p-3.5 px-4 border-b border-white/[0.02] light:border-zinc-100 animate-pulse">
+                                        <div className="w-10 h-10 rounded-full bg-white/5 light:bg-zinc-200 shrink-0" />
                                         <div className="flex-1 space-y-2">
                                             <div className="flex justify-between items-center">
-                                                <div className="h-3 w-28 bg-white/5 rounded" />
-                                                <div className="h-2.5 w-10 bg-white/5 rounded" />
+                                                <div className="h-3 w-28 bg-white/5 light:bg-zinc-200 rounded" />
+                                                <div className="h-2.5 w-10 bg-white/5 light:bg-zinc-200 rounded" />
                                             </div>
-                                            <div className="h-2.5 w-44 bg-white/5 rounded" />
+                                            <div className="h-2.5 w-44 bg-white/5 light:bg-zinc-200 rounded" />
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : chats.length === 0 ? (
-                            <div className="p-4 text-center text-xs text-zinc-500">{isRu ? 'Чатов пока нет' : 'No chats yet'}</div>
+                            <div className="p-4 text-center text-xs text-zinc-500 light:text-zinc-500">{isRu ? 'Чатов пока нет' : 'No chats yet'}</div>
                         ) : (
                             <div className="animate-fade-in flex flex-col">
                                 {chats.map(chat => {
@@ -419,7 +419,7 @@ function MessagesContent() {
                                         <div 
                                             key={chat.id} 
                                             onClick={() => handleSelectChat(chat)}
-                                            className={`cursor-pointer transition ${activeChat?.id === chat.id ? 'bg-white/5' : 'hover:bg-white/[0.02]'}`}
+                                            className={`cursor-pointer transition ${activeChat?.id === chat.id ? 'bg-white/5 light:bg-zinc-100' : 'hover:bg-white/[0.02] light:hover:bg-zinc-50'}`}
                                         >
                                             <MessagePreview 
                                                 Id={chat.id} 
@@ -427,7 +427,7 @@ function MessagesContent() {
                                                 UserName={chat.userName || ""} 
                                                 Content={chat.content || (isRu ? "Сообщений пока нет" : "No messages yet")} 
                                                 Time={chat.time} 
-                                                Avatar={chat.avatar || userData.avatar} 
+                                                Avatar={chat.avatar} 
                                                 isOnline={isUserOnline}
                                                 isPinned={chat.isPinned}
                                                 onOpenProfile={() => handleOpenProfile(chat.userName)}
@@ -443,14 +443,14 @@ function MessagesContent() {
                     </div>
                 </div>
                {activeChat ? (
-                    <div className="w-full flex flex-col flex-1 min-w-0 h-full relative overflow-hidden no-scrollbar max-md:fixed max-md:inset-0 max-md:z-[1001] max-md:bg-black/75 max-md:backdrop-blur-xl animate-in fade-in max-md:slide-in-from-right-4 duration-200">
+                    <div className="w-full flex flex-col flex-1 min-w-0 h-full relative overflow-hidden no-scrollbar max-md:fixed max-md:inset-0 max-md:z-[1001] max-md:bg-black/75 max-md:backdrop-blur-xl animate-in fade-in max-md:slide-in-from-right-4 duration-200 light:bg-white light:max-md:bg-white/95">
                                         <div className="absolute top-0 inset-x-0 z-20">
                                     <TitlebarMessage 
                                             Id={activeChat.id} 
                                             Name={activeChat.name} 
                                             UserName={activeChat.userName || ""} 
                                             Info={isPartnerOnline ? (isRu ? "В сети" : "Online") : (isRu ? "Не в сети" : "Offline")} 
-                                            Avatar={activeChat.avatar || userData.avatar} 
+                                            Avatar={activeChat.avatar} 
                                             isOnline={isPartnerOnline}
                                             onClose={() => setActiveChat(null)}
                                             isTyping={isPartnerTyping}
@@ -463,7 +463,7 @@ function MessagesContent() {
                             
                         </div>
                     ) : messages.length === 0 ? (
-                        <div className="text-center text-zinc-500 my-auto text-xs">{isRu ? 'Напишите первое сообщение' : 'Write first message'}</div>
+                        <div className="text-center text-zinc-500 light:text-zinc-500 my-auto text-xs">{isRu ? 'Напишите первое сообщение' : 'Write first message'}</div>
                     ) : (
                         <div className="animate-fade-in flex flex-col gap-1">
                             {messages.map((msg) => 
@@ -501,21 +501,21 @@ function MessagesContent() {
 
                     <div className="absolute bottom-0 inset-x-0 z-20 flex flex-col">
                         {replyingMessage && (
-                            <div className="flex z-11150 items-center justify-between px-4 py-2 mx-5 bg-white/[0.04] backdrop-blur-md border border-white/10 backdrop-blur-xl rounded-xl text-xs text-neutral-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                            <div className="flex z-11150 items-center justify-between px-4 py-2 mx-5 bg-white/[0.04] backdrop-blur-md border border-white/10 backdrop-blur-xl rounded-xl text-xs text-neutral-300 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-700 animate-in fade-in slide-in-from-bottom-2 duration-150">
                                 <div className="flex items-center gap-2 truncate">
-                                    <Reply size={14} className="text-neutral-200 shrink-0" />
+                                    <Reply size={14} className="text-neutral-200 light:text-zinc-600 shrink-0" />
                                     <div className="flex flex-col truncate">
-                                        <span className="font-semibold text-neutral-100 text-[11px]">
+                                        <span className="font-semibold text-neutral-100 light:text-zinc-900 text-[11px]">
                                             {isRu ? `В ответ ${replyingMessage.authorName}` : `Replying to ${replyingMessage.authorName}`}
                                         </span>
-                                        <span className="truncate text-neutral-400 text-[11px] max-w-md">
+                                        <span className="truncate text-neutral-400 light:text-zinc-500 text-[11px] max-w-md">
                                             {replyingMessage.content || (isRu ? "📷 Вложение" : "📷 Attachment")}
                                         </span>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => setReplyingMessage(null)}
-                                    className="p-1 hover:bg-white/10 rounded-full text-neutral-400 hover:text-neutral-200 transition-colors"
+                                    className="p-1 hover:bg-white/10 light:hover:bg-zinc-200 rounded-full text-neutral-400 light:text-zinc-500 hover:text-neutral-200 light:hover:text-zinc-900 transition-colors"
                                     title={isRu ? "Отменить ответ" : "Cancel reply"}
                                 >
                                     <X size={14} />
@@ -524,15 +524,15 @@ function MessagesContent() {
                         )}
 
                         {editingMessage && (
-                            <div className="flex z-50 items-center justify-between px-4 py-2 mx-5 bg-white/[0.04] backdrop-blur-md border border-white/10 backdrop-blur-xl rounded-xl text-xs text-neutral-300 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                            <div className="flex z-50 items-center justify-between px-4 py-2 mx-5 bg-white/[0.04] backdrop-blur-md border border-white/10 backdrop-blur-xl rounded-xl text-xs text-neutral-300 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-700 animate-in fade-in slide-in-from-bottom-2 duration-150">
                                 <div className="flex items-center gap-2 truncate">
-                                    <Edit size={14} className="text-neutral-200 shrink-0" />
-                                    <span className="font-semibold text-neutral-100">{isRu ? 'Редактирование сообщения:' : 'Editing message:'}</span>
-                                    <span className="truncate text-neutral-400 max-w-md">{editingMessage.content}</span>
+                                    <Edit size={14} className="text-neutral-200 light:text-zinc-600 shrink-0" />
+                                    <span className="font-semibold text-neutral-100 light:text-zinc-900">{isRu ? 'Редактирование сообщения:' : 'Editing message:'}</span>
+                                    <span className="truncate text-neutral-400 light:text-zinc-500 max-w-md">{editingMessage.content}</span>
                                 </div>
                                 <button 
                                     onClick={handleCancelEdit}
-                                    className="p-1 hover:bg-white/10 rounded-full text-neutral-400 hover:text-neutral-200 transition-colors"
+                                    className="p-1 hover:bg-white/10 light:hover:bg-zinc-200 rounded-full text-neutral-400 light:text-zinc-500 hover:text-neutral-200 light:hover:text-zinc-900 transition-colors"
                                     title={isRu ? "Отменить редактирование" : "Cancel edit"}
                                 >
                                     <X size={14} />
@@ -549,7 +549,7 @@ function MessagesContent() {
                     </div>
                 </div>
                ) : (
-               <div className="hidden md:flex flex-1 items-center justify-center text-neutral-600">
+               <div className="hidden md:flex flex-1 items-center justify-center text-neutral-600 light:text-zinc-400 light:bg-white">
                     {isRu ? 'Выберите диалог, чтобы начать общение' : 'Select a conversation to start messaging'}
                </div>
           )}
@@ -557,17 +557,17 @@ function MessagesContent() {
           <Modal
               isOpen={!!confirmAction}
               onClose={() => !isActionLoading && setConfirmAction(null)}
-              className="bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 w-full max-w-[500px] mx-4 shadow-2xl flex flex-col gap-4 text-center"
+              className="bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 w-full max-w-[500px] mx-4 shadow-2xl flex flex-col gap-4 text-center light:bg-white light:border-zinc-200"
           >
               {confirmAction && (
                   <>
                       <div className="flex flex-col gap-1.5">
-                          <h3 className="text-base font-semibold text-neutral-100">
+                          <h3 className="text-base font-semibold text-neutral-100 light:text-zinc-900">
                               {confirmAction.type === 'clear'
                                   ? (isRu ? 'Очистить переписку?' : 'Clear conversation?')
                                   : (isRu ? 'Удалить чат?' : 'Delete chat?')}
                           </h3>
-                          <p className="text-xs text-neutral-400 leading-relaxed">
+                          <p className="text-xs text-neutral-400 light:text-zinc-600 leading-relaxed">
                               {confirmAction.type === 'clear'
                                   ? (isRu
                                       ? `Все сообщения в чате с "${confirmAction.chatName}" будут безвозвратно удалены.`
@@ -583,7 +583,7 @@ function MessagesContent() {
                               type="button"
                               disabled={isActionLoading}
                               onClick={() => setConfirmAction(null)}
-                              className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white hover:bg-white/5 transition disabled:opacity-50 cursor-pointer"
+                              className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white hover:bg-white/5 transition disabled:opacity-50 cursor-pointer light:text-zinc-600 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                           >
                               {isRu ? 'Отмена' : 'Cancel'}
                           </button>
@@ -593,7 +593,7 @@ function MessagesContent() {
                               onClick={handleConfirmAction}
                               className={`px-4 py-2 rounded-xl text-xs font-medium transition disabled:opacity-50 cursor-pointer flex items-center justify-center min-w-[80px] ${
                                   confirmAction.type === 'clear'
-                                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
+                                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 light:bg-amber-50 light:text-amber-700 light:border-amber-200'
                                       : 'bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20'
                               }`}
                           >

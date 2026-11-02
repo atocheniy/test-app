@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { ApplicationProvider } from "@/context/ApplicationContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 export const metadata: Metadata = {
   title: "Compile — Платформа для разработчиков",
@@ -24,6 +25,26 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
+const themeInitScript = `
+  (function() {
+    try {
+      var saved = localStorage.getItem('devlink_theme') || 'dark';
+      var isDark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (!isDark && (saved === 'light' || (saved === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches))) {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.documentElement.style.colorScheme = 'light';
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.style.colorScheme = 'dark';
+      }
+    } catch (e) {}
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,12 +53,18 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
+      suppressHydrationWarning
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <ApplicationProvider>
           <LanguageProvider>
-            {children}
+            <ThemeProvider>
+              {children}
+            </ThemeProvider>
           </LanguageProvider>
         </ApplicationProvider>
       </body>

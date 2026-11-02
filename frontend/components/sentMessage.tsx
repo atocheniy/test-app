@@ -66,14 +66,14 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
     
     return(
        <div className={`flex flex-col self-end max-w-[75%] sm:max-w-md my-0.5 group ${isMenuOpen ? 'z-30' : 'z-0'}`}>
-            <div className="relative flex flex-col gap-1 px-3.5 py-2 bg-white/[0.08] hover:bg-white/[0.12] transition rounded-2xl rounded-tr-sm border border-white/10 text-neutral-100 shadow-sm min-w-[100px]">
+            <div className="relative flex flex-col gap-1 px-3.5 py-2 bg-white/[0.08] hover:bg-white/[0.12] transition rounded-2xl rounded-tr-sm border border-white/10 text-neutral-100 shadow-sm min-w-[100px] light:bg-blue-600 light:hover:bg-blue-600 light:text-white light:border-blue-600">
                 
                 {ReplyTo && (
-                    <div className="flex flex-col text-xs border-l-2 border-white/40 bg-black/30 hover:bg-black/45 transition px-2 py-1 rounded-r-lg mb-1 cursor-pointer">
-                        <span className="font-semibold text-neutral-200 text-[11px] truncate">
+                    <div className="flex flex-col text-xs border-l-2 border-white/40 bg-black/30 hover:bg-black/45 transition px-2 py-1 rounded-r-lg mb-1 cursor-pointer light:border-white/80 light:bg-blue-700/60 light:hover:bg-blue-700/80">
+                        <span className="font-semibold text-neutral-200 light:text-white text-[11px] truncate">
                             {ReplyTo.authorName}
                         </span>
-                        <span className="text-neutral-400 text-[11px] truncate">
+                        <span className="text-neutral-400 light:text-blue-100 text-[11px] truncate">
                             {ReplyTo.content || (ReplyTo.attachments?.length ? (isRu ? "📷 Вложение" : "📷 Attachment") : (isRu ? "Сообщение" : "Message"))}
                         </span>
                     </div>
@@ -105,29 +105,29 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
 
                 <div className="flex items-end justify-between gap-3">
                     {Content && Content.trim().length > 0 && (
-                        <p className="text-[14px] leading-relaxed break-words whitespace-pre-wrap text-neutral-100">
+                        <p className="text-[14px] leading-relaxed break-words whitespace-pre-wrap text-neutral-100 light:text-white">
                             {Content}
                         </p>
                     )}
 
                     <div className="flex items-center gap-1.5 ml-auto shrink-0 pb-0.5 select-none relative" ref={menuRef}>
                         
-                        <span className="text-[10px] text-neutral-400">
+                        <span className="text-[10px] text-neutral-400 light:text-blue-100">
                             {Time}
                         </span>
 
                         {IsRead ? (
-                            <CheckCheck size={14} className="text-white" />
+                            <CheckCheck size={14} className="text-white light:text-white" />
                         ) : (
-                            <Check size={14} className="text-neutral-400" />
+                            <Check size={14} className="text-neutral-400 light:text-blue-200" />
                         )}
 
                         <button
                             ref={buttonRef}
                             type="button"
                             onClick={handleToggleMenu}
-                            className={`p-0.5 rounded hover:bg-white/10 text-neutral-400 hover:text-neutral-100 transition-all ${
-                                isMenuOpen ? 'opacity-100 bg-white/10 text-neutral-100' : 'opacity-0 opacity-100'
+                            className={`p-0.5 rounded hover:bg-white/10 light:hover:bg-blue-500/50 text-neutral-400 light:text-blue-100 hover:text-neutral-100 light:hover:text-white transition-all ${
+                                isMenuOpen ? 'opacity-100 bg-white/10 light:bg-blue-500/50 text-neutral-100 light:text-white' : 'opacity-0 opacity-100'
                             }`}
                             title={isRu ? "Действия" : "Actions"}
                         >
@@ -137,7 +137,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                         {isMenuOpen && (
                             <div className={`absolute right-0 ${
                                 menuPlacement === 'bottom' ? 'top-full mt-1.5' : 'bottom-full mb-1.5'
-                            } w-42 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl py-1 z-150 flex flex-col text-xs text-neutral-300 animate-in fade-in zoom-in-95 duration-100`}>
+                            } w-42 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl py-1 z-150 flex flex-col text-xs text-neutral-300 light:bg-white light:border-zinc-200 light:text-zinc-700 light:shadow-xl animate-in fade-in zoom-in-95 duration-100`}>
                                 
                                 {onReply && (
                                     <button
@@ -146,7 +146,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                             setIsMenuOpen(false);
                                             onReply({ id: Id, content: Content || "", authorName: resolvedAuthorName });
                                         }}
-                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 transition-colors text-left w-full"
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 light:hover:bg-zinc-100 light:hover:text-zinc-900 transition-colors text-left w-full"
                                     >
                                         <Reply size={13} />
                                         <span>{isRu ? "Ответить" : "Reply"}</span>
@@ -157,9 +157,9 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                     <button
                                         type="button"
                                         onClick={handleCopy}
-                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 transition-colors text-left w-full"
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 light:hover:bg-zinc-100 light:hover:text-zinc-900 transition-colors text-left w-full"
                                     >
-                                        {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                                        {copied ? <Check size={13} className="text-emerald-400 light:text-emerald-600" /> : <Copy size={13} />}
                                         <span>{copied ? (isRu ? "Скопировано!" : "Copied!") : (isRu ? "Копировать" : "Copy")}</span>
                                     </button>
                                 )}
@@ -171,7 +171,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                             setIsMenuOpen(false);
                                             onEdit(Id, Content, Attachments);
                                         }}
-                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 transition-colors text-left w-full"
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 light:hover:bg-zinc-100 light:hover:text-zinc-900 transition-colors text-left w-full"
                                     >
                                         <Edit size={13} />
                                         <span>{isRu ? "Редактировать" : t.post.edit}</span>
@@ -185,7 +185,7 @@ export default function sentMessage ({ Id, Content, Time, IsRead = false, Attach
                                             setIsMenuOpen(false);
                                             onDelete(Id);
                                         }}
-                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors text-left w-full"
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-red-500/10 text-red-400 hover:text-red-300 light:text-red-600 light:hover:text-red-700 light:hover:bg-red-50 transition-colors text-left w-full"
                                     >
                                         <Trash2 size={13} />
                                         <span>{isRu ? "Удалить" : t.post.delete}</span>

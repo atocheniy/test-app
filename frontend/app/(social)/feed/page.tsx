@@ -96,23 +96,23 @@ export default function Feed() {
                     <button
                         onClick={() => handleTabChange('all')}
                         className={`text-sm font-semibold transition relative py-1 ${
-                            feedTab === 'all' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                            feedTab === 'all' ? 'text-white light:text-zinc-900' : 'text-zinc-500 hover:text-zinc-300 light:text-zinc-500 light:hover:text-zinc-700'
                         }`}
                     >
                         {isRu ? 'Все' : 'All'}
                         {feedTab === 'all' && (
-                            <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full" />
+                            <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full light:bg-zinc-900" />
                         )}
                     </button>
                     <button
                         onClick={() => handleTabChange('watching')}
                         className={`text-sm font-semibold transition relative py-1 ${
-                            feedTab === 'watching' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                            feedTab === 'watching' ? 'text-white light:text-zinc-900' : 'text-zinc-500 hover:text-zinc-300 light:text-zinc-500 light:hover:text-zinc-700'
                         }`}
                     >
                         {isRu ? 'Подписки' : 'Watching'}
                         {feedTab === 'watching' && (
-                            <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full" />
+                            <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full light:bg-zinc-900" />
                         )}
                     </button>
                 </div>
@@ -130,23 +130,23 @@ export default function Feed() {
                 ) : postsData.length === 0 ? (
                     feedTab === 'watching' ? (
                         <div className="p-12 text-center flex flex-col items-center justify-center gap-3">
-                            <p className="text-zinc-400 font-medium">
+                            <p className="text-zinc-400 font-medium light:text-zinc-700">
                                 {isRu ? 'Ваша лента отслеживания пуста' : 'Your watching feed is empty'}
                             </p>
-                            <p className="text-xs text-zinc-500 max-w-sm">
+                            <p className="text-xs text-zinc-500 max-w-sm light:text-zinc-500">
                                 {isRu 
                                     ? 'Вы пока никого не читаете. Нажмите «Читать» в профиле интересных разработчиков, чтобы видеть их публикации здесь.'
                                     : 'You are not following anyone yet. Click "Watch" on profiles of developers you like to see their posts here.'}
                             </p>
                             <Link 
                                 href="/search" 
-                                className="mt-2 px-4 py-2 text-xs font-semibold rounded-2xl bg-white/10 hover:bg-white/15 text-white transition"
+                                className="mt-2 px-4 py-2 text-xs font-semibold rounded-2xl bg-white/10 hover:bg-white/15 text-white transition light:bg-zinc-100 light:text-zinc-800 light:hover:bg-zinc-200 light:border light:border-zinc-200"
                             >
                                 {isRu ? 'Найти разработчиков' : 'Discover developers'}
                             </Link>
                         </div>
                     ) : (
-                        <div className="p-12 text-center text-zinc-500">
+                        <div className="p-12 text-center text-zinc-500 light:text-zinc-500">
                             {t.feed.noPosts}
                         </div>
                     )
@@ -204,7 +204,7 @@ export default function Feed() {
                 )}
 
                 {!hasMorePosts && postsData.length > 0 && (
-                    <div className="py-8 text-center text-xs text-zinc-600 select-none">
+                    <div className="py-8 text-center text-xs text-zinc-600 select-none light:text-zinc-400">
                         {isRu ? 'Вы просмотрели все публикации' : 'You have viewed all posts'}
                     </div>
                 )}

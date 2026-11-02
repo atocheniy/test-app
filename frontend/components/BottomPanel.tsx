@@ -23,14 +23,14 @@ export default function BottomPanel() {
   return (
     <div className="md:hidden block fixed inset-x-0 bottom-0 z-1000 pointer-events-none">
       <div className="relative h-28">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent light:from-white/80 light:via-white/30 light:to-transparent" />
       </div>
 
       <div
         className="absolute inset-x-0 flex justify-center px-2 pointer-events-none"
         style={{ bottom: "calc(env(safe-area-inset-bottom) + 10px)" }}
       >
-        <nav className="pointer-events-auto flex items-center justify-between backdrop-blur-2xl gap-1 px-2 py-1.5 rounded-full bg-[#0a0a0a]/90 border border-white/10 shadow-2xl shadow-black/60 max-w-[calc(100vw-16px)]">
+        <nav className="pointer-events-auto flex items-center justify-between backdrop-blur-2xl gap-1 px-2 py-1.5 rounded-full bg-[#0a0a0a]/90 border border-white/10 shadow-2xl shadow-black/60 max-w-[calc(100vw-16px)] light:bg-white/90 light:border-zinc-200/80 light:shadow-xl light:shadow-zinc-950/10">
           {links.map((link) => {
             const LinkIcon = link.icon;
             const active = pathname === link.href;
@@ -43,8 +43,8 @@ export default function BottomPanel() {
                 className={clsx(
                   "flex items-center justify-center p-2.5 rounded-full transition-all duration-150 shrink-0",
                   active
-                    ? "text-zinc-100 bg-white/10"
-                    : "text-zinc-400 hover:text-zinc-100 hover:bg-white/5"
+                    ? "text-zinc-100 bg-white/10 light:bg-zinc-100 light:text-zinc-950"
+                    : "text-zinc-400 hover:text-zinc-100 hover:bg-white/5 light:text-zinc-600 light:hover:text-zinc-950 light:hover:bg-zinc-100"
                 )}
               >
                 <LinkIcon className="w-5 h-5 stroke-[1.8]" />

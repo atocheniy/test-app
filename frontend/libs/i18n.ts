@@ -98,6 +98,11 @@ export const translations = {
             directMessagesDesc: 'Любой пользователь сообщества может начать с вами личный диалог',
 
             interfaceTitle: 'Интерфейс и эффекты',
+            themeTitle: 'Тема оформления',
+            themeDesc: 'Выберите цветовую тему приложения или синхронизируйте с системой',
+            themeDark: 'Тёмная',
+            themeLight: 'Светлая',
+            themeSystem: 'Системная',
             blurTitle: 'Мягкое размытие (Glassmorphism)',
             blurDesc: 'Включить прогрессивное градиентное размытие в шапке, карточках и боковых панелях',
             soundTitle: 'Звуки сообщений',
@@ -290,6 +295,11 @@ export const translations = {
             directMessagesDesc: 'Anyone in the community can start a private chat with you',
 
             interfaceTitle: 'Interface & Effects',
+            themeTitle: 'Color Theme',
+            themeDesc: 'Select an interface color theme or match your system preferences',
+            themeDark: 'Dark',
+            themeLight: 'Light',
+            themeSystem: 'System',
             blurTitle: 'Progressive Blur & Glassmorphism',
             blurDesc: 'Enable soft gradient blur in headers, feed, and chat panels',
             soundTitle: 'Message Notification Sounds',

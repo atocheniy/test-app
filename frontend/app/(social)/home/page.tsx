@@ -62,22 +62,22 @@ export default function Home() {
 
             <div className="p-6 max-w-5xl space-y-6">
                 
-                <div className="relative overflow-hidden rounded-3xl border border-white/10 p-6 md:p-8 backdrop-blur-xl">
+                <div className="relative overflow-hidden rounded-3xl border border-white/10 p-6 md:p-8 backdrop-blur-xl light:bg-white light:border-zinc-200/80 light:shadow-sm">
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="space-y-2">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium light:bg-emerald-50 light:border-emerald-200 light:text-emerald-700">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse light:bg-emerald-500" />
                                 {isRu ? "Рабочее пространство" : "Branch of Workspace"}
                             </div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+                            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2 light:text-zinc-900">
                                 <span>{isRu ? "С возвращением," : "Welcome back,"}</span>
                                 {isUserLoading ? (
-                                    <span className="inline-block h-7 md:h-8 w-36 bg-white/10 rounded-xl animate-pulse align-middle" />
+                                    <span className="inline-block h-7 md:h-8 w-36 bg-white/10 rounded-xl animate-pulse align-middle light:bg-zinc-200" />
                                 ) : (
-                                    <span className="text-zinc-100">{userData.fullName}</span>
+                                    <span className="text-zinc-100 light:text-zinc-900">{userData.fullName}</span>
                                 )}!
                             </h1>
-                            <p className="text-sm text-zinc-400 max-w-md">
+                            <p className="text-sm text-zinc-400 max-w-md light:text-zinc-600">
                                 {isRu
                                     ? "Центральный хаб для обмена кодом, общения с коллегами и поиска карьерных возможностей."
                                     : "Central hub for sharing code, chatting with colleagues, and exploring career opportunities."}
@@ -87,7 +87,7 @@ export default function Home() {
                         <div className="flex items-center gap-3">
                             <Link 
                                 href="/feed"
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition active:scale-95 shadow-lg shadow-white/10"
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition active:scale-95 shadow-lg shadow-white/10 light:bg-zinc-900 light:text-white light:hover:bg-zinc-800 light:shadow-sm"
                             >
                                 <Plus size={16} />
                                 {isRu ? "Создать пост" : "Create Post"}
@@ -95,11 +95,11 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-blue-500/10 rounded-full blur-3xl pointer-events-none light:bg-blue-500/5" />
                 </div>
 
                 <div>
-                    <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4 px-1">
+                    <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4 px-1 light:text-zinc-500">
                         {isRu ? "Рекомендуемые действия" : "Recommended Actions"}
                     </h2>
                     
@@ -110,27 +110,27 @@ export default function Home() {
                                 <Link 
                                     key={index}
                                     href={action.href}
-                                    className="group relative flex flex-col justify-between p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5"
+                                    className="group relative flex flex-col justify-between p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 light:bg-white light:border-zinc-200/80 light:shadow-sm light:hover:border-zinc-300 light:hover:bg-zinc-50/50"
                                 >
                                     <div>
                                         <div className="flex items-center justify-between mb-3">
                                             <div className={`p-2.5 rounded-xl bg-gradient-to-br border ${action.color}`}>
                                                 <Icon size={20} />
                                             </div>
-                                            <div className="p-2 rounded-full text-zinc-500 group-hover:text-white group-hover:bg-white/10 transition">
+                                            <div className="p-2 rounded-full text-zinc-500 group-hover:text-white group-hover:bg-white/10 transition light:text-zinc-400 light:group-hover:text-zinc-900 light:group-hover:bg-zinc-100">
                                                 <ArrowUpRight size={18} />
                                             </div>
                                         </div>
-                                        <h3 className="text-base font-bold text-zinc-100 group-hover:text-white transition">
+                                        <h3 className="text-base font-bold text-zinc-100 group-hover:text-white transition light:text-zinc-900 light:group-hover:text-zinc-900">
                                             {action.title}
                                         </h3>
-                                        <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                                        <p className="text-xs text-zinc-400 mt-1 leading-relaxed light:text-zinc-600">
                                             {action.desc}
                                         </p>
                                     </div>
 
-                                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-                                        <span className="text-xs font-medium text-zinc-300 group-hover:underline">
+                                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between light:border-zinc-100">
+                                        <span className="text-xs font-medium text-zinc-300 group-hover:underline light:text-zinc-700 light:group-hover:text-zinc-900">
                                             {action.btnText}
                                         </span>
                                     </div>

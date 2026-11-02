@@ -1,4 +1,5 @@
 import { useLanguage } from '@/context/LanguageContext';
+import { compressImage } from '@/libs/imageUtils';
 import { upload } from '@vercel/blob/client';
 import { Loader2, Paperclip, SendHorizontal, X } from 'lucide-react';
 import { LinearBlur } from 'progressive-blur';
@@ -44,8 +45,9 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
         try {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
+                const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 1920, quality: 0.85 });
                 
-                const newBlob = await upload(file.name, file, {
+                const newBlob = await upload(compressed.name, compressed, {
                     access: 'public',
                     handleUploadUrl: '/api/img/upload',
                 });
@@ -83,9 +85,9 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
     };
 
     return (
-        <div className="shrink-0 sticky bottom-0 bg-transparent px-4 py-2 flex flex-col gap-2 z-50 relative max-md:bg-black/90">
+        <div className="shrink-0 sticky bottom-0 bg-transparent px-4 py-2 flex flex-col gap-2 z-50 relative max-md:bg-black/90 light:bg-white light:border-t light:border-zinc-200/80">
             <LinearBlur
-                className="max-md:hidden"
+                className="max-md:hidden light:hidden"
                 side="bottom"
                 steps={6}
                 strength={20}
@@ -105,7 +107,7 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
             {attachments.length > 0 && (
                 <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-thin">
                     {attachments.map((url, index) => (
-                        <div key={index} className="relative group w-14 h-14 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-[#0a0a0a]">
+                        <div key={index} className="relative group w-14 h-14 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-[#0a0a0a] light:border-zinc-200 light:bg-zinc-100">
                             <img src={url} alt={isRu ? "Предпросмотр вложения" : "Attachment preview"} className="w-full h-full object-cover" />
                             <button
                                 type="button"
@@ -134,11 +136,11 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={disabled || isUploading}
-                    className="p-2.5 rounded-full text-neutral-400 hover:text-neutral-100 hover:bg-white/5 transition-colors disabled:opacity-50"
+                    className="p-2.5 rounded-full text-neutral-400 hover:text-neutral-100 hover:bg-white/5 transition-colors disabled:opacity-50 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                     title={isRu ? "Прикрепить изображение" : "Attach image"}
                 >
                     {isUploading ? (
-                        <Loader2 size={20} className="animate-spin text-white" />
+                        <Loader2 size={20} className="animate-spin text-white light:text-zinc-900" />
                     ) : (
                         <Paperclip size={20} />
                     )}
@@ -152,14 +154,14 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
                     onKeyDown={handleKeyDown}
                     disabled={disabled}
                     placeholder={isUploading ? (isRu ? "Загрузка изображения..." : "Uploading image...") : activePlaceholder} 
-                    className="flex-1 min-h-[40px] max-h-[140px] py-2.5 px-4 resize-none transition rounded-2xl bg-white/[0.04] backdrop-blur-md text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-white/20 border border-white/10 focus:border-white/25 text-sm leading-relaxed overflow-y-auto no-scrollbar"
+                    className="flex-1 min-h-[40px] max-h-[140px] py-2.5 px-4 resize-none transition rounded-2xl bg-white/[0.04] backdrop-blur-md text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-white/20 border border-white/10 focus:border-white/25 text-sm leading-relaxed overflow-y-auto no-scrollbar light:bg-white light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:ring-blue-500/20 light:focus:border-blue-500/50"
                 />
 
                 <button 
                     type="button"
                     onClick={handleSend}
                     disabled={!canSend}
-                    className={`p-2.5 rounded-full transition-all duration-200 flex items-center justify-center ${ canSend ? 'bg-white hover:bg-neutral-200 text-black active:scale-95 cursor-pointer shadow-md' : 'bg-white/5 text-neutral-600 cursor-not-allowed' }`}
+                    className={`p-2.5 rounded-full transition-all duration-200 flex items-center justify-center ${ canSend ? 'bg-white hover:bg-neutral-200 text-black active:scale-95 cursor-pointer shadow-md light:bg-blue-600 light:hover:bg-blue-700 light:text-white' : 'bg-white/5 text-neutral-600 cursor-not-allowed light:bg-zinc-100 light:text-zinc-400' }`}
                     title={isRu ? "Отправить" : t.post.send}
                 >
                     <SendHorizontal size={18} className="translate-x-[1px]" />

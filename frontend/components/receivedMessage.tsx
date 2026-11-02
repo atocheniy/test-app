@@ -58,14 +58,14 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
 
     return(
         <div className={`flex flex-col self-start max-w-[75%] sm:max-w-md my-0.5 group ${isMenuOpen ? 'z-30' : 'z-0'}`}>
-            <div className="flex flex-col gap-1 px-3.5 py-2 bg-[#0a0a0a] hover:bg-[#141414] transition rounded-2xl rounded-tl-sm border border-white/5 text-neutral-100 shadow-sm min-w-[85px]">
+            <div className="flex flex-col gap-1 px-3.5 py-2 bg-[#0a0a0a] hover:bg-[#141414] transition rounded-2xl rounded-tl-sm border border-white/5 text-neutral-100 shadow-sm min-w-[85px] light:bg-zinc-100 light:hover:bg-zinc-100/90 light:border-zinc-200 light:text-zinc-900">
                 
                 {ReplyTo && (
-                    <div className="flex flex-col text-xs border-l-2 border-white/40 bg-black/30 hover:bg-black/45 transition px-2 py-1 rounded-r-lg mb-1 cursor-pointer">
-                        <span className="font-semibold text-neutral-200 text-[11px] truncate">
+                    <div className="flex flex-col text-xs border-l-2 border-white/40 bg-black/30 hover:bg-black/45 transition px-2 py-1 rounded-r-lg mb-1 cursor-pointer light:border-zinc-300 light:bg-zinc-200/60 light:hover:bg-zinc-200">
+                        <span className="font-semibold text-neutral-200 light:text-zinc-800 text-[11px] truncate">
                             {ReplyTo.authorName}
                         </span>
-                        <span className="text-neutral-400 text-[11px] truncate">
+                        <span className="text-neutral-400 light:text-zinc-500 text-[11px] truncate">
                             {ReplyTo.content || (ReplyTo.attachments?.length ? (isRu ? "📷 Вложение" : "📷 Attachment") : (isRu ? "Сообщение" : "Message"))}
                         </span>
                     </div>
@@ -97,12 +97,12 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
 
                 <div className="flex items-end justify-between gap-3">
                     {Content && Content.trim().length > 0 && (
-                        <p className="text-[14px] leading-relaxed break-words whitespace-pre-wrap text-neutral-300">
+                        <p className="text-[14px] leading-relaxed break-words whitespace-pre-wrap text-neutral-300 light:text-zinc-900">
                             {Content}
                         </p>
                     )}
                     <div className="flex items-center gap-1.5 ml-auto shrink-0 pb-0.5 select-none relative" ref={menuRef}>
-                        <span className="text-[10px] text-neutral-500">
+                        <span className="text-[10px] text-neutral-500 light:text-zinc-500">
                             {Time}
                         </span>
 
@@ -110,8 +110,8 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                             ref={buttonRef}
                             type="button"
                             onClick={handleToggleMenu}
-                            className={`p-0.5 rounded hover:bg-white/10 text-neutral-400 hover:text-neutral-100 transition-all ${
-                                isMenuOpen ? 'opacity-100 bg-white/10 text-neutral-100' : 'opacity-0 opacity-100'
+                            className={`p-0.5 rounded hover:bg-white/10 light:hover:bg-zinc-200 text-neutral-400 light:text-zinc-500 hover:text-neutral-100 light:hover:text-zinc-900 transition-all ${
+                                isMenuOpen ? 'opacity-100 bg-white/10 light:bg-zinc-200 text-neutral-100 light:text-zinc-900' : 'opacity-0 opacity-100'
                             }`}
                             title={isRu ? "Действия" : "Actions"}
                         >
@@ -121,7 +121,7 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                         {isMenuOpen && (
                             <div className={`absolute right-0 ${
                                 menuPlacement === 'bottom' ? 'top-full mt-1.5' : 'bottom-full mb-1.5'
-                            } w-32 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl py-1 z-150 flex flex-col text-xs text-neutral-300 animate-in fade-in zoom-in-95 duration-100`}>
+                            } w-32 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl py-1 z-150 flex flex-col text-xs text-neutral-300 light:bg-white light:border-zinc-200 light:text-zinc-700 light:shadow-xl animate-in fade-in zoom-in-95 duration-100`}>
                                 
                                 {onReply && (
                                     <button
@@ -130,7 +130,7 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                                             setIsMenuOpen(false);
                                             onReply({ id: Id, content: Content || "", authorName: resolvedAuthorName });
                                         }}
-                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 transition-colors text-left w-full"
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 light:hover:bg-zinc-100 light:hover:text-zinc-900 transition-colors text-left w-full"
                                     >
                                         <Reply size={13} />
                                         <span>{isRu ? "Ответить" : "Reply"}</span>
@@ -141,9 +141,9 @@ export default function receivedMessage ({ Id, Content, Time, Attachments, Reply
                                     <button
                                         type="button"
                                         onClick={handleCopy}
-                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 transition-colors text-left w-full"
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 hover:text-neutral-100 light:hover:bg-zinc-100 light:hover:text-zinc-900 transition-colors text-left w-full"
                                     >
-                                        {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                                        {copied ? <Check size={13} className="text-emerald-400 light:text-emerald-600" /> : <Copy size={13} />}
                                         <span>{copied ? (isRu ? "Скопировано!" : "Copied!") : (isRu ? "Копировать" : "Copy")}</span>
                                     </button>
                                 )}

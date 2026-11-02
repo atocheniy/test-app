@@ -1,5 +1,6 @@
 'use client';
 
+import Avatar from "@/components/Avatar";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatSalary } from "@/libs/format";
 import type { Vacancy } from "@/types/auth";
@@ -73,14 +74,14 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
     };
 
     return (
-        <div className="py-4 px-4 mx-2 border border-white/5 rounded-xl bg-white/[0.02] text-zinc-100 flex flex-col gap-3 min-w-0 overflow-hidden">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/5">
+        <div className="py-4 px-4 mx-2 border border-white/5 rounded-xl bg-white/[0.02] text-zinc-100 flex flex-col gap-3 min-w-0 overflow-hidden light:bg-white light:border-zinc-200/80 light:shadow-sm light:text-zinc-900">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/5 light:border-zinc-200/80">
                 <div className="flex items-center gap-2 min-w-0">
-                    <Briefcase size={15} className="text-zinc-400 shrink-0" />
-                    <span className="font-semibold text-sm text-zinc-200 truncate">
+                    <Briefcase size={15} className="text-zinc-400 shrink-0 light:text-zinc-500" />
+                    <span className="font-semibold text-sm text-zinc-200 truncate light:text-zinc-900">
                         {isRu ? 'Рекомендуемые вакансии' : 'Recommended vacancies'}
                     </span>
-                    <span className="text-[11px] text-zinc-500 font-mono shrink-0">
+                    <span className="text-[11px] text-zinc-500 font-mono shrink-0 light:text-zinc-400">
                         · {vacancies.length}
                     </span>
                 </div>
@@ -90,16 +91,16 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                         <button
                             type="button"
                             onClick={onRefresh}
-                            className="p-1 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition cursor-pointer"
+                            className="p-1 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition cursor-pointer light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                             title={isRu ? "Обновить рекомендации" : "Refresh recommendations"}
                         >
-                            <RotateCcw size={13} className={isRefreshing ? "animate-spin text-emerald-400" : ""} />
+                            <RotateCcw size={13} className={isRefreshing ? "animate-spin text-emerald-400 light:text-emerald-600" : ""} />
                         </button>
                     )}
 
                     <Link
                         href="/vacancies"
-                        className="text-xs text-zinc-500 hover:text-zinc-300 transition whitespace-nowrap"
+                        className="text-xs text-zinc-500 hover:text-zinc-300 transition whitespace-nowrap light:text-zinc-600 light:hover:text-zinc-900"
                     >
                         {isRu ? 'Все вакансии →' : 'All vacancies →'}
                     </Link>
@@ -110,7 +111,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                                 type="button"
                                 disabled={!canScrollLeft}
                                 onClick={() => scroll('left')}
-                                className="p-1 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
+                                className="p-1 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                 title={isRu ? "Назад" : "Previous"}
                             >
                                 <ChevronLeft size={15} />
@@ -119,7 +120,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                                 type="button"
                                 disabled={!canScrollRight}
                                 onClick={() => scroll('right')}
-                                className="p-1 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
+                                className="p-1 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-100"
                                 title={isRu ? "Вперед" : "Next"}
                             >
                                 <ChevronRight size={15} />
@@ -131,7 +132,7 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                         <button
                             type="button"
                             onClick={onDismiss}
-                            className="p-1 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-300 transition cursor-pointer"
+                            className="p-1 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-300 transition cursor-pointer light:text-zinc-400 light:hover:text-zinc-700 light:hover:bg-zinc-100"
                             title={isRu ? "Скрыть блок" : "Dismiss"}
                         >
                             <X size={14} />
@@ -151,39 +152,34 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                     return (
                         <div
                             key={v.id}
-                            className="w-full sm:w-[calc(50%-6px)] shrink-0 snap-start p-3.5 rounded-xl border border-white/5 bg-zinc-950/40 hover:bg-zinc-950/70 hover:border-white/10 transition flex flex-col justify-between gap-3 group min-w-0"
+                            className="w-full sm:w-[calc(50%-6px)] shrink-0 snap-start p-3.5 rounded-xl border border-white/5 bg-zinc-950/40 hover:bg-zinc-950/70 hover:border-white/10 transition flex flex-col justify-between gap-3 group min-w-0 light:bg-zinc-50/80 light:hover:bg-zinc-100/70 light:border-zinc-200/80 light:hover:border-zinc-300 light:shadow-xs"
                         >
                             <div className="flex flex-col gap-2 min-w-0">
                                 <div className="flex items-start justify-between gap-2 flex-wrap">
                                     <div className="flex items-center gap-2.5 min-w-0">
                                         <Link
                                             href={`/c/${v.companySlug}`}
-                                            className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/5 overflow-hidden shrink-0 block"
+                                            className="w-8 h-8 rounded-lg overflow-hidden shrink-0 block"
                                         >
-                                            {v.companyAvatar ? (
-                                                <img
-                                                    src={v.companyAvatar}
-                                                    className="w-full h-full object-cover"
-                                                    alt={v.companyName}
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center font-bold text-xs text-zinc-400">
-                                                    {v.companyName?.[0]?.toUpperCase()}
-                                                </div>
-                                            )}
+                                            <Avatar
+                                                src={v.companyAvatar}
+                                                name={v.companyName}
+                                                shape="rounded"
+                                                className="w-full h-full text-[10px]"
+                                            />
                                         </Link>
                                         <div className="min-w-0">
                                             <Link
                                                 href={`/c/${v.companySlug}`}
-                                                className="text-xs font-semibold text-zinc-300 hover:underline transition truncate flex items-center gap-1"
+                                                className="text-xs font-semibold text-zinc-300 hover:underline transition truncate flex items-center gap-1 light:text-zinc-800 light:hover:text-zinc-950"
                                             >
                                                 <span className="truncate">{v.companyName}</span>
                                                 {v.isCompanyVerified && (
-                                                    <CheckCircle2 size={12} className="text-blue-400 shrink-0" />
+                                                    <CheckCircle2 size={12} className="text-blue-400 light:text-blue-600 shrink-0" />
                                                 )}
                                             </Link>
                                             {v.companyLocation && (
-                                                <span className="text-[11px] text-zinc-500 flex items-center gap-1 truncate">
+                                                <span className="text-[11px] text-zinc-500 flex items-center gap-1 truncate light:text-zinc-500">
                                                     <MapPin size={10} />
                                                     {v.companyLocation}
                                                 </span>
@@ -193,11 +189,11 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
 
                                     <div className="flex items-center gap-1.5 shrink-0">
                                         {v.matchPercent && (
-                                            <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                            <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200">
                                                 ✨ {v.matchPercent}%
                                             </span>
                                         )}
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white/5 text-zinc-400 border border-white/5">
+                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white/5 text-zinc-400 border border-white/5 light:bg-zinc-200/60 light:text-zinc-700 light:border-zinc-300/60">
                                             {formatWorkTypeText(v.format)}
                                         </span>
                                     </div>
@@ -206,13 +202,13 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                                 <div className="flex flex-col gap-0.5">
                                     <Link
                                         href={`/vacancies?search=${encodeURIComponent(v.title)}`}
-                                        className="text-sm font-semibold text-zinc-100 hover:text-white transition line-clamp-1"
+                                        className="text-sm font-semibold text-zinc-100 hover:text-white transition line-clamp-1 light:text-zinc-900 light:hover:text-blue-600"
                                     >
                                         {v.title}
                                     </Link>
 
                                     {v.matchReason && (
-                                        <div className="text-[11px] text-emerald-400/90 font-medium truncate">
+                                        <div className="text-[11px] text-emerald-400/90 font-medium truncate light:text-emerald-700">
                                             {v.matchReason}
                                         </div>
                                     )}
@@ -220,49 +216,49 @@ export default function FeedVacanciesBlock({ vacancies, onDismiss, onRefresh, is
                                     {hasSalary ? (
                                         <span
                                             suppressHydrationWarning
-                                            className="text-xs font-medium text-emerald-400"
+                                            className="text-xs font-medium text-emerald-400 light:text-emerald-600 light:font-semibold"
                                         >
                                             {formatSalary(v.salaryFrom, v.salaryTo, v.currency)}
                                         </span>
                                     ) : (
-                                        <span className="text-xs text-zinc-500">
+                                        <span className="text-xs text-zinc-500 light:text-zinc-500">
                                             {isRu ? 'Зарплата не указана' : 'Salary not specified'}
                                         </span>
                                     )}
                                 </div>
 
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white/5 text-zinc-300 border border-white/5">
+                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white/5 text-zinc-300 border border-white/5 light:bg-zinc-200/60 light:text-zinc-800 light:border-zinc-300/60 font-medium">
                                         {formatLevelText(v.level)}
                                     </span>
 
                                     {v.stack && v.stack.slice(0, 3).map((tech, idx) => (
                                         <span
                                             key={idx}
-                                            className="text-[10px] px-2 py-0.5 rounded-md bg-white/[0.03] text-zinc-400 border border-white/5 truncate max-w-[90px]"
+                                            className="text-[10px] px-2 py-0.5 rounded-md bg-white/[0.03] text-zinc-400 border border-white/5 truncate max-w-[90px] light:bg-zinc-200/50 light:text-zinc-700 light:border-zinc-300/60"
                                         >
                                             {tech}
                                         </span>
                                     ))}
 
                                     {v.stack && v.stack.length > 3 && (
-                                        <span className="text-[10px] text-zinc-500">
+                                        <span className="text-[10px] text-zinc-500 light:text-zinc-500">
                                             +{v.stack.length - 3}
                                         </span>
                                     )}
                                 </div>
 
                                 {v.description && (
-                                    <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                                    <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed light:text-zinc-600">
                                         {v.description}
                                     </p>
                                 )}
                             </div>
 
-                            <div className="pt-2 border-t border-white/5">
+                            <div className="pt-2 border-t border-white/5 light:border-zinc-200/80">
                                 <Link
                                     href={`/vacancies?search=${encodeURIComponent(v.title)}`}
-                                    className="w-full py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white font-medium text-xs text-center transition block"
+                                    className="w-full py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white font-medium text-xs text-center transition block light:bg-white light:border light:border-zinc-200 light:hover:bg-zinc-100 light:text-zinc-800 light:hover:text-zinc-950 light:shadow-xs"
                                 >
                                     {isRu ? 'Смотреть вакансию' : 'View vacancy'}
                                 </Link>
