@@ -2,7 +2,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import UserAvatar from "@/components/Avatar";
 import { X } from "lucide-react";
 import Link from "next/link";
-import { LinearBlur } from "progressive-blur";
+import ProgressiveBlur from "@/components/ProgressiveBlur";
 
 interface TitlebarMessageProps {
     Id: string;
@@ -22,7 +22,7 @@ export default function TitlebarMessage({ Id, Name, UserName, Info, Avatar, isOn
 
     return (
         <div className="sticky top-0 shrink-0 z-50 flex items-center h-14 px-3 bg-transparent relative max-md:bg-black/90 light:bg-white/80 light:border-b light:border-zinc-200/80 light:shadow-sm light:backdrop-blur-md">
-            <LinearBlur
+            <ProgressiveBlur
                 className="max-md:hidden light:hidden"
                 side="top"
                 steps={6}

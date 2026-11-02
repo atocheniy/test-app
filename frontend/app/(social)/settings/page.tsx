@@ -24,20 +24,78 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function Settings() {
-    const { userData, logout } = useApplication();
+    const { userData, setUserData, connection, logout } = useApplication();
     const { language, setLanguage, t } = useLanguage();
-    const { theme, setTheme } = useTheme();
+    const { theme, setTheme, codeFontSize, setCodeFontSize, blurEnabled, setBlurEnabled } = useTheme();
     const isRu = language === 'ru';
 
     const [mounted, setMounted] = useState(false);
     const [showOnlineStatus, setShowOnlineStatus] = useState(true);
+    const [allowDirectMessages, setAllowDirectMessages] = useState(true);
+    const [isPrivate, setIsPrivate] = useState(false);
 
     useEffect(() => {
         setMounted(true);
     }, []);
-    const [allowDirectMessages, setAllowDirectMessages] = useState(true);
-    const [soundEnabled, setSoundEnabled] = useState(true);
-    const [blurEnabled, setBlurEnabled] = useState(true);
+
+    useEffect(() => {
+        if (userData && userData.userName && userData.userName !== '...') {
+            if (userData.showOnlineStatus !== undefined) {
+                setShowOnlineStatus(userData.showOnlineStatus);
+            }
+            if (userData.allowDirectMessages !== undefined) {
+                setAllowDirectMessages(userData.allowDirectMessages);
+            }
+            if (userData.isPrivate !== undefined) {
+                setIsPrivate(userData.isPrivate);
+            }
+        }
+    }, [userData.showOnlineStatus, userData.allowDirectMessages, userData.isPrivate, userData.userName]);
+
+    const handleToggleOnlineStatus = async () => {
+        const nextValue = !showOnlineStatus;
+        setShowOnlineStatus(nextValue);
+        setUserData(prev => ({ ...prev, showOnlineStatus: nextValue }));
+
+        try {
+            await UserService.updatePrivacySettings({ showOnlineStatus: nextValue });
+            if (connection && connection.state === 'Connected') {
+                await connection.invoke("ChangeOnlineStatus", "global", nextValue);
+            }
+        } catch (error) {
+            console.error("Failed to update online status:", error);
+            setShowOnlineStatus(!nextValue);
+            setUserData(prev => ({ ...prev, showOnlineStatus: !nextValue }));
+        }
+    };
+
+    const handleToggleDirectMessages = async () => {
+        const nextValue = !allowDirectMessages;
+        setAllowDirectMessages(nextValue);
+        setUserData(prev => ({ ...prev, allowDirectMessages: nextValue }));
+
+        try {
+            await UserService.updatePrivacySettings({ allowDirectMessages: nextValue });
+        } catch (error) {
+            console.error("Failed to update direct messages setting:", error);
+            setAllowDirectMessages(!nextValue);
+            setUserData(prev => ({ ...prev, allowDirectMessages: !nextValue }));
+        }
+    };
+
+    const handleToggleIsPrivate = async () => {
+        const nextValue = !isPrivate;
+        setIsPrivate(nextValue);
+        setUserData(prev => ({ ...prev, isPrivate: nextValue }));
+
+        try {
+            await UserService.updatePrivacySettings({ isPrivate: nextValue });
+        } catch (error) {
+            console.error("Failed to update private account setting:", error);
+            setIsPrivate(!nextValue);
+            setUserData(prev => ({ ...prev, isPrivate: !nextValue }));
+        }
+    };
 
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -227,7 +285,7 @@ export default function Settings() {
                                 <h4 className="text-sm font-medium text-zinc-200 light:text-zinc-900">{t.settings.onlineStatusTitle}</h4>
                                 <p className="text-xs text-zinc-500 light:text-zinc-600">{t.settings.onlineStatusDesc}</p>
                             </div>
-                            <Toggle active={showOnlineStatus} onToggle={() => setShowOnlineStatus(!showOnlineStatus)} />
+                            <Toggle active={showOnlineStatus} onToggle={handleToggleOnlineStatus} />
                         </div>
 
                         <div className="py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
@@ -235,7 +293,15 @@ export default function Settings() {
                                 <h4 className="text-sm font-medium text-zinc-200 light:text-zinc-900">{t.settings.directMessagesTitle}</h4>
                                 <p className="text-xs text-zinc-500 light:text-zinc-600">{t.settings.directMessagesDesc}</p>
                             </div>
-                            <Toggle active={allowDirectMessages} onToggle={() => setAllowDirectMessages(!allowDirectMessages)} />
+                            <Toggle active={allowDirectMessages} onToggle={handleToggleDirectMessages} />
+                        </div>
+
+                        <div className="py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1 pr-2">
+                                <h4 className="text-sm font-medium text-zinc-200 light:text-zinc-900">{t.settings.privateProfileTitle}</h4>
+                                <p className="text-xs text-zinc-500 light:text-zinc-600">{t.settings.privateProfileDesc}</p>
+                            </div>
+                            <Toggle active={isPrivate} onToggle={handleToggleIsPrivate} />
                         </div>
                     </div>
                 </div>
@@ -291,6 +357,49 @@ export default function Settings() {
                                 >
                                     <Monitor size={13} />
                                     <span>{t.settings.themeSystem}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="min-w-0 flex-1 pr-2">
+                                <h4 className="text-sm font-medium text-zinc-200 light:text-zinc-900">{t.settings.codeFontSizeTitle}</h4>
+                                <p className="text-xs text-zinc-500 light:text-zinc-600">{t.settings.codeFontSizeDesc}</p>
+                            </div>
+                            
+                            <div className="inline-flex flex-wrap items-center p-1 rounded-2xl bg-zinc-900/80 border border-white/10 light:bg-zinc-100 light:border-zinc-200 shrink-0 self-start sm:self-auto max-w-full">
+                                <button
+                                    type="button"
+                                    onClick={() => setCodeFontSize('sm')}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                                        codeFontSize === 'sm'
+                                            ? 'bg-white text-black shadow-lg shadow-white/10 light:bg-white light:text-zinc-900 light:shadow-sm'
+                                            : 'text-zinc-400 hover:text-white hover:bg-white/5 light:text-zinc-600 light:hover:text-zinc-900 light:hover:bg-zinc-200/60'
+                                    }`}
+                                >
+                                    <span>{t.settings.codeFontSm}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setCodeFontSize('md')}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                                        codeFontSize === 'md'
+                                            ? 'bg-white text-black shadow-lg shadow-white/10 light:bg-white light:text-zinc-900 light:shadow-sm'
+                                            : 'text-zinc-400 hover:text-white hover:bg-white/5 light:text-zinc-600 light:hover:text-zinc-900 light:hover:bg-zinc-200/60'
+                                    }`}
+                                >
+                                    <span>{t.settings.codeFontMd}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setCodeFontSize('lg')}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                                        codeFontSize === 'lg'
+                                            ? 'bg-white text-black shadow-lg shadow-white/10 light:bg-white light:text-zinc-900 light:shadow-sm'
+                                            : 'text-zinc-400 hover:text-white hover:bg-white/5 light:text-zinc-600 light:hover:text-zinc-900 light:hover:bg-zinc-200/60'
+                                    }`}
+                                >
+                                    <span>{t.settings.codeFontLg}</span>
                                 </button>
                             </div>
                         </div>

@@ -32,6 +32,9 @@ public class ApplicationUser : IdentityUser
     public bool IsActive { get; set; } = true;
     public string? Room { get; set; }
     public string PreferredLanguage { get; set; } = "ru";
+    public bool ShowOnlineStatus { get; set; } = true;
+    public bool AllowDirectMessages { get; set; } = true;
+    public bool IsPrivate { get; set; } = false;
     
     public virtual ICollection<ChatParticipant> Chats { get; set; } = new List<ChatParticipant>();
     public virtual ICollection<UserProject> Projects { get; set; } = new List<UserProject>();

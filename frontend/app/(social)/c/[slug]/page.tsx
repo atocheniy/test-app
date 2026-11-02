@@ -1201,13 +1201,22 @@ export default function Profile() {
             <Modal
                 isOpen={isCreateVacancyOpen}
                 onClose={() => setIsCreateVacancyOpen(false)}
-                className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
+                className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-y-auto md:overflow-hidden flex flex-col md:grid md:grid-cols-12 relative shadow-[0_24px_80px_rgba(0,0,0,0.85)] light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
             >
-                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-4 light:bg-zinc-50/80 light:border-zinc-200">
+                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-5 sm:p-6 flex flex-col justify-between gap-4 shrink-0 light:bg-zinc-50/80 light:border-zinc-200">
                             <div className="space-y-3">
-                                <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
-                                    {isRu ? "Превью вакансии" : "Vacancy Preview"}
-                                </span>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
+                                        {isRu ? "Превью вакансии" : "Vacancy Preview"}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCreateVacancyOpen(false)}
+                                        className="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
                                 <div className="p-4 rounded-2xl border border-white/10 bg-[#050505]/90 space-y-3 shadow-xl light:bg-white light:border-zinc-200 light:shadow-md">
                                     <div className="flex flex-wrap gap-1.5">
                                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-neutral-200 border border-white/15 light:bg-blue-50 light:text-blue-700 light:border-blue-200">
@@ -1246,7 +1255,7 @@ export default function Profile() {
                             </p>
                         </div>
 
-                        <div className="md:col-span-8 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh]">
+                        <div className="md:col-span-8 p-5 sm:p-7 md:overflow-y-auto md:no-scrollbar md:max-h-[90vh]">
                             <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10 light:border-zinc-200">
                                 <div>
                                     <h3 className="text-lg font-bold text-neutral-100 tracking-tight light:text-zinc-900">{isRu ? "Создать вакансию" : "Create Vacancy"}</h3>
@@ -1255,7 +1264,7 @@ export default function Profile() {
                                 <button
                                     type="button"
                                     onClick={() => setIsCreateVacancyOpen(false)}
-                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    className="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                 >
                                     <X size={16} />
                                 </button>
@@ -1377,7 +1386,7 @@ export default function Profile() {
                                     />
                                 </div>
 
-                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 light:border-zinc-200">
+                                <div className="flex items-center justify-end gap-3 pt-4 pb-2 border-t border-white/10 light:border-zinc-200">
                                     <button
                                         type="button"
                                         onClick={() => setIsCreateVacancyOpen(false)}
@@ -1400,20 +1409,29 @@ export default function Profile() {
             <Modal
                 isOpen={isEditOpen}
                 onClose={() => setIsEditOpen(false)}
-                className="w-full max-w-[920px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
+                className="w-full max-w-[920px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-y-auto md:overflow-hidden flex flex-col md:grid md:grid-cols-12 relative shadow-[0_24px_80px_rgba(0,0,0,0.85)] light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
             >
-                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-5 light:bg-zinc-50/80 light:border-zinc-200">
+                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-5 sm:p-6 flex flex-col justify-between gap-5 shrink-0 light:bg-zinc-50/80 light:border-zinc-200">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
                                         {isRu ? "Превью карточки" : "Live Card Preview"}
                                     </span>
-                                    {isSaving && (
-                                        <span className="inline-flex items-center gap-1.5 text-xs text-neutral-400 light:text-zinc-500">
-                                            <Loader2 size={12} className="animate-spin text-white light:text-zinc-900" />
-                                            <span>{isRu ? "Загрузка..." : "Saving..."}</span>
-                                        </span>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        {isSaving && (
+                                            <span className="inline-flex items-center gap-1.5 text-xs text-neutral-400 light:text-zinc-500">
+                                                <Loader2 size={12} className="animate-spin text-white light:text-zinc-900" />
+                                                <span>{isRu ? "Загрузка..." : "Saving..."}</span>
+                                            </span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditOpen(false)}
+                                            className="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="rounded-2xl border border-white/10 bg-[#050505]/90 overflow-hidden shadow-xl light:bg-white light:border-zinc-200 light:shadow-md">
@@ -1510,7 +1528,7 @@ export default function Profile() {
                             </p>
                         </div>
 
-                        <div className="md:col-span-8 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh]">
+                        <div className="md:col-span-8 p-5 sm:p-7 md:overflow-y-auto md:no-scrollbar md:max-h-[90vh]">
                             <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10 light:border-zinc-200">
                                 <div>
                                     <h3 className="text-lg font-bold text-neutral-100 tracking-tight light:text-zinc-900">
@@ -1521,7 +1539,7 @@ export default function Profile() {
                                 <button
                                     type="button"
                                     onClick={() => setIsEditOpen(false)}
-                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    className="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                 >
                                     <X size={16} />
                                 </button>
@@ -1713,7 +1731,7 @@ export default function Profile() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 light:border-zinc-200">
+                                <div className="flex items-center justify-end gap-3 pt-4 pb-2 border-t border-white/10 light:border-zinc-200">
                                     <button
                                         type="button"
                                         onClick={() => setIsEditOpen(false)}

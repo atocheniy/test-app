@@ -4,7 +4,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { LinearBlur } from "progressive-blur";
+import ProgressiveBlur from "@/components/ProgressiveBlur";
 
 export default function Titlebar({ title }: { title: string }) {
     const router = useRouter();
@@ -14,7 +14,7 @@ export default function Titlebar({ title }: { title: string }) {
 
   return (
     <div className="sticky top-0 shrink-0 z-1000 relative max-md:top-2 max-md:mx-3 max-md:mt-2 max-md:mb-1 max-md:rounded-full max-md:bg-black/85 max-md:border max-md:border-white/10 max-md:shadow-2xl max-md:shadow-black/60 light:max-md:bg-white/90 light:max-md:border-zinc-200/80 light:max-md:shadow-black/10">
-      <LinearBlur
+      <ProgressiveBlur
                 className="max-md:hidden"
                 side="top"
                 steps={6}

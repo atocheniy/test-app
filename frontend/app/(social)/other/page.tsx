@@ -359,13 +359,25 @@ export default function OtherPage() {
                     setIsCreateCommunityOpen(false);
                     setFormError(null);
                 }}
-                className="w-full max-w-[900px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
+                className="w-full max-w-[900px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-y-auto md:overflow-hidden flex flex-col md:grid md:grid-cols-12 relative shadow-[0_24px_80px_rgba(0,0,0,0.85)] light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
             >
-                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-4 light:bg-zinc-50/80 light:border-zinc-200">
+                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-5 sm:p-6 flex flex-col justify-between gap-4 shrink-0 light:bg-zinc-50/80 light:border-zinc-200">
                             <div className="space-y-4">
-                                <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
-                                    {isRu ? "Превью карточки" : "Live Card Preview"}
-                                </span>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
+                                        {isRu ? "Превью карточки" : "Live Card Preview"}
+                                    </span>
+                                    <button 
+                                        type="button"
+                                        onClick={() => {
+                                            setIsCreateCommunityOpen(false);
+                                            setFormError(null);
+                                        }}
+                                        className="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
 
                                 <div className="rounded-2xl border border-white/10 bg-[#050505]/90 overflow-hidden shadow-xl light:bg-white light:border-zinc-200 light:shadow-sm">
                                     <div className="h-20 w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-neutral-800 via-neutral-950 to-black relative light:from-zinc-100 light:via-zinc-200 light:to-zinc-300" />
@@ -440,7 +452,7 @@ export default function OtherPage() {
                             </p>
                         </div>
 
-                        <div className="md:col-span-8 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh]">
+                        <div className="md:col-span-8 p-5 sm:p-7 md:overflow-y-auto md:no-scrollbar md:max-h-[90vh]">
                             <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10 light:border-zinc-200">
                                 <div>
                                     <h3 className="text-lg font-bold text-neutral-100 tracking-tight light:text-zinc-900">{isRu ? "Создать сообщество или компанию" : "Create Community or Company"}</h3>
@@ -452,7 +464,7 @@ export default function OtherPage() {
                                         setIsCreateCommunityOpen(false);
                                         setFormError(null);
                                     }}
-                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    className="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                 >
                                     <X size={16} />
                                 </button>
@@ -654,7 +666,7 @@ export default function OtherPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 light:border-zinc-200">
+                                <div className="flex items-center justify-end gap-3 pt-4 pb-2 border-t border-white/10 light:border-zinc-200">
                                     <button
                                         type="button"
                                         onClick={() => {

@@ -45,6 +45,10 @@ export interface User{
     technologies?: string[];
     focus?: string;
     preferredLanguage?: 'ru' | 'en';
+    showOnlineStatus?: boolean;
+    allowDirectMessages?: boolean;
+    isPrivate?: boolean;
+    isLocked?: boolean;
     projects?: UserProject[];
     experiences?: UserExperience[];
 }

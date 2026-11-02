@@ -162,6 +162,9 @@ namespace server.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("AllowDirectMessages")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Avatar")
                         .HasColumnType("text");
 
@@ -209,6 +212,9 @@ namespace server.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsPrivate")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Location")
                         .HasColumnType("text");
 
@@ -244,6 +250,9 @@ namespace server.Migrations
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
+
+                    b.Property<bool>("ShowOnlineStatus")
+                        .HasColumnType("boolean");
 
                     b.PrimitiveCollection<string[]>("Technologies")
                         .HasColumnType("text[]");

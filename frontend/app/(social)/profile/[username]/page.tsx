@@ -24,6 +24,7 @@ import {
     Code2,
     Globe,
     LayoutGrid,
+    Lock,
     Mail,
     MapPin,
     Send,
@@ -110,13 +111,19 @@ export default function Profile() {
     const handleWriteMessage = async () => {
         if (!otherUserData?.id || loadingChat) return;
 
+        if (otherUserData.allowDirectMessages === false) {
+            alert(isRu ? "Пользователь ограничил отправку личных сообщений" : "User has disabled direct messages");
+            return;
+        }
+
         try {
             setLoadingChat(true);
             const data = await ChatService.startChat(otherUserData.id);
-            
             router.push(`/messages?chatId=${data.chatId}`);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Не удалось начать чат:", error);
+            const msg = error?.response?.data?.message || (isRu ? "Не удалось начать чат" : "Failed to start chat");
+            alert(msg);
         } finally {
             setLoadingChat(false);
         }
@@ -128,6 +135,8 @@ export default function Profile() {
         usernameFromUrl &&
         usernameFromUrl.toLowerCase() === userData.userName.toLowerCase()
     );
+
+    const isAccountLocked = !isOwnProfile && (Boolean(otherUserData.isLocked) || (Boolean(otherUserData.isPrivate) && !isWatchingUser));
     
     useEffect(() => {
         if (isOwnProfile) {
@@ -222,7 +231,14 @@ export default function Profile() {
                             )}
                         </div>
                         <div className="mb-1 sm:mb-2 min-w-0 flex-1">
-                            <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 break-words light:text-zinc-900">{otherUserData.fullName}</h2>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 break-words light:text-zinc-900">{otherUserData.fullName}</h2>
+                                {otherUserData.isPrivate && (
+                                    <span title={isRu ? "Закрытый профиль" : "Private profile"} className="inline-flex items-center text-zinc-400 light:text-zinc-500">
+                                        <Lock size={16} />
+                                    </span>
+                                )}
+                            </div>
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
                                 <p className="text-sm text-zinc-400 break-all light:text-zinc-500">@{otherUserData.userName}</p>
                                 <span className="text-sm text-zinc-400 light:text-zinc-400">•</span>
@@ -252,12 +268,22 @@ export default function Profile() {
                                     >
                                         {isWatchingUser ? (isRu ? "Вы читаете" : "Following") : t.profile.watchBtn}
                                     </button>
-                                    <button 
-                                        className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 text-center light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
-                                        onClick={handleWriteMessage}
-                                    >
-                                        {isRu ? "Написать сообщение" : "Write a message"}
-                                    </button>
+                                    {otherUserData.allowDirectMessages === false ? (
+                                        <button 
+                                            disabled
+                                            title={isRu ? "Пользователь ограничил входящие личные сообщения" : "User has disabled direct messages"}
+                                            className="px-4 py-2 text-sm font-medium bg-white/5 text-zinc-500 rounded-3xl cursor-not-allowed whitespace-nowrap shrink-0 text-center border border-white/5 light:bg-zinc-100 light:text-zinc-400 light:border-zinc-200"
+                                        >
+                                            {isRu ? "ЛС закрыты" : "DMs disabled"}
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            className="px-4 py-2 text-sm font-medium bg-white text-stone-950 rounded-3xl hover:bg-stone-300 transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 text-center light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
+                                            onClick={handleWriteMessage}
+                                        >
+                                            {isRu ? "Написать сообщение" : "Write a message"}
+                                        </button>
+                                    )}
                                 </>
                             )}
                         </div>
@@ -292,7 +318,21 @@ export default function Profile() {
                         )}
                     </div>
 
-                    <div className="mt-8 border-b border-white/5 flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar light:border-zinc-200/80">
+                    {isAccountLocked ? (
+                        <div className="mt-8 p-8 sm:p-12 rounded-3xl border border-white/5 bg-zinc-950/20 flex flex-col items-center justify-center text-center light:bg-zinc-50 light:border-zinc-200/80">
+                            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4 text-zinc-300 border border-white/10 light:bg-zinc-200/80 light:text-zinc-700 light:border-zinc-300">
+                                <Lock size={26} />
+                            </div>
+                            <h3 className="text-base font-bold text-zinc-100 light:text-zinc-900 mb-1.5">
+                                {t.settings.privateAccountNoticeTitle}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-zinc-500 light:text-zinc-600 max-w-md">
+                                {t.settings.privateAccountNoticeDesc}
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="mt-8 border-b border-white/5 flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar light:border-zinc-200/80">
                         <button
                             type="button"
                             onClick={() => setProfileTab('details')}
@@ -678,11 +718,14 @@ export default function Profile() {
                             </div>
                         )}
                     </div>
+                </>
+            )}
                 </div>
             </div>
 
-            <div>
-                <Titlebar title={isRu ? "Активность" : "Activity"}></Titlebar>
+            {!isAccountLocked && (
+                <div>
+                    <Titlebar title={isRu ? "Активность" : "Activity"}></Titlebar>
                 <div>
                                 
                     <div className="flex flex-col gap-4 p-6 max-sm:p-0 max-sm:py-6 max-sm:pb-[90px]">
@@ -738,6 +781,7 @@ export default function Profile() {
                     </div>
                 </div>
             </div>
+            )}
         </div>
     )
 }

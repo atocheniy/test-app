@@ -133,6 +133,15 @@ namespace server.Controllers
             if (currentUserId == targetUserId)
                 return BadRequest("Error");
 
+            var targetUser = await _context.Users.FindAsync(targetUserId);
+            if (targetUser == null)
+                return NotFound("User not found");
+
+            if (!targetUser.AllowDirectMessages)
+            {
+                return BadRequest(new { message = "Пользователь ограничил отправку личных сообщений", code = "DM_DISABLED" });
+            }
+
             var existingChatId = await _context.Chat
                 .Where(c => c.Participants.Count == 2 &&
                             c.Participants.Any(p => p.UserId == currentUserId) &&

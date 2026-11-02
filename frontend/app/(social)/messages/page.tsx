@@ -295,8 +295,10 @@ function MessagesContent() {
                     ? { ...c, content: sentMessage.content || (attachments.length ? (isRu ? "📷 Фото" : "📷 Photo") : ""), time: sentMessage.time }
                     : c
             ));
-        } catch (error) {
+        } catch (error: any) {
             console.error("Ошибка отправки:", error);
+            const msg = error?.response?.data?.message || (isRu ? "Не удалось отправить сообщение" : "Failed to send message");
+            alert(msg);
         }
     };
 

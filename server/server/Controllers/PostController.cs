@@ -1134,6 +1134,14 @@ namespace server.Controllers
             var user = await _userManager.FindByNameAsync(username);
             if (user == null) return NotFound();
 
+            var isOwn = currentUserId != null && currentUserId == user.Id;
+            var isWatching = currentUserId != null && await _context.UserWatchers
+                .AnyAsync(uw => uw.WatcherId == currentUserId && uw.TargetUserId == user.Id);
+            if (user.IsPrivate && !isOwn && !isWatching)
+            {
+                return Ok(new { posts = Array.Empty<object>(), nextCursor = (DateTime?)null, hasMore = false, isLocked = true });
+            }
+
             limit = Math.Clamp(limit, 1, 50);
 
             var query = _context.Post

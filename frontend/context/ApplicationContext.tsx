@@ -19,6 +19,7 @@ interface RepostTarget {
 
 interface ApplicationContextType {
     userData: User;
+    setUserData: React.Dispatch<React.SetStateAction<User>>;
     UserNameNormalized: string;
     refreshUserData: () => Promise<void>;
 
@@ -61,10 +62,10 @@ const ApplicationContext = createContext<ApplicationContextType | null>(null);
 
 export const ApplicationProvider = ({ children }: { children: React.ReactNode }) => {
    
-    const [userData, setUserData] = useState<User>({ id: '', fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [], focus: '', projects: [], experiences: [] });
+    const [userData, setUserData] = useState<User>({ id: '', fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [], focus: '', projects: [], experiences: [], showOnlineStatus: true, allowDirectMessages: true });
     const [UserNameNormalized, setUserNameNormalized] = useState<string>('');
 
-    const [otherUserData, setOtherUserData] = useState<User>({ id: '', fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [], focus: '', projects: [], experiences: [] });
+    const [otherUserData, setOtherUserData] = useState<User>({ id: '', fullName: 'Загрузка...', userName: '...', email: '', bio_FirstLine: '', bio_SecondLine: '', avatar: "", banner: "", followers: 0, followings: 0, technologies: [], focus: '', projects: [], experiences: [], showOnlineStatus: true, allowDirectMessages: true });
     const [otherUserPostsData, setOtherUserPostsData] = useState<Post[]>([]);
     const [otherUserPostsCursor, setOtherUserPostsCursor] = useState<string | null>(null);
     const [hasMoreOtherUserPosts, setHasMoreOtherUserPosts] = useState<boolean>(true);
@@ -461,6 +462,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
 
     const contextValue = useMemo(() => ({ 
         userData, 
+        setUserData,
         UserNameNormalized,
         refreshUserData, 
         postsData,

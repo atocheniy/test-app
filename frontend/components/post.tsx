@@ -26,7 +26,7 @@ import { PostService } from "@/services/postService";
 import "@uiw/react-markdown-preview/markdown.css";
 import "@uiw/react-md-editor/markdown-editor.css";
 import { useRouter } from "next/navigation";
-import { LinearBlur } from "progressive-blur";
+import ProgressiveBlur from "@/components/ProgressiveBlur";
 import { useEffect, useRef, useState } from "react";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), { ssr: false });
@@ -569,7 +569,7 @@ export default function Post({
 
           {isLongPost && !isExpanded && (
             <>
-              <LinearBlur
+              <ProgressiveBlur
                 side="bottom"
                 steps={5}
                 strength={4}

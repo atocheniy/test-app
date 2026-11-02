@@ -345,6 +345,38 @@ public class AuthController : ControllerBase
         return Ok(new { language = user.PreferredLanguage });
     }
 
+    [HttpPatch("updatePrivacySettings")]
+    [Authorize]
+    public async Task<IActionResult> UpdatePrivacySettings([FromBody] UpdatePrivacySettingsDto model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        if (model.ShowOnlineStatus.HasValue)
+        {
+            user.ShowOnlineStatus = model.ShowOnlineStatus.Value;
+        }
+
+        if (model.AllowDirectMessages.HasValue)
+        {
+            user.AllowDirectMessages = model.AllowDirectMessages.Value;
+        }
+
+        if (model.IsPrivate.HasValue)
+        {
+            user.IsPrivate = model.IsPrivate.Value;
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(new
+        {
+            showOnlineStatus = user.ShowOnlineStatus,
+            allowDirectMessages = user.AllowDirectMessages,
+            isPrivate = user.IsPrivate
+        });
+    }
+
     [HttpGet("me")]
     [Authorize]
     public async Task<IActionResult> GetCurrentUser()
@@ -417,7 +449,11 @@ public class AuthController : ControllerBase
             watchingCount = watchingCount,
             projects = projects,
             experiences = experiences,
-            preferredLanguage = user.PreferredLanguage ?? "ru"
+            preferredLanguage = user.PreferredLanguage ?? "ru",
+            showOnlineStatus = user.ShowOnlineStatus,
+            allowDirectMessages = user.AllowDirectMessages,
+            isPrivate = user.IsPrivate,
+            isLocked = false
         });
     }
     
@@ -431,13 +467,16 @@ public class AuthController : ControllerBase
         var isWatching = currentUserId != null && await _context.UserWatchers
             .AnyAsync(uw => uw.WatcherId == currentUserId && uw.TargetUserId == user.Id);
 
+        var isOwn = currentUserId != null && currentUserId == user.Id;
+        var isLocked = user.IsPrivate && !isOwn && !isWatching;
+
         var watchersCount = await _context.UserWatchers
             .CountAsync(uw => uw.TargetUserId == user.Id);
 
         var watchingCount = await _context.UserWatchers
             .CountAsync(uw => uw.WatcherId == user.Id);
 
-        var projects = await _context.UserProjects
+        var projects = isLocked ? (object)Array.Empty<object>() : await _context.UserProjects
             .Where(p => p.UserId == user.Id)
             .OrderByDescending(p => p.CreatedAt)
             .Select(p => new {
@@ -457,7 +496,7 @@ public class AuthController : ControllerBase
             })
             .ToListAsync();
 
-        var experiences = await _context.UserExperiences
+        var experiences = isLocked ? (object)Array.Empty<object>() : await _context.UserExperiences
             .Where(e => e.UserId == user.Id)
             .OrderByDescending(e => e.CreatedAt)
             .Select(e => new {
@@ -496,7 +535,11 @@ public class AuthController : ControllerBase
             isWatching = isWatching,
             projects = projects,
             experiences = experiences,
-            preferredLanguage = user.PreferredLanguage ?? "ru"
+            preferredLanguage = user.PreferredLanguage ?? "ru",
+            showOnlineStatus = user.ShowOnlineStatus,
+            allowDirectMessages = user.AllowDirectMessages,
+            isPrivate = user.IsPrivate,
+            isLocked = isLocked
         });
     }
 

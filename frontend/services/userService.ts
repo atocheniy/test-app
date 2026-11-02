@@ -94,4 +94,9 @@ export const UserService = {
         const response = await $api.patch<{ language: 'ru' | 'en' }>('/auth/updateLanguage', { language });
         return response.data;
     },
+
+    async updatePrivacySettings(data: { showOnlineStatus?: boolean; allowDirectMessages?: boolean; isPrivate?: boolean }) {
+        const response = await $api.patch<{ showOnlineStatus: boolean; allowDirectMessages: boolean; isPrivate: boolean }>('/auth/updatePrivacySettings', data);
+        return response.data;
+    },
 };

@@ -1104,20 +1104,40 @@ export default function Profile() {
             <Modal
                 isOpen={isEditOpen}
                 onClose={() => setIsEditOpen(false)}
-                className="w-full max-w-[1040px] max-h-[92vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
+                className="w-full max-w-[1040px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-y-auto md:overflow-hidden flex flex-col md:grid md:grid-cols-12 relative shadow-[0_24px_80px_rgba(0,0,0,0.85)] light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
             >
-                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-5 light:bg-zinc-50/80 light:border-zinc-200">
+                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-5 sm:p-6 flex flex-col justify-between gap-5 shrink-0 light:bg-zinc-50/80 light:border-zinc-200">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
-                                        {isRu ? "Превью карточки" : "Live Card Preview"}
-                                    </span>
-                                    {isSaving && (
-                                        <span className="inline-flex items-center gap-1.5 text-xs text-neutral-400 light:text-zinc-500">
-                                            <Loader2 size={12} className="animate-spin text-white light:text-zinc-900" />
-                                            <span>{isRu ? "Загрузка..." : "Saving..."}</span>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-neutral-100 md:hidden light:text-zinc-900">{t.profile.editProfile}</h3>
+                                        <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block light:text-zinc-500">
+                                            {isRu ? "Превью карточки" : "Live Card Preview"}
                                         </span>
-                                    )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {isSaving && (
+                                            <span className="inline-flex items-center gap-1.5 text-xs text-neutral-400 light:text-zinc-500">
+                                                <Loader2 size={12} className="animate-spin text-white light:text-zinc-900" />
+                                                <span className="hidden sm:inline">{isRu ? "Загрузка..." : "Saving..."}</span>
+                                            </span>
+                                        )}
+                                        <button
+                                            type="submit"
+                                            form="edit-profile-form"
+                                            disabled={isSaving}
+                                            className="md:hidden px-3 py-1.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-neutral-200 active:scale-[0.98] transition disabled:opacity-50 cursor-pointer light:bg-zinc-900 light:text-white"
+                                        >
+                                            {isSaving ? (isRu ? "..." : "...") : (isRu ? "Сохранить" : "Save")}
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            onClick={() => setIsEditOpen(false)}
+                                            className="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="rounded-2xl border border-white/10 bg-[#050505]/90 overflow-hidden shadow-xl light:bg-white light:border-zinc-200 light:shadow-md">
@@ -1237,7 +1257,7 @@ export default function Profile() {
                             </p>
                         </div>
 
-                        <div className="md:col-span-8 p-6 sm:p-8 overflow-y-auto no-scrollbar max-h-[92vh] light:bg-white">
+                        <div className="md:col-span-8 p-5 sm:p-8 md:overflow-y-auto md:no-scrollbar md:max-h-[90vh] light:bg-white">
                             <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10 light:border-zinc-200">
                                 <div>
                                     <h3 className="text-lg font-bold text-neutral-100 tracking-tight light:text-zinc-900">{t.profile.editProfile}</h3>
@@ -1246,13 +1266,13 @@ export default function Profile() {
                                 <button 
                                     type="button"
                                     onClick={() => setIsEditOpen(false)}
-                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    className="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                 >
                                     <X size={16} />
                                 </button>
                             </div>
 
-                            <form onSubmit={handleSaveProfile} className="space-y-4">
+                            <form id="edit-profile-form" onSubmit={handleSaveProfile} className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-500">{isRu ? "Отображаемое имя" : "Display Name"}</label>
@@ -1473,7 +1493,7 @@ export default function Profile() {
                                     )}
                                 </div>
 
-                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 light:border-zinc-200">
+                                <div className="flex items-center justify-end gap-3 pt-4 pb-2 border-t border-white/10 light:border-zinc-200">
                                     <button
                                         type="button"
                                         onClick={() => setIsEditOpen(false)}
@@ -1496,25 +1516,34 @@ export default function Profile() {
             <Modal
                 isOpen={isProjectModalOpen}
                 onClose={() => setIsProjectModalOpen(false)}
-                className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
+                className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-y-auto md:overflow-hidden flex flex-col md:grid md:grid-cols-12 relative shadow-[0_24px_80px_rgba(0,0,0,0.85)] light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
             >
-                        <div className="md:col-span-5 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-4 light:bg-zinc-50/80 light:border-zinc-200">
+                        <div className="md:col-span-5 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-5 sm:p-6 flex flex-col justify-between gap-4 shrink-0 light:bg-zinc-50/80 light:border-zinc-200">
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center">
                                     <label className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
                                         {isRu ? "Обложка и скриншоты" : "Cover & Screenshots"} {projectImages.length > 0 && `(${projectImages.length})`}
                                     </label>
-                                    {projectImages.length > 0 && (
-                                        <button
+                                    <div className="flex items-center gap-2">
+                                        {projectImages.length > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => projectImageInputRef.current?.click()}
+                                                disabled={isUploadingProjectImages}
+                                                className="text-xs text-neutral-300 hover:text-white transition flex items-center gap-1 cursor-pointer light:text-zinc-600 light:hover:text-zinc-900"
+                                            >
+                                                <Plus size={13} />
+                                                <span>{isRu ? "Добавить" : "Add"}</span>
+                                            </button>
+                                        )}
+                                        <button 
                                             type="button"
-                                            onClick={() => projectImageInputRef.current?.click()}
-                                            disabled={isUploadingProjectImages}
-                                            className="text-xs text-neutral-300 hover:text-white transition flex items-center gap-1 cursor-pointer light:text-zinc-600 light:hover:text-zinc-900"
+                                            onClick={() => setIsProjectModalOpen(false)}
+                                            className="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                         >
-                                            <Plus size={13} />
-                                            <span>{isRu ? "Добавить" : "Add"}</span>
+                                            <X size={16} />
                                         </button>
-                                    )}
+                                    </div>
                                 </div>
 
                                 <input
@@ -1618,7 +1647,7 @@ export default function Profile() {
                             </p>
                         </div>
 
-                        <div className="md:col-span-7 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh]">
+                        <div className="md:col-span-7 p-5 sm:p-7 md:overflow-y-auto md:no-scrollbar md:max-h-[90vh]">
                             <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10 light:border-zinc-200">
                                 <div>
                                     <h3 className="text-lg font-bold text-neutral-100 tracking-tight light:text-zinc-900">
@@ -1629,7 +1658,7 @@ export default function Profile() {
                                 <button 
                                     type="button"
                                     onClick={() => setIsProjectModalOpen(false)}
-                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    className="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                 >
                                     <X size={16} />
                                 </button>
@@ -1733,7 +1762,7 @@ export default function Profile() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 light:border-zinc-200">
+                                <div className="flex items-center justify-end gap-3 pt-4 pb-2 border-t border-white/10 light:border-zinc-200">
                                     <button
                                         type="button"
                                         onClick={() => setIsProjectModalOpen(false)}
@@ -1756,13 +1785,22 @@ export default function Profile() {
             <Modal
                 isOpen={isExpModalOpen}
                 onClose={() => setIsExpModalOpen(false)}
-                className="w-full max-w-[820px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 relative light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
+                className="w-full max-w-[820px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-y-auto md:overflow-hidden flex flex-col md:grid md:grid-cols-12 relative shadow-[0_24px_80px_rgba(0,0,0,0.85)] light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
             >
-                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-4 light:bg-zinc-50/80 light:border-zinc-200">
+                        <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-5 sm:p-6 flex flex-col justify-between gap-4 shrink-0 light:bg-zinc-50/80 light:border-zinc-200">
                             <div className="space-y-3">
-                                <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
-                                    {isRu ? "Превью записи" : "Experience Preview"}
-                                </span>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
+                                        {isRu ? "Превью записи" : "Experience Preview"}
+                                    </span>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setIsExpModalOpen(false)}
+                                        className="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
                                 <div className="p-4 rounded-2xl border border-white/10 bg-[#050505]/90 space-y-3 shadow-xl light:bg-white light:border-zinc-200 light:shadow-sm">
                                     <div className="flex items-start gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-neutral-300 shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-700">
@@ -1797,7 +1835,7 @@ export default function Profile() {
                             </p>
                         </div>
 
-                        <div className="md:col-span-8 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh]">
+                        <div className="md:col-span-8 p-5 sm:p-7 md:overflow-y-auto md:no-scrollbar md:max-h-[90vh]">
                             <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10 light:border-zinc-200">
                                 <div>
                                     <h3 className="text-lg font-bold text-neutral-100 tracking-tight light:text-zinc-900">
@@ -1808,7 +1846,7 @@ export default function Profile() {
                                 <button 
                                     type="button"
                                     onClick={() => setIsExpModalOpen(false)}
-                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    className="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                 >
                                     <X size={16} />
                                 </button>
@@ -1880,7 +1918,7 @@ export default function Profile() {
                                     />
                                 </div>
 
-                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 light:border-zinc-200">
+                                <div className="flex items-center justify-end gap-3 pt-4 pb-2 border-t border-white/10 light:border-zinc-200">
                                     <button
                                         type="button"
                                         onClick={() => setIsExpModalOpen(false)}

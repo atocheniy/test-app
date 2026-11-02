@@ -717,13 +717,22 @@ export default function ProjectPage() {
             <Modal
                 isOpen={isEditOpen}
                 onClose={() => setIsEditOpen(false)}
-                className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] grid grid-cols-1 md:grid-cols-12 text-neutral-100 relative light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
+                className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-y-auto md:overflow-hidden flex flex-col md:grid md:grid-cols-12 text-neutral-100 relative shadow-[0_24px_80px_rgba(0,0,0,0.85)] light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
             >
-                        <div className="md:col-span-5 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col justify-between gap-4 overflow-y-auto no-scrollbar max-h-[90vh] light:bg-zinc-50/80 light:border-zinc-200">
+                        <div className="md:col-span-5 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-5 sm:p-6 flex flex-col justify-between gap-4 shrink-0 md:overflow-y-auto md:no-scrollbar md:max-h-[90vh] light:bg-zinc-50/80 light:border-zinc-200">
                             <div className="space-y-4">
-                                <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
-                                    {isRu ? "Обложка и медиа проекта" : "Project Cover & Media"}
-                                </span>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider light:text-zinc-500">
+                                        {isRu ? "Обложка и медиа проекта" : "Project Cover & Media"}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditOpen(false)}
+                                        className="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
 
                                 <div className="space-y-2">
                                     <div className="relative h-36 w-full rounded-2xl overflow-hidden border border-white/10 bg-[#050505]/90 light:bg-zinc-100 light:border-zinc-200">
@@ -821,7 +830,7 @@ export default function ProjectPage() {
                             </p>
                         </div>
 
-                        <div className="md:col-span-7 p-6 sm:p-7 overflow-y-auto no-scrollbar max-h-[90vh] light:bg-white">
+                        <div className="md:col-span-7 p-5 sm:p-7 md:overflow-y-auto md:no-scrollbar md:max-h-[90vh] light:bg-white">
                             <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5 light:border-zinc-200">
                                 <div>
                                     <h3 className="text-lg font-bold text-white tracking-tight light:text-zinc-900">{isRu ? "Редактирование проекта" : "Edit Project"}</h3>
@@ -830,7 +839,7 @@ export default function ProjectPage() {
                                 <button
                                     type="button"
                                     onClick={() => setIsEditOpen(false)}
-                                    className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
+                                    className="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                 >
                                     <X size={16} />
                                 </button>
@@ -965,7 +974,7 @@ export default function ProjectPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 light:border-zinc-200">
+                                <div className="flex items-center justify-end gap-3 pt-4 pb-2 border-t border-white/10 light:border-zinc-200">
                                     <button
                                         type="button"
                                         onClick={() => setIsEditOpen(false)}

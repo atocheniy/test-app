@@ -115,10 +115,17 @@ namespace server.Controllers
             
             var chat = await _context.Chat
                 .Include(c => c.Participants)
+                    .ThenInclude(p => p.User)
                 .FirstOrDefaultAsync(c => c.Id == dto.ChatId);
 
             if (chat == null || !chat.Participants.Any(p => p.UserId == currentUserId))
                 return Forbid();
+
+            var otherParticipant = chat.Participants.FirstOrDefault(p => p.UserId != currentUserId);
+            if (otherParticipant?.User != null && !otherParticipant.User.AllowDirectMessages)
+            {
+                return BadRequest(new { message = "Пользователь ограничил отправку личных сообщений", code = "DM_DISABLED" });
+            }
 
             var message = new Message
             {

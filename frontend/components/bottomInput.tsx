@@ -2,7 +2,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { compressImage } from '@/libs/imageUtils';
 import { upload } from '@vercel/blob/client';
 import { Loader2, Paperclip, SendHorizontal, X } from 'lucide-react';
-import { LinearBlur } from 'progressive-blur';
+import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { useEffect, useRef, useState } from 'react';
 
 interface BottomInputProps {
@@ -86,7 +86,7 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
 
     return (
         <div className="shrink-0 sticky bottom-0 bg-transparent px-4 py-2 flex flex-col gap-2 z-50 relative max-md:bg-black/90 light:bg-white light:border-t light:border-zinc-200/80">
-            <LinearBlur
+            <ProgressiveBlur
                 className="max-md:hidden light:hidden"
                 side="bottom"
                 steps={6}
