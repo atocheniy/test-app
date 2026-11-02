@@ -434,6 +434,18 @@ namespace server.Controllers
                 }
             }
 
+            var reposts = await _context.Post.Where(p => p.RepostOfPostId == post.Id).ToListAsync();
+            foreach (var r in reposts)
+            {
+                r.RepostOfPostId = null;
+            }
+
+            var comments = await _context.Comment.Where(c => c.PostId == post.Id).ToListAsync();
+            _context.Comment.RemoveRange(comments);
+
+            var likes = await _context.PostLikes.Where(l => l.PostId == post.Id).ToListAsync();
+            _context.PostLikes.RemoveRange(likes);
+
             _context.Post.Remove(post);
             await _context.SaveChangesAsync();
 

@@ -547,16 +547,145 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteAccount()
     {
-        var user = await _userManager.GetUserAsync(User);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var user = await _userManager.FindByIdAsync(userId);
         if (user == null) return NotFound();
 
-        var result = await _userManager.DeleteAsync(user);
-        if (!result.Succeeded)
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            return BadRequest(result.Errors);
-        }
+            var userPosts = await _context.Post.Where(p => p.UserId == userId).ToListAsync();
+            var userPostIds = userPosts.Select(p => p.Id).ToList();
 
-        return Ok(new { message = "Аккаунт успешно удален" });
+            if (userPostIds.Any())
+            {
+                var repostsOfUserPosts = await _context.Post
+                    .Where(p => p.RepostOfPostId.HasValue && userPostIds.Contains(p.RepostOfPostId.Value))
+                    .ToListAsync();
+                foreach (var r in repostsOfUserPosts)
+                {
+                    r.RepostOfPostId = null;
+                }
+
+                var likesOnUserPosts = await _context.PostLikes
+                    .Where(l => userPostIds.Contains(l.PostId))
+                    .ToListAsync();
+                _context.PostLikes.RemoveRange(likesOnUserPosts);
+
+                var commentsOnUserPosts = await _context.Comment
+                    .Where(c => userPostIds.Contains(c.PostId))
+                    .ToListAsync();
+                _context.Comment.RemoveRange(commentsOnUserPosts);
+            }
+
+            var userCreatedCommunities = await _context.Communities.Where(c => c.CreatorId == userId).ToListAsync();
+            var communityIds = userCreatedCommunities.Select(c => c.Id).ToList();
+
+            if (communityIds.Any())
+            {
+                var communityPosts = await _context.Post.Where(p => p.CommunityId.HasValue && communityIds.Contains(p.CommunityId.Value)).ToListAsync();
+                var commPostIds = communityPosts.Select(p => p.Id).ToList();
+
+                if (commPostIds.Any())
+                {
+                    var repostsOfCommPosts = await _context.Post
+                        .Where(p => p.RepostOfPostId.HasValue && commPostIds.Contains(p.RepostOfPostId.Value))
+                        .ToListAsync();
+                    foreach (var r in repostsOfCommPosts)
+                    {
+                        r.RepostOfPostId = null;
+                    }
+
+                    var commPostLikes = await _context.PostLikes.Where(l => commPostIds.Contains(l.PostId)).ToListAsync();
+                    _context.PostLikes.RemoveRange(commPostLikes);
+
+                    var commPostComments = await _context.Comment.Where(c => commPostIds.Contains(c.PostId)).ToListAsync();
+                    _context.Comment.RemoveRange(commPostComments);
+
+                    _context.Post.RemoveRange(communityPosts);
+                }
+
+                var commVacancies = await _context.Vacancies.Where(v => communityIds.Contains(v.CompanyId)).ToListAsync();
+                _context.Vacancies.RemoveRange(commVacancies);
+
+                var commWatchers = await _context.CommunityWatchers.Where(cw => communityIds.Contains(cw.CommunityId)).ToListAsync();
+                _context.CommunityWatchers.RemoveRange(commWatchers);
+
+                var commMembers = await _context.CommunityMembers.Where(cm => communityIds.Contains(cm.CommunityId)).ToListAsync();
+                _context.CommunityMembers.RemoveRange(commMembers);
+
+                _context.Communities.RemoveRange(userCreatedCommunities);
+            }
+
+            var userLikes = await _context.PostLikes.Where(l => l.UserId == userId).ToListAsync();
+            _context.PostLikes.RemoveRange(userLikes);
+
+            var userComments = await _context.Comment.Where(c => c.UserId == userId).ToListAsync();
+            _context.Comment.RemoveRange(userComments);
+
+            _context.Post.RemoveRange(userPosts);
+
+            var userVacancies = await _context.Vacancies.Where(v => v.CreatedById == userId).ToListAsync();
+            _context.Vacancies.RemoveRange(userVacancies);
+
+            var userWatchers = await _context.UserWatchers
+                .Where(uw => uw.WatcherId == userId || uw.TargetUserId == userId)
+                .ToListAsync();
+            _context.UserWatchers.RemoveRange(userWatchers);
+
+            var userCommWatchers = await _context.CommunityWatchers.Where(cw => cw.UserId == userId).ToListAsync();
+            _context.CommunityWatchers.RemoveRange(userCommWatchers);
+
+            var userCommMembers = await _context.CommunityMembers.Where(cm => cm.UserId == userId).ToListAsync();
+            _context.CommunityMembers.RemoveRange(userCommMembers);
+
+            var userProjects = await _context.UserProjects.Where(p => p.UserId == userId).ToListAsync();
+            _context.UserProjects.RemoveRange(userProjects);
+
+            var userExperiences = await _context.UserExperiences.Where(e => e.UserId == userId).ToListAsync();
+            _context.UserExperiences.RemoveRange(userExperiences);
+
+            var projectStars = await _context.ProjectStars.Where(ps => ps.UserId == userId).ToListAsync();
+            _context.ProjectStars.RemoveRange(projectStars);
+
+            var userMessages = await _context.Message.Where(m => m.SenderId == userId).ToListAsync();
+            var userMessageIds = userMessages.Select(m => m.Id).ToList();
+
+            if (userMessageIds.Any())
+            {
+                var repliesToUserMessages = await _context.Message
+                    .Where(m => m.ReplyToId.HasValue && userMessageIds.Contains(m.ReplyToId.Value))
+                    .ToListAsync();
+                foreach (var reply in repliesToUserMessages)
+                {
+                    reply.ReplyToId = null;
+                }
+            }
+
+            _context.Message.RemoveRange(userMessages);
+
+            var chatParticipants = await _context.ChatParticipant.Where(cp => cp.UserId == userId).ToListAsync();
+            _context.ChatParticipant.RemoveRange(chatParticipants);
+
+            await _context.SaveChangesAsync();
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                await transaction.RollbackAsync();
+                return BadRequest(result.Errors);
+            }
+
+            await transaction.CommitAsync();
+            return Ok(new { message = "Аккаунт успешно удален" });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return StatusCode(500, new { message = "Не удалось удалить аккаунт: " + ex.Message });
+        }
     }
 
     [HttpPost("changePassword")]

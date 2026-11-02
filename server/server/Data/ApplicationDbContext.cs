@@ -124,6 +124,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(pr => pr.Posts)
             .HasForeignKey(p => p.ProjectId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Post>()
+            .HasOne(p => p.RepostOfPost)
+            .WithMany()
+            .HasForeignKey(p => p.RepostOfPostId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Comment>()
+            .HasOne(c => c.Post)
+            .WithMany(p => p.Comments)
+            .HasForeignKey(c => c.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PostLike>()
+            .HasOne(pl => pl.Post)
+            .WithMany()
+            .HasForeignKey(pl => pl.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
 public DbSet<server.Models.Post> Post { get; set; } = default!;
