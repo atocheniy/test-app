@@ -8,5 +8,7 @@ public class UserWatcher
     public string TargetUserId { get; set; } = string.Empty;
     public ApplicationUser TargetUser { get; set; }
 
+    public MemberStatus Status { get; set; } = MemberStatus.Active;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

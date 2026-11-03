@@ -223,6 +223,13 @@ export default function PublicBlock({
         setUploadingMedia({ type: 'image' });
         try {
             const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 1920, quality: 0.85 });
+            if (compressed.size > 5 * 1024 * 1024) {
+                alert(isRu
+                    ? `Размер изображения превышает 5 МБ (${(compressed.size / (1024 * 1024)).toFixed(1)} МБ). Пожалуйста, выберите файл поменьше.`
+                    : `Image size exceeds 5 MB (${(compressed.size / (1024 * 1024)).toFixed(1)} MB). Please choose a smaller file.`
+                );
+                return;
+            }
             const newBlob = await upload(compressed.name, compressed, {
                 access: 'public',
                 handleUploadUrl: '/api/img/upload',
@@ -241,7 +248,7 @@ export default function PublicBlock({
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const MAX_SIZE_MB = 60;
+        const MAX_SIZE_MB = 30;
         if (file.size > MAX_SIZE_MB * 1024 * 1024) {
             alert(isRu
                 ? `Размер видео превышает ${MAX_SIZE_MB} МБ (${(file.size / (1024 * 1024)).toFixed(1)} МБ). Пожалуйста, выберите файл поменьше.`

@@ -6,7 +6,7 @@ import { UserService } from '@/services/userService';
 import { Post, User } from "@/types/auth";
 import * as signalR from "@microsoft/signalr";
 import Cookies from 'js-cookie';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 interface RepostTarget {
   id: string;
@@ -30,6 +30,7 @@ interface ApplicationContextType {
     loadMorePosts: () => Promise<void>;
 
     currentPost: Post;
+    currentPostError: 'locked' | 'not_found' | null;
     refreshCurrentPost: (id: string) => Promise<void>;
 
     commentsData: Comment[];
@@ -71,6 +72,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
     const [hasMoreOtherUserPosts, setHasMoreOtherUserPosts] = useState<boolean>(true);
     const [isLoadingMoreOtherUserPosts, setIsLoadingMoreOtherUserPosts] = useState<boolean>(false);
     const [currentOtherUsername, setCurrentOtherUsername] = useState<string>('');
+    const currentOtherUsernameRef = useRef<string>('');
 
     const [postsData, setPostsData] = useState<Post[]>([]);
     const [postsCursor, setPostsCursor] = useState<string | null>(null);
@@ -86,6 +88,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
     const [commentsData, setCommentsData] = useState<Comment[]>([]);
 
     const [currentPost, setCurrentPost] = useState<Post>({} as Post);
+    const [currentPostError, setCurrentPostError] = useState<'locked' | 'not_found' | null>(null);
 
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
@@ -94,12 +97,14 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
 
     const refreshCurrentPost = useCallback(async (id: string) => {
         try {
+            setCurrentPostError(null);
             const data = await PostService.getPost(id);
             setCurrentPost(data);
         }
-        catch (error) {
+        catch (error: any) {
             console.error("Ошибка обновления данных", error);
-            setCurrentPost({} as Post)
+            setCurrentPostError(error?.response?.status === 403 ? 'locked' : 'not_found');
+            setCurrentPost({} as Post);
         }
     }, []);
 
@@ -212,6 +217,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
     const refreshOtherUserPostsData = async (username: string) => {
         try {
             setCurrentOtherUsername(username);
+            currentOtherUsernameRef.current = username;
             const data = await PostService.getOtherUserPosts(username, null, 15);
             console.log("Данные постов другого пользователя от сервера:", data);
             setOtherUserPostsData(data.items || []);
@@ -252,6 +258,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
 
      const refreshOtherUserData = async (username: string) => {
         try {
+            currentOtherUsernameRef.current = username;
             const data = await UserService.getOtherUser(username);
             console.log("Данные пользователя от сервера:", data);
             setOtherUserData(data);
@@ -322,6 +329,91 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             setPostsData((prev) => prev.filter((p) => p.id !== data.id));
             setUserPostsData((prev) => prev.filter((p) => p.id !== data.id));
             setOtherUserPostsData((prev) => prev.filter((p) => p.id !== data.id));
+            setCurrentPost((prev) => {
+                if (prev && prev.id === data.id) {
+                    setCurrentPostError('not_found');
+                    return {} as Post;
+                }
+                return prev;
+            });
+        });
+
+        newConnection.on("postUpdated", (data: { id: string; content: string; attachments?: string[] }) => {
+            const updatePostInList = (postsList: Post[]) =>
+                postsList.map((post) => {
+                    const updatedRepost = post.repostOfPost && post.repostOfPost.id === data.id
+                        ? { ...post.repostOfPost, content: data.content, attachments: data.attachments ?? post.repostOfPost.attachments }
+                        : post.repostOfPost;
+
+                    if (post.id === data.id) {
+                        return {
+                            ...post,
+                            content: data.content,
+                            attachments: data.attachments ?? post.attachments,
+                            repostOfPost: updatedRepost
+                        };
+                    }
+
+                    if (updatedRepost !== post.repostOfPost) {
+                        return { ...post, repostOfPost: updatedRepost };
+                    }
+
+                    return post;
+                });
+
+            setPostsData((prev) => updatePostInList(prev));
+            setUserPostsData((prev) => updatePostInList(prev));
+            setOtherUserPostsData((prev) => updatePostInList(prev));
+
+            setCurrentPost((prev) => {
+                if (!prev || !prev.id) return prev;
+                const updatedRepost = prev.repostOfPost && prev.repostOfPost.id === data.id
+                    ? { ...prev.repostOfPost, content: data.content, attachments: data.attachments ?? prev.repostOfPost.attachments }
+                    : prev.repostOfPost;
+
+                if (prev.id === data.id) {
+                    return {
+                        ...prev,
+                        content: data.content,
+                        attachments: data.attachments ?? prev.attachments,
+                        repostOfPost: updatedRepost
+                    };
+                }
+
+                if (updatedRepost !== prev.repostOfPost) {
+                    return { ...prev, repostOfPost: updatedRepost };
+                }
+
+                return prev;
+            });
+        });
+
+        newConnection.on("postPinChanged", (data: { id: string; isPinned: boolean; communityId?: string | null; projectId?: string | null; userId?: string }) => {
+            setCurrentPost((prev) => {
+                if (prev && prev.id === data.id) {
+                    return { ...prev, isPinned: data.isPinned };
+                }
+                return prev;
+            });
+
+            if (!data.communityId && !data.projectId) {
+                const applyPin = (list: Post[]) => {
+                    if (!list.some((p) => p.id === data.id)) return list;
+                    const updated = list.map((p) => {
+                        if (p.id === data.id) return { ...p, isPinned: data.isPinned };
+                        if (data.isPinned && !p.community && !p.project) return { ...p, isPinned: false };
+                        return p;
+                    });
+                    return [...updated].sort((a, b) => {
+                        const pinDiff = Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned));
+                        if (pinDiff !== 0) return pinDiff;
+                        return new Date(b.created).getTime() - new Date(a.created).getTime();
+                    });
+                };
+
+                setUserPostsData((prev) => applyPin(prev));
+                setOtherUserPostsData((prev) => applyPin(prev));
+            }
         });
 
         newConnection.on("commentCreated", (newComment: any) => {
@@ -363,6 +455,70 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             setPostsData((prev) => updatePostsArray(prev));
             setUserPostsData((prev) => updatePostsArray(prev));
             setOtherUserPostsData((prev) => updatePostsArray(prev));
+        });
+
+        newConnection.on("commentUpdated", (data: { id: string; postId: string; content: string }) => {
+            setCurrentPost((prev) => {
+                if (prev && prev.id === data.postId && prev.commentsList) {
+                    return {
+                        ...prev,
+                        commentsList: prev.commentsList.map((c) =>
+                            c.id === data.id ? { ...c, content: data.content } : c
+                        )
+                    };
+                }
+                return prev;
+            });
+
+            const updateCommentInPosts = (postsList: Post[]) =>
+                postsList.map((post) => {
+                    if (post.id === data.postId && post.commentsList) {
+                        return {
+                            ...post,
+                            commentsList: post.commentsList.map((c) =>
+                                c.id === data.id ? { ...c, content: data.content } : c
+                            )
+                        };
+                    }
+                    return post;
+                });
+
+            setPostsData((prev) => updateCommentInPosts(prev));
+            setUserPostsData((prev) => updateCommentInPosts(prev));
+            setOtherUserPostsData((prev) => updateCommentInPosts(prev));
+            setCommentsData((prev: any[]) =>
+                prev.map((c: any) => (c.id === data.id ? { ...c, content: data.content } : c))
+            );
+        });
+
+        newConnection.on("commentDeleted", (data: { id: string; postId: string; commentsCount: number; latestComments?: any[] }) => {
+            setCurrentPost((prev) => {
+                if (prev && prev.id === data.postId) {
+                    return {
+                        ...prev,
+                        commentsCount: data.commentsCount,
+                        commentsList: (prev.commentsList || []).filter((c) => c.id !== data.id)
+                    };
+                }
+                return prev;
+            });
+
+            const removeCommentFromPosts = (postsList: Post[]) =>
+                postsList.map((post) => {
+                    if (post.id === data.postId) {
+                        return {
+                            ...post,
+                            commentsCount: data.commentsCount,
+                            commentsList: data.latestComments ?? (post.commentsList || []).filter((c) => c.id !== data.id)
+                        };
+                    }
+                    return post;
+                });
+
+            setPostsData((prev) => removeCommentFromPosts(prev));
+            setUserPostsData((prev) => removeCommentFromPosts(prev));
+            setOtherUserPostsData((prev) => removeCommentFromPosts(prev));
+            setCommentsData((prev: any[]) => prev.filter((c: any) => c.id !== data.id));
         });
 
         newConnection.on("postLiked", (data: { postId: string; likesCount: number; userId: string; isLiked: boolean }) => {
@@ -437,6 +593,18 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
             setOnlineUsers(data.activeUsers);
         });
 
+        newConnection.on("watchRequestsChanged", () => {
+            refreshUserData();
+        });
+
+        newConnection.on("watchRequestResolved", (data: { username?: string; accepted?: boolean }) => {
+            refreshUserData();
+            if (data?.username && currentOtherUsernameRef.current?.toLowerCase() === data.username.toLowerCase()) {
+                refreshOtherUserData(data.username);
+                refreshOtherUserPostsData(data.username);
+            }
+        });
+
         return () => {
             if (newConnection.state === signalR.HubConnectionState.Connected) {
                 newConnection.invoke("LeaveRoom", "global")
@@ -471,6 +639,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         isLoadingMorePosts,
         loadMorePosts,
         currentPost,
+        currentPostError,
         refreshCurrentPost,
         userPostsData,
         refreshUserPostsData,
@@ -491,7 +660,7 @@ export const ApplicationProvider = ({ children }: { children: React.ReactNode })
         repostTarget,
         setRepostTarget,
         logout 
-    }), [userData, postsData, hasMorePosts, isLoadingMorePosts, userPostsData, hasMoreUserPosts, isLoadingMoreUserPosts, otherUserPostsData, hasMoreOtherUserPosts, isLoadingMoreOtherUserPosts, otherUserData, currentPost, commentsData, onlineUsers, connection, repostTarget]);
+    }), [userData, postsData, hasMorePosts, isLoadingMorePosts, userPostsData, hasMoreUserPosts, isLoadingMoreUserPosts, otherUserPostsData, hasMoreOtherUserPosts, isLoadingMoreOtherUserPosts, otherUserData, currentPost, currentPostError, commentsData, onlineUsers, connection, repostTarget]);
 
     return (
         <ApplicationContext.Provider value={ contextValue }>

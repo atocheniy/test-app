@@ -31,7 +31,7 @@ export const CommunityService = {
     },
 
     async toggleJoin(slug: string) {
-        const response = await $api.post<{ isMember: boolean; membersCount: number }>(`/Community/toggleJoin/${slug}`);
+        const response = await $api.post<{ isMember: boolean; myMemberStatus?: number | string | null; membersCount: number }>(`/Community/toggleJoin/${slug}`);
         return response.data;
     },
 

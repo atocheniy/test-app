@@ -80,7 +80,9 @@ interface PostProps {
   recommendationReason?: string;
   isPinned?: boolean;
   canPin?: boolean;
+  canDelete?: boolean;
   onPinToggle?: (id: string, isPinned: boolean) => void;
+  onDelete?: (id: string) => void;
 }
 
 export default function Post({
@@ -102,7 +104,9 @@ export default function Post({
   recommendationReason,
   isPinned = false,
   canPin,
-  onPinToggle
+  canDelete,
+  onPinToggle,
+  onDelete
 }: PostProps) {
   const [isPinnedState, setIsPinnedState] = useState(isPinned);
   const [isPinning, setIsPinning] = useState(false);
@@ -185,6 +189,12 @@ export default function Post({
   }, [Likes, isLikedByMe]);
 
   useEffect(() => {
+    if (!isEditing) {
+      setEditContent(Content);
+    }
+  }, [Content, isEditing]);
+
+  useEffect(() => {
     if (!innerContentRef.current) return;
 
     const checkHeight = () => {
@@ -227,6 +237,7 @@ export default function Post({
 
     try {
       await PostService.deletePost(Id);
+      onDelete?.(Id);
       await refreshPostsData();
       if (refreshUserPostsData) await refreshUserPostsData();
     } catch (err) {
@@ -236,6 +247,7 @@ export default function Post({
   };
 
   const canPinEffective = canPin !== undefined ? canPin : isMyPost;
+  const canDeleteEffective = Boolean(isMyPost || canDelete);
 
   const handleTogglePin = async () => {
     if (isPinning) return;
@@ -469,18 +481,20 @@ export default function Post({
               )}
 
               {isMyPost && (
-                <>
-                  <button
-                    onClick={() => {
-                      setIsEditing(true);
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition light:text-zinc-700 light:hover:text-zinc-900 light:hover:bg-zinc-100"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    <span>{t.post.edit}</span>
-                  </button>
+                <button
+                  onClick={() => {
+                    setIsEditing(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition light:text-zinc-700 light:hover:text-zinc-900 light:hover:bg-zinc-100"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>{t.post.edit}</span>
+                </button>
+              )}
 
+              {canDeleteEffective && (
+                <>
                   <div className="h-[1px] bg-white/5 my-1 light:bg-zinc-100" />
 
                   <button

@@ -107,7 +107,7 @@ function MessagesContent() {
         if (activeChat?.id === chat.id) return;
 
         if (activeChat && connection) {
-            await connection.invoke("LeaveChat", activeChat.id).catch(console.error);
+            await connection.invoke("LeaveChat", activeChat.id.toLowerCase()).catch(console.error);
         }
 
         setActiveChat(chat);
@@ -131,14 +131,14 @@ function MessagesContent() {
         if (!connection || !activeChat) return;
 
         if (connection.state === signalR.HubConnectionState.Connected) {
-            connection.invoke("JoinChat", activeChat.id)
+            connection.invoke("JoinChat", activeChat.id.toLowerCase())
                 .then(() => console.log(`Вход в чат: ${activeChat.id}`))
                 .catch(err => console.error("Ошибка входа в комнату:", err));
         }
 
         return () => {
             if (connection.state === signalR.HubConnectionState.Connected) {
-                connection.invoke("LeaveChat", activeChat.id).catch(console.error);
+                connection.invoke("LeaveChat", activeChat.id.toLowerCase()).catch(console.error);
             }
         };
     }, [connection, activeChat?.id]);

@@ -12,6 +12,7 @@ import { formatPostTime } from "@/libs/format";
 import type { Post, User } from "@/types/auth";
 import {
     ArrowUpRight,
+    Lock,
     Sparkles,
     TrendingUp,
     Users,
@@ -50,7 +51,7 @@ function SearchContent() {
     const [recommendedUsers, setRecommendedUsers] = useState<RecommendedUser[]>([]);
     const [loadingRecommendedUsers, setLoadingRecommendedUsers] = useState(true);
 
-    const { onlineUsers, userData } = useApplication();
+    const { onlineUsers, userData, connection } = useApplication();
     const { language, t } = useLanguage();
     const isRu = language === 'ru';
     
@@ -96,6 +97,94 @@ function SearchContent() {
             .catch(err => console.error("Error loading search recommended users:", err))
             .finally(() => setLoadingRecommendedUsers(false));
     }, []);
+
+    useEffect(() => {
+        if (!connection) return;
+
+        const handlePostDeleted = (data: { id: string }) => {
+            setPosts((prev) => prev.filter((p) => p.id !== data.id));
+        };
+
+        const handlePostUpdated = (data: { id: string; content: string; attachments?: string[] }) => {
+            setPosts((prev) =>
+                prev.map((p) => {
+                    const updatedRepost = p.repostOfPost && p.repostOfPost.id === data.id
+                        ? { ...p.repostOfPost, content: data.content, attachments: data.attachments ?? p.repostOfPost.attachments }
+                        : p.repostOfPost;
+
+                    if (p.id === data.id) {
+                        return { ...p, content: data.content, attachments: data.attachments ?? p.attachments, repostOfPost: updatedRepost };
+                    }
+                    if (updatedRepost !== p.repostOfPost) {
+                        return { ...p, repostOfPost: updatedRepost };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handleCommentCreated = (newComment: any) => {
+            setPosts((prev) =>
+                prev.map((p) => {
+                    if (p.id === newComment.postId) {
+                        const list = p.commentsList || [];
+                        if (list.some((c: any) => c.id === newComment.id)) return p;
+                        return {
+                            ...p,
+                            commentsCount: p.commentsCount + 1,
+                            commentsList: [newComment, ...list].slice(0, 3)
+                        };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handleCommentUpdated = (data: { id: string; postId: string; content: string }) => {
+            setPosts((prev) =>
+                prev.map((p) => {
+                    if (p.id === data.postId && p.commentsList) {
+                        return {
+                            ...p,
+                            commentsList: p.commentsList.map((c: any) =>
+                                c.id === data.id ? { ...c, content: data.content } : c
+                            )
+                        };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handleCommentDeleted = (data: { id: string; postId: string; commentsCount: number; latestComments?: any[] }) => {
+            setPosts((prev) =>
+                prev.map((p) => {
+                    if (p.id === data.postId) {
+                        return {
+                            ...p,
+                            commentsCount: data.commentsCount,
+                            commentsList: data.latestComments ?? (p.commentsList || []).filter((c: any) => c.id !== data.id)
+                        };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        connection.on("postDeleted", handlePostDeleted);
+        connection.on("postUpdated", handlePostUpdated);
+        connection.on("commentCreated", handleCommentCreated);
+        connection.on("commentUpdated", handleCommentUpdated);
+        connection.on("commentDeleted", handleCommentDeleted);
+
+        return () => {
+            connection.off("postDeleted", handlePostDeleted);
+            connection.off("postUpdated", handlePostUpdated);
+            connection.off("commentCreated", handleCommentCreated);
+            connection.off("commentUpdated", handleCommentUpdated);
+            connection.off("commentDeleted", handleCommentDeleted);
+        };
+    }, [connection]);
 
     const handleToggleWatch = async (e: React.MouseEvent, targetUsername: string) => {
         e.preventDefault();
@@ -307,6 +396,9 @@ function SearchContent() {
                                                                 <span className="text-sm font-bold text-zinc-100 group-hover:text-blue-400 transition truncate light:text-zinc-900 light:group-hover:text-blue-600">
                                                                     {user.fullName || cleanUser}
                                                                 </span>
+                                                                {user.isPrivate && (
+                                                                    <Lock size={12} className="text-zinc-500 shrink-0 light:text-zinc-400" />
+                                                                )}
                                                             </div>
                                                             <span className="text-xs text-zinc-500 light:text-zinc-500 truncate">
                                                                 @{cleanUser} {user.followers ? `· ${user.followers} ${isRu ? 'подписчиков' : 'followers'}` : ''}

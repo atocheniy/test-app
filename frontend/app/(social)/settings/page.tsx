@@ -7,7 +7,9 @@ import { useApplication } from "@/context/ApplicationContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { UserService } from "@/services/userService";
+import type { WatchRequestUser } from "@/types/auth";
 import {
+    Check,
     KeyRound,
     Languages,
     Lock,
@@ -18,13 +20,14 @@ import {
     Shield,
     Sun,
     Trash2,
+    UserPlus,
     X
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function Settings() {
-    const { userData, setUserData, connection, logout } = useApplication();
+    const { userData, setUserData, refreshUserData, connection, logout } = useApplication();
     const { language, setLanguage, t } = useLanguage();
     const { theme, setTheme, codeFontSize, setCodeFontSize, blurEnabled, setBlurEnabled } = useTheme();
     const isRu = language === 'ru';
@@ -33,10 +36,47 @@ export default function Settings() {
     const [showOnlineStatus, setShowOnlineStatus] = useState(true);
     const [allowDirectMessages, setAllowDirectMessages] = useState(true);
     const [isPrivate, setIsPrivate] = useState(false);
+    const [watchRequests, setWatchRequests] = useState<WatchRequestUser[]>([]);
+    const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null);
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (!userData?.id || userData.userName === '...') return;
+        UserService.getWatchRequests()
+            .then((reqs) => setWatchRequests(reqs || []))
+            .catch((err) => console.error("Failed to load watch requests:", err));
+    }, [userData?.id, userData?.userName, userData?.pendingWatchRequestsCount, isPrivate]);
+
+    const handleAcceptWatchRequest = async (requesterId: string) => {
+        if (resolvingRequestId) return;
+        setResolvingRequestId(requesterId);
+        try {
+            await UserService.acceptWatchRequest(requesterId);
+            setWatchRequests((prev) => prev.filter((r) => r.id !== requesterId));
+            await refreshUserData();
+        } catch (err) {
+            console.error("Failed to accept watch request:", err);
+        } finally {
+            setResolvingRequestId(null);
+        }
+    };
+
+    const handleRejectWatchRequest = async (requesterId: string) => {
+        if (resolvingRequestId) return;
+        setResolvingRequestId(requesterId);
+        try {
+            await UserService.rejectWatchRequest(requesterId);
+            setWatchRequests((prev) => prev.filter((r) => r.id !== requesterId));
+            await refreshUserData();
+        } catch (err) {
+            console.error("Failed to reject watch request:", err);
+        } finally {
+            setResolvingRequestId(null);
+        }
+    };
 
     useEffect(() => {
         if (userData && userData.userName && userData.userName !== '...') {
@@ -90,6 +130,7 @@ export default function Settings() {
 
         try {
             await UserService.updatePrivacySettings({ isPrivate: nextValue });
+            await refreshUserData();
         } catch (error) {
             console.error("Failed to update private account setting:", error);
             setIsPrivate(!nextValue);
@@ -303,6 +344,64 @@ export default function Settings() {
                             </div>
                             <Toggle active={isPrivate} onToggle={handleToggleIsPrivate} />
                         </div>
+
+                        {watchRequests.length > 0 && (
+                            <div className="pt-4 space-y-3">
+                                <div className="flex items-center justify-between gap-2">
+                                    <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 light:text-amber-700">
+                                        <UserPlus size={14} />
+                                        {isRu ? `Заявки на чтение (${watchRequests.length})` : `Follow Requests (${watchRequests.length})`}
+                                    </h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    {watchRequests.map((req) => (
+                                        <div
+                                            key={req.id}
+                                            className="p-3 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center justify-between gap-3 light:bg-zinc-50 light:border-zinc-200"
+                                        >
+                                            <Link href={`/profile/${req.userName}`} className="flex items-center gap-2.5 min-w-0 group">
+                                                <Avatar
+                                                    src={req.avatar}
+                                                    name={req.fullName || req.userName}
+                                                    className="w-8 h-8 text-[11px] shrink-0"
+                                                />
+                                                <div className="flex flex-col truncate">
+                                                    <span className="text-xs font-semibold text-zinc-100 group-hover:underline truncate light:text-zinc-900">
+                                                        {req.fullName || req.userName}
+                                                    </span>
+                                                    <span className="text-[11px] text-zinc-500 truncate light:text-zinc-500">
+                                                        @{req.userName}
+                                                    </span>
+                                                </div>
+                                            </Link>
+
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    disabled={resolvingRequestId === req.id}
+                                                    onClick={() => handleAcceptWatchRequest(req.id)}
+                                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition text-xs font-semibold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 light:bg-emerald-50 light:text-emerald-700 light:hover:bg-emerald-100"
+                                                    title={isRu ? "Принять заявку" : "Approve request"}
+                                                >
+                                                    <Check size={14} />
+                                                    <span>{isRu ? "Принять" : "Approve"}</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={resolvingRequestId === req.id}
+                                                    onClick={() => handleRejectWatchRequest(req.id)}
+                                                    className="p-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/30 transition text-xs font-semibold cursor-pointer disabled:opacity-50 light:bg-red-50 light:text-red-600 light:hover:bg-red-100"
+                                                    title={isRu ? "Отклонить" : "Reject"}
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -509,6 +608,7 @@ export default function Settings() {
                         <label className="text-[10px] font-medium text-neutral-500 light:text-zinc-500 uppercase">{t.settings.newPasswordLabel}</label>
                         <input
                             type="password"
+                            minLength={6}
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             required

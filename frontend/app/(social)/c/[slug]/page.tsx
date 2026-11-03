@@ -28,6 +28,7 @@ import {
     Loader2,
     Lock,
     MapPin,
+    Pencil,
     Plus,
     ShieldAlert,
     Trash2,
@@ -75,6 +76,7 @@ export default function Profile() {
     const [companyVacancies, setCompanyVacancies] = useState<Vacancy[]>([]);
     const [isVacanciesLoading, setIsVacanciesLoading] = useState(false);
     const [isCreateVacancyOpen, setIsCreateVacancyOpen] = useState(false);
+    const [editingVacancyId, setEditingVacancyId] = useState<string | null>(null);
     const [vacancyTitle, setVacancyTitle] = useState('');
     const [vacancyDescription, setVacancyDescription] = useState('');
     const [vacancySalaryFrom, setVacancySalaryFrom] = useState('');
@@ -82,6 +84,7 @@ export default function Profile() {
     const [vacancyCurrency, setVacancyCurrency] = useState('USD');
     const [vacancyFormat, setVacancyFormat] = useState<number>(0);
     const [vacancyLevel, setVacancyLevel] = useState<number>(2);
+    const [vacancyStatus, setVacancyStatus] = useState<number>(0);
     const [vacancyStack, setVacancyStack] = useState('');
     const [isSubmittingVacancy, setIsSubmittingVacancy] = useState(false);
 
@@ -92,10 +95,13 @@ export default function Profile() {
         setMounted(true);
     }, []);
 
-    const loadVacancies = async () => {
+    const loadVacancies = async (includeAll?: boolean) => {
         setIsVacanciesLoading(true);
         try {
-            const data = await VacancyService.getVacancies({ companySlug: slug });
+            const canManage = includeAll !== undefined
+                ? includeAll
+                : (community?.myRole === 'Owner' || community?.myRole === 'Admin' || community?.myRole === 3 || community?.myRole === 2);
+            const data = await VacancyService.getVacancies({ companySlug: slug, includeAllStatuses: canManage });
             setCompanyVacancies(data.items || []);
         } catch (e) {
             console.error("Ошибка загрузки вакансий:", e);
@@ -131,11 +137,12 @@ export default function Profile() {
                 setIsPostsLoading(false);
                 document.title = commData?.name || (isRu ? 'Сообщество' : 'Community');
 
+                const canManageComm = commData?.myRole === 'Owner' || commData?.myRole === 'Admin' || commData?.myRole === 3 || commData?.myRole === 2;
                 if (isCompanyEntity(commData?.kind)) {
-                    loadVacancies();
-                    if (commData?.myRole === 'Owner' || commData?.myRole === 'Admin' || commData?.myRole === 3 || commData?.myRole === 2) {
-                        loadPendingEmployees();
-                    }
+                    loadVacancies(canManageComm);
+                }
+                if (canManageComm) {
+                    loadPendingEmployees();
                 }
             } catch (e) {
                 console.error("Ошибка загрузки паблика:", e);
@@ -201,46 +208,144 @@ export default function Profile() {
             }
         };
 
-        const handleCommunityPostDeleted = (data: { id: string }) => {
+        const handleCommunityPostDeleted = (data: { id: string; communityId?: string | null }) => {
             setCommunityPosts((prev) => prev.filter((p) => p.id !== data.id));
+            if (data.communityId && community?.id && data.communityId.toLowerCase() === community.id.toLowerCase()) {
+                setCommunity((prev: any) => prev ? { ...prev, postsCount: Math.max(0, (prev.postsCount || 0) - 1) } : prev);
+            }
         };
 
-        const handleCommunityPostPinChanged = () => {
-            refreshCommunityPosts();
+        const handleCommunityPostUpdated = (data: { id: string; content: string; attachments?: string[] }) => {
+            setCommunityPosts((prev) =>
+                prev.map((p) => {
+                    const updatedRepost = p.repostOfPost && p.repostOfPost.id === data.id
+                        ? { ...p.repostOfPost, content: data.content, attachments: data.attachments ?? p.repostOfPost.attachments }
+                        : p.repostOfPost;
+
+                    if (p.id === data.id) {
+                        return { ...p, content: data.content, attachments: data.attachments ?? p.attachments, repostOfPost: updatedRepost };
+                    }
+                    if (updatedRepost !== p.repostOfPost) {
+                        return { ...p, repostOfPost: updatedRepost };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handleCommunityCommentCreated = (newComment: any) => {
+            setCommunityPosts((prev) =>
+                prev.map((p) => {
+                    if (p.id === newComment.postId) {
+                        const list = p.commentsList || [];
+                        if (list.some((c: any) => c.id === newComment.id)) return p;
+                        return {
+                            ...p,
+                            commentsCount: p.commentsCount + 1,
+                            commentsList: [newComment, ...list].slice(0, 3)
+                        };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handleCommunityCommentUpdated = (data: { id: string; postId: string; content: string }) => {
+            setCommunityPosts((prev) =>
+                prev.map((p) => {
+                    if (p.id === data.postId && p.commentsList) {
+                        return {
+                            ...p,
+                            commentsList: p.commentsList.map((c: any) =>
+                                c.id === data.id ? { ...c, content: data.content } : c
+                            )
+                        };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handleCommunityCommentDeleted = (data: { id: string; postId: string; commentsCount: number; latestComments?: any[] }) => {
+            setCommunityPosts((prev) =>
+                prev.map((p) => {
+                    if (p.id === data.postId) {
+                        return {
+                            ...p,
+                            commentsCount: data.commentsCount,
+                            commentsList: data.latestComments ?? (p.commentsList || []).filter((c: any) => c.id !== data.id)
+                        };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handleCommunityPostPinChanged = (data?: { id?: string; communityId?: string | null }) => {
+            if (data?.communityId && community?.id && data.communityId.toLowerCase() === community.id.toLowerCase()) {
+                refreshCommunityPosts(false);
+            }
         };
 
         connection.on("postCreated", handleCommunityPostCreated);
         connection.on("postDeleted", handleCommunityPostDeleted);
+        connection.on("postUpdated", handleCommunityPostUpdated);
+        connection.on("commentCreated", handleCommunityCommentCreated);
+        connection.on("commentUpdated", handleCommunityCommentUpdated);
+        connection.on("commentDeleted", handleCommunityCommentDeleted);
         connection.on("postPinChanged", handleCommunityPostPinChanged);
 
         return () => {
             connection.off("postCreated", handleCommunityPostCreated);
             connection.off("postDeleted", handleCommunityPostDeleted);
+            connection.off("postUpdated", handleCommunityPostUpdated);
+            connection.off("commentCreated", handleCommunityCommentCreated);
+            connection.off("commentUpdated", handleCommunityCommentUpdated);
+            connection.off("commentDeleted", handleCommunityCommentDeleted);
             connection.off("postPinChanged", handleCommunityPostPinChanged);
         };
-    }, [connection, slug]);
+    }, [connection, slug, community?.id]);
 
-    const refreshCommunityPosts = async () => {
+    const refreshCommunityPosts = async (syncCount: boolean = true) => {
         try {
             const data = await PostService.getCommunityPosts(slug, null, 15);
             setCommunityPosts(data.items || []);
             setCommunityPostsCursor(data.nextCursor || null);
             setHasMoreCommunityPosts(data.hasMore || false);
-            setCommunity((prev: any) => prev ? { ...prev, postsCount: (prev.postsCount || 0) + 1 } : prev);
+            if (syncCount) {
+                const commData = await CommunityService.getCommunity(slug);
+                setCommunity(commData);
+            }
         } catch (e) {
             console.error("Ошибка обновления постов сообщества:", e);
         }
     };
 
     const handleToggleJoin = async () => {
+        if (!isLoggedIn) {
+            alert(isRu ? "Пожалуйста, войдите в систему" : "Please sign in");
+            return;
+        }
         try {
             const res = await CommunityService.toggleJoin(slug);
             setCommunity((prev: any) => ({
                 ...prev,
                 isMember: res.isMember,
+                myMemberStatus: res.myMemberStatus ?? null,
                 membersCount: res.membersCount,
-                myRole: res.isMember ? (prev?.myRole ?? 0) : null
+                myRole: res.isMember ? (prev?.myRole ?? 0) : null,
+                isLocked: (prev?.type === 2 || prev?.type === 'Private') ? !res.isMember : false
             }));
+            if (community?.type === 2 || community?.type === 'Private') {
+                const [commData, postsData] = await Promise.all([
+                    CommunityService.getCommunity(slug),
+                    PostService.getCommunityPosts(slug, null, 15)
+                ]);
+                setCommunity(commData);
+                setCommunityPosts(postsData.items || []);
+                setCommunityPostsCursor(postsData.nextCursor || null);
+                setHasMoreCommunityPosts(postsData.hasMore || false);
+            }
         } catch (error: any) {
             console.error("Ошибка вступления:", error);
             const msg = error?.response?.data?.message || (isRu ? "Не удалось изменить статус участия" : "Failed to update membership status");
@@ -302,6 +407,54 @@ export default function Profile() {
         }
     };
 
+    const normalizeVacancyFormat = (fmt: any): number => {
+        if (fmt === 1 || fmt === '1' || fmt === 'Hybrid') return 1;
+        if (fmt === 2 || fmt === '2' || fmt === 'Office') return 2;
+        return 0;
+    };
+
+    const normalizeVacancyLevel = (lvl: any): number => {
+        if (lvl === 0 || lvl === '0' || lvl === 'Intern') return 0;
+        if (lvl === 1 || lvl === '1' || lvl === 'Junior') return 1;
+        if (lvl === 3 || lvl === '3' || lvl === 'Senior') return 3;
+        if (lvl === 4 || lvl === '4' || lvl === 'Lead') return 4;
+        return 2;
+    };
+
+    const normalizeVacancyStatus = (st: any): number => {
+        if (st === 1 || st === '1' || st === 'Paused') return 1;
+        if (st === 2 || st === '2' || st === 'Closed') return 2;
+        return 0;
+    };
+
+    const openCreateVacancyModal = () => {
+        setEditingVacancyId(null);
+        setVacancyTitle('');
+        setVacancyDescription('');
+        setVacancySalaryFrom('');
+        setVacancySalaryTo('');
+        setVacancyCurrency('USD');
+        setVacancyFormat(0);
+        setVacancyLevel(2);
+        setVacancyStatus(0);
+        setVacancyStack('');
+        setIsCreateVacancyOpen(true);
+    };
+
+    const openEditVacancyModal = (v: Vacancy) => {
+        setEditingVacancyId(v.id);
+        setVacancyTitle(v.title || '');
+        setVacancyDescription(v.description || '');
+        setVacancySalaryFrom(v.salaryFrom != null ? String(v.salaryFrom) : '');
+        setVacancySalaryTo(v.salaryTo != null ? String(v.salaryTo) : '');
+        setVacancyCurrency(v.currency || 'USD');
+        setVacancyFormat(normalizeVacancyFormat(v.format));
+        setVacancyLevel(normalizeVacancyLevel(v.level));
+        setVacancyStatus(normalizeVacancyStatus(v.status));
+        setVacancyStack((v.stack || []).join(', '));
+        setIsCreateVacancyOpen(true);
+    };
+
     const handleCreateVacancy = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!vacancyTitle.trim()) return;
@@ -313,27 +466,49 @@ export default function Profile() {
                 .map((s) => s.trim())
                 .filter(Boolean);
 
-            await VacancyService.createVacancy(slug, {
-                title: vacancyTitle.trim(),
-                description: vacancyDescription.trim(),
-                salaryFrom: vacancySalaryFrom ? parseInt(vacancySalaryFrom) : null,
-                salaryTo: vacancySalaryTo ? parseInt(vacancySalaryTo) : null,
-                currency: vacancyCurrency,
-                format: vacancyFormat,
-                level: vacancyLevel,
-                stack: stackArray,
-            });
+            const parsedFrom = vacancySalaryFrom.trim() !== '' ? parseInt(vacancySalaryFrom, 10) : null;
+            const parsedTo = vacancySalaryTo.trim() !== '' ? parseInt(vacancySalaryTo, 10) : null;
+
+            if (editingVacancyId) {
+                await VacancyService.updateVacancy(editingVacancyId, {
+                    title: vacancyTitle.trim(),
+                    description: vacancyDescription.trim(),
+                    salaryFrom: parsedFrom !== null && !Number.isNaN(parsedFrom) ? parsedFrom : null,
+                    salaryTo: parsedTo !== null && !Number.isNaN(parsedTo) ? parsedTo : null,
+                    currency: vacancyCurrency,
+                    format: vacancyFormat,
+                    level: vacancyLevel,
+                    stack: stackArray,
+                    status: vacancyStatus,
+                });
+            } else {
+                await VacancyService.createVacancy(slug, {
+                    title: vacancyTitle.trim(),
+                    description: vacancyDescription.trim(),
+                    salaryFrom: parsedFrom !== null && !Number.isNaN(parsedFrom) ? parsedFrom : null,
+                    salaryTo: parsedTo !== null && !Number.isNaN(parsedTo) ? parsedTo : null,
+                    currency: vacancyCurrency,
+                    format: vacancyFormat,
+                    level: vacancyLevel,
+                    stack: stackArray,
+                });
+            }
 
             setIsCreateVacancyOpen(false);
+            setEditingVacancyId(null);
             setVacancyTitle('');
             setVacancyDescription('');
             setVacancySalaryFrom('');
             setVacancySalaryTo('');
+            setVacancyStatus(0);
             setVacancyStack('');
             await loadVacancies();
-        } catch (error) {
-            console.error("Ошибка создания вакансии:", error);
-            alert(isRu ? "Не удалось создать вакансию" : "Failed to create vacancy");
+        } catch (error: any) {
+            console.error("Ошибка сохранения вакансии:", error);
+            const msg = error?.response?.data?.message || (editingVacancyId
+                ? (isRu ? "Не удалось обновить вакансию" : "Failed to update vacancy")
+                : (isRu ? "Не удалось создать вакансию" : "Failed to create vacancy"));
+            alert(msg);
         } finally {
             setIsSubmittingVacancy(false);
         }
@@ -359,10 +534,14 @@ export default function Profile() {
         try {
             setIsApplyingVacancyId(vacancyId);
             const res = await VacancyService.apply(vacancyId);
+            setCompanyVacancies((prev) => prev.map((item) => item.id === vacancyId ? { ...item, hasApplied: true } : item));
             alert(res.message || (isRu ? "Отклик отправлен! Переходим в диалог с рекрутером." : "Application sent! Redirecting to recruiter chat."));
-            router.push('/messages');
+            router.push(res.chatId ? `/messages?chatId=${res.chatId}` : '/messages');
         } catch (error: any) {
             console.error("Ошибка отклика:", error);
+            if (error?.response?.data?.alreadyApplied) {
+                setCompanyVacancies((prev) => prev.map((item) => item.id === vacancyId ? { ...item, hasApplied: true } : item));
+            }
             const msg = error?.response?.data?.message || (isRu ? "Не удалось отправить отклик" : "Failed to submit application");
             alert(msg);
         } finally {
@@ -404,9 +583,9 @@ export default function Profile() {
             const isComp = editKind === 1 || isCompanyEntity(res?.kind);
             if (isComp) {
                 loadVacancies();
-                if (community?.myRole === 'Owner' || community?.myRole === 'Admin' || community?.myRole === 3 || community?.myRole === 2) {
-                    loadPendingEmployees();
-                }
+            }
+            if (community?.myRole === 'Owner' || community?.myRole === 'Admin' || community?.myRole === 3 || community?.myRole === 2) {
+                loadPendingEmployees();
             }
 
             setIsEditOpen(false);
@@ -477,6 +656,10 @@ export default function Profile() {
     };
 
     const handleCropSave = async (croppedFile: File) => {
+        if (croppedFile.size > 5 * 1024 * 1024) {
+            alert(isRu ? "Размер изображения превышает 5 МБ" : "Image size exceeds 5 MB");
+            return;
+        }
         setIsUploading(true);
         try {
             if (cropModalState.type === 'avatar') {
@@ -525,11 +708,16 @@ export default function Profile() {
     }
 
     const isCompany = isCompanyEntity(community?.kind);
+    const isPrivateCommunity = community?.type === 2 || community?.type === 'Private';
+    const isRestrictedCommunity = community?.type === 1 || community?.type === 'Restricted';
     const isOwner = community?.myRole === 'Owner' || community?.myRole === 3;
     const isCanEdit = community?.myRole === 'Owner' || community?.myRole === 'Admin' || community?.myRole === 3 || community?.myRole === 2;
     const isOwnerOrAdminOrMod = isCanEdit || community?.myRole === 'Moderator' || community?.myRole === 1;
     const isAdminsOnlyPolicy = community?.postingPolicy === 1 || community?.postingPolicy === 'AdminsAndModerators';
     const isMember = Boolean(community?.isMember);
+    const isJoinPending = community?.myMemberStatus === 1 || community?.myMemberStatus === 'Pending';
+    const isEmployeeActive = community?.myMemberStatus === 0 || community?.myMemberStatus === 'Active';
+    const isCommunityLocked = Boolean(community?.isLocked) || (isPrivateCommunity && !isMember);
     const isLoggedIn = Boolean(userData?.userName && userData.userName !== '...');
     const canPost = isLoggedIn && (isAdminsOnlyPolicy ? isOwnerOrAdminOrMod : isMember);
 
@@ -619,22 +807,29 @@ export default function Profile() {
                                 <span className="text-sm text-zinc-600 light:text-zinc-400">•</span>
                                 <p className="text-sm text-zinc-400 light:text-zinc-500">{community.postsCount || 0} {t.profile.postsTab}</p>
 
-                                {isCompany ? (
+                                {isCompany && (
                                     <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200">
                                         <Building2 size={11} />
                                         {isRu ? "Компания" : "Company"}
                                     </span>
-                                ) : (community.type === 1 || community.type === 'Restricted') ? (
+                                )}
+
+                                {isPrivateCommunity ? (
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 light:bg-rose-50 light:text-rose-700 light:border-rose-200">
+                                        <Lock size={10} />
+                                        {isRu ? "Приватное" : "Private"}
+                                    </span>
+                                ) : isRestrictedCommunity ? (
                                     <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 light:bg-amber-50 light:text-amber-700 light:border-amber-200">
                                         <Lock size={10} />
-                                        {isRu ? "Закрытое" : "Restricted"}
+                                        {isRu ? "Ограниченное" : "Restricted"}
                                     </span>
-                                ) : (
+                                ) : !isCompany ? (
                                     <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200">
                                         <Globe size={10} />
                                         {isRu ? "Публичное" : "Public"}
                                     </span>
-                                )}
+                                ) : null}
 
                                 {isAdminsOnlyPolicy && (
                                     <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 light:bg-purple-50 light:text-purple-700 light:border-purple-200">
@@ -654,7 +849,7 @@ export default function Profile() {
                                         setEditDescription(community.description || '');
                                         setEditRules(community.rules || '');
                                         setEditPostingPolicy(community.postingPolicy === 1 || community.postingPolicy === 'AdminsAndModerators' ? 1 : 0);
-                                        setEditType(community.type === 1 || community.type === 'Restricted' ? 1 : 0);
+                                        setEditType(community.type === 2 || community.type === 'Private' ? 2 : community.type === 1 || community.type === 'Restricted' ? 1 : 0);
                                         setEditKind(isCompanyEntity(community.kind) ? 1 : 0);
                                         setEditWebsiteUrl(community.websiteUrl || '');
                                         setEditLocation(community.location || '');
@@ -667,30 +862,32 @@ export default function Profile() {
                                 </button>
                             )}
 
-                            <button
-                                onClick={handleToggleWatch}
-                                className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 min-w-[90px] sm:min-w-[100px] text-center ${
-                                    community?.isWatching
-                                        ? "bg-white/10 text-white border border-white/20 hover:bg-white/15 light:bg-zinc-100 light:text-zinc-900 light:border-zinc-300 light:hover:bg-zinc-200"
-                                        : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200 light:hover:bg-zinc-200 light:hover:text-zinc-900"
-                                }`}
-                            >
-                                {community?.isWatching ? (isRu ? "Вы читаете" : "Following") : t.profile.watchBtn}
-                            </button>
+                            {!isCommunityLocked && (
+                                <button
+                                    onClick={handleToggleWatch}
+                                    className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 min-w-[90px] sm:min-w-[100px] text-center ${
+                                        community?.isWatching
+                                            ? "bg-white/10 text-white border border-white/20 hover:bg-white/15 light:bg-zinc-100 light:text-zinc-900 light:border-zinc-300 light:hover:bg-zinc-200"
+                                            : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200 light:hover:bg-zinc-200 light:hover:text-zinc-900"
+                                    }`}
+                                >
+                                    {community?.isWatching ? (isRu ? "Вы читаете" : "Following") : t.profile.watchBtn}
+                                </button>
+                            )}
 
                             {isCompany ? (
-                                community.myMemberStatus === 0 ? (
+                                isEmployeeActive ? (
                                     <span className="px-4 py-2 text-xs font-semibold rounded-3xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200">
                                         {isRu ? "В штате" : "Employee"}
                                     </span>
-                                ) : community.myMemberStatus === 1 ? (
+                                ) : isJoinPending ? (
                                     <span className="px-4 py-2 text-xs font-semibold rounded-3xl bg-amber-500/15 text-amber-400 border border-amber-500/30 light:bg-amber-50 light:text-amber-700 light:border-amber-200">
                                         {isRu ? "Заявка на рассмотрении" : "Request pending"}
                                     </span>
                                 ) : !isOwner && (
                                     <button
                                         onClick={handleRequestEmployee}
-                                        className="px-4 py-2 text-xs font-semibold rounded-3xl bg-white/10 hover:bg-white text-zinc-200 hover:text-black transition light:bg-zinc-100 light:text-zinc-800 light:border light:border-zinc-200 light:hover:bg-zinc-200"
+                                        className="px-4 py-2 text-xs font-semibold rounded-3xl bg-white/10 hover:bg-white text-zinc-200 hover:text-black transition cursor-pointer light:bg-zinc-100 light:text-zinc-800 light:border light:border-zinc-200 light:hover:bg-zinc-200"
                                     >
                                         {isRu ? "Работаю здесь" : "I work here"}
                                     </button>
@@ -699,61 +896,115 @@ export default function Profile() {
                                 !isOwner && (
                                     <button
                                         onClick={handleToggleJoin}
-                                        className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition ${
+                                        className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition cursor-pointer whitespace-nowrap ${
                                             community?.isMember
                                                 ? "bg-white/10 text-white hover:bg-red-500/20 hover:text-red-400 light:bg-zinc-100 light:text-zinc-900 light:border light:border-zinc-300 light:hover:bg-red-50 light:hover:text-red-600 light:hover:border-red-200"
+                                                : isJoinPending
+                                                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 light:bg-amber-50 light:text-amber-700 light:border-amber-200 light:hover:bg-amber-100"
                                                 : "bg-white text-black hover:bg-zinc-200 light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                         }`}
                                     >
-                                        {community?.isMember ? (isRu ? "Вы вступили" : "Joined") : (isRu ? "Вступить" : "Join")}
+                                        {community?.isMember
+                                            ? (isRu ? "Вы вступили" : "Joined")
+                                            : isJoinPending
+                                            ? (isRu ? "Заявка отправлена" : "Request sent")
+                                            : (isPrivateCommunity || isRestrictedCommunity)
+                                            ? (isRu ? "Подать заявку" : "Request to join")
+                                            : (isRu ? "Вступить" : "Join")}
                                     </button>
                                 )
                             )}
                         </div>
                     </div>
 
-                    <div className="mt-4">
-                        <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line light:text-zinc-700">
-                            {community.description || ""}
-                        </p>
-                    </div>
+                    {!isCommunityLocked && (
+                        <>
+                            <div className="mt-4">
+                                <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line light:text-zinc-700">
+                                    {community.description || ""}
+                                </p>
+                            </div>
 
-                    {isCompany && (
-                        <div className="mt-4 flex flex-wrap items-center gap-y-2 gap-x-5 pt-3 border-t border-white/5 text-xs text-zinc-400 light:border-zinc-200/80 light:text-zinc-600">
-                            {community.websiteUrl && (
-                                <a
-                                    href={community.websiteUrl.startsWith('http') ? community.websiteUrl : `https://${community.websiteUrl}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-blue-400 hover:underline light:text-blue-600"
-                                >
-                                    <Globe size={13} />
-                                    <span>{community.websiteUrl.replace(/^https?:\/\//, '')}</span>
-                                    <ExternalLink size={10} />
-                                </a>
+                            {isCompany && (
+                                <div className="mt-4 flex flex-wrap items-center gap-y-2 gap-x-5 pt-3 border-t border-white/5 text-xs text-zinc-400 light:border-zinc-200/80 light:text-zinc-600">
+                                    {community.websiteUrl && (
+                                        <a
+                                            href={community.websiteUrl.startsWith('http') ? community.websiteUrl : `https://${community.websiteUrl}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-1.5 text-blue-400 hover:underline light:text-blue-600"
+                                        >
+                                            <Globe size={13} />
+                                            <span>{community.websiteUrl.replace(/^https?:\/\//, '')}</span>
+                                            <ExternalLink size={10} />
+                                        </a>
+                                    )}
+                                    {community.location && (
+                                        <span className="flex items-center gap-1.5 text-zinc-400 light:text-zinc-600">
+                                            <MapPin size={13} className="text-zinc-500 light:text-zinc-400" />
+                                            {community.location}
+                                        </span>
+                                    )}
+                                    {community.industry && (
+                                        <span className="flex items-center gap-1.5 text-zinc-400 light:text-zinc-600">
+                                            <Briefcase size={13} className="text-zinc-500 light:text-zinc-400" />
+                                            {community.industry}
+                                        </span>
+                                    )}
+                                    {community.companySize && (
+                                        <span className="flex items-center gap-1.5 text-zinc-400 light:text-zinc-600">
+                                            <Users size={13} className="text-zinc-500 light:text-zinc-400" />
+                                            {community.companySize} {isRu ? "сотрудников" : "employees"}
+                                        </span>
+                                    )}
+                                </div>
                             )}
-                            {community.location && (
-                                <span className="flex items-center gap-1.5 text-zinc-400 light:text-zinc-600">
-                                    <MapPin size={13} className="text-zinc-500 light:text-zinc-400" />
-                                    {community.location}
-                                </span>
-                            )}
-                            {community.industry && (
-                                <span className="flex items-center gap-1.5 text-zinc-400 light:text-zinc-600">
-                                    <Briefcase size={13} className="text-zinc-500 light:text-zinc-400" />
-                                    {community.industry}
-                                </span>
-                            )}
-                            {community.companySize && (
-                                <span className="flex items-center gap-1.5 text-zinc-400 light:text-zinc-600">
-                                    <Users size={13} className="text-zinc-500 light:text-zinc-400" />
-                                    {community.companySize} {isRu ? "сотрудников" : "employees"}
-                                </span>
-                            )}
-                        </div>
+                        </>
                     )}
                 </div>
 
+                {isCommunityLocked ? (
+                    <div className="mx-5 sm:mx-10 mb-10 p-8 sm:p-12 rounded-3xl border border-white/5 bg-zinc-950/20 flex flex-col items-center justify-center text-center light:bg-zinc-50 light:border-zinc-200/80">
+                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4 text-zinc-300 border border-white/10 light:bg-zinc-200/80 light:text-zinc-700 light:border-zinc-300">
+                            <Lock size={26} />
+                        </div>
+                        <h3 className="text-base font-bold text-zinc-100 light:text-zinc-900 mb-1.5">
+                            {isCompany
+                                ? (isRu ? "Это закрытое пространство компании" : "This company space is private")
+                                : (isRu ? "Это приватное сообщество" : "This community is private")}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-zinc-500 light:text-zinc-600 max-w-md">
+                            {isJoinPending
+                                ? (isRu ? "Ваша заявка отправлена и ожидает подтверждения администратором." : "Your join request has been sent and is awaiting admin approval.")
+                                : (isRu ? "Публикации, описание и список участников доступны только одобренным участникам." : "Posts, details, and member list are visible only to approved members.")}
+                        </p>
+                        {!isOwner && !isCompany && (
+                            <button
+                                type="button"
+                                onClick={handleToggleJoin}
+                                className={`mt-5 px-5 py-2.5 text-xs font-semibold rounded-2xl transition active:scale-[0.97] cursor-pointer ${
+                                    isJoinPending
+                                        ? "bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 light:bg-amber-50 light:text-amber-700 light:border-amber-200 light:hover:bg-amber-100"
+                                        : "bg-white text-black hover:bg-zinc-200 light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
+                                }`}
+                            >
+                                {isJoinPending
+                                    ? (isRu ? "Заявка отправлена (отменить)" : "Request sent (cancel)")
+                                    : (isRu ? "Подать заявку на вступление" : "Request to join")}
+                            </button>
+                        )}
+                        {!isOwner && isCompany && !isEmployeeActive && !isJoinPending && (
+                            <button
+                                type="button"
+                                onClick={handleRequestEmployee}
+                                className="mt-5 px-5 py-2.5 text-xs font-semibold rounded-2xl bg-white text-black hover:bg-zinc-200 transition active:scale-[0.97] cursor-pointer light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
+                            >
+                                {isRu ? "Работаю здесь" : "I work here"}
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <>
                 <div className="flex items-center gap-4 sm:gap-6 border-b border-white/5 px-10 max-sm:px-5 overflow-x-auto no-scrollbar light:border-zinc-200/80">
                     <button
                         onClick={() => setActiveTab('posts')}
@@ -802,6 +1053,11 @@ export default function Profile() {
                         <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-zinc-400 font-mono light:bg-zinc-100 light:text-zinc-600">
                             {community.membersCount}
                         </span>
+                        {isCanEdit && pendingEmployees.length > 0 && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 font-mono light:bg-amber-50 light:text-amber-700 light:border light:border-amber-200">
+                                +{pendingEmployees.length}
+                            </span>
+                        )}
                         {activeTab === 'employees' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white light:bg-zinc-950 rounded-full" />}
                     </button>
                 </div>
@@ -891,7 +1147,8 @@ export default function Profile() {
                                             community={p.community}
                                             isPinned={p.isPinned}
                                             canPin={isOwnerOrAdminOrMod}
-                                            onPinToggle={refreshCommunityPosts}
+                                            canDelete={isOwnerOrAdminOrMod || userData?.userName?.toLowerCase() === p.authorUsername?.toLowerCase()}
+                                            onPinToggle={() => refreshCommunityPosts(false)}
                                         />
                                     </div>
                                 ))
@@ -925,7 +1182,7 @@ export default function Profile() {
                             </div>
                             {isCanEdit && (
                                 <button
-                                    onClick={() => setIsCreateVacancyOpen(true)}
+                                    onClick={openCreateVacancyModal}
                                     className="px-4 py-2 rounded-2xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition flex items-center gap-1.5 cursor-pointer light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                 >
                                     <Plus size={14} />
@@ -944,7 +1201,10 @@ export default function Profile() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 gap-4">
-                                {companyVacancies.map((v) => (
+                                {companyVacancies.map((v) => {
+                                    const stNum = normalizeVacancyStatus(v.status);
+                                    const isOwnVacancy = Boolean(userData?.id && v.createdById === userData.id);
+                                    return (
                                     <div
                                         key={v.id}
                                         className="p-5 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition space-y-3 light:bg-white light:border-zinc-200/80 light:shadow-sm light:hover:border-zinc-300"
@@ -952,6 +1212,16 @@ export default function Profile() {
                                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                                             <div>
                                                 <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                    {stNum === 1 && (
+                                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 light:bg-amber-50 light:text-amber-700 light:border-amber-200">
+                                                            {isRu ? "На паузе" : "Paused"}
+                                                        </span>
+                                                    )}
+                                                    {stNum === 2 && (
+                                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30 light:bg-red-50 light:text-red-700 light:border-red-200">
+                                                            {isRu ? "Закрыта" : "Closed"}
+                                                        </span>
+                                                    )}
                                                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 light:bg-blue-50 light:text-blue-700 light:border-blue-200">
                                                         {formatLevelText(v.level)}
                                                     </span>
@@ -972,21 +1242,41 @@ export default function Profile() {
 
                                             <div className="flex items-center gap-2">
                                                 {isCanEdit && (
-                                                    <button
-                                                        onClick={() => handleDeleteVacancy(v.id)}
-                                                        className="p-2 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition light:text-zinc-400 light:hover:text-red-600 light:hover:bg-red-50"
-                                                        title={isRu ? "Удалить вакансию" : "Delete vacancy"}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => openEditVacancyModal(v)}
+                                                            className="p-2 rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition light:text-zinc-400 light:hover:text-zinc-800 light:hover:bg-zinc-100"
+                                                            title={isRu ? "Редактировать вакансию" : "Edit vacancy"}
+                                                        >
+                                                            <Pencil size={15} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteVacancy(v.id)}
+                                                            className="p-2 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition light:text-zinc-400 light:hover:text-red-600 light:hover:bg-red-50"
+                                                            title={isRu ? "Удалить вакансию" : "Delete vacancy"}
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </>
                                                 )}
-                                                <button
-                                                    onClick={() => handleApplyVacancy(v.id)}
-                                                    disabled={isApplyingVacancyId === v.id}
-                                                    className="px-4 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
-                                                >
-                                                    {isApplyingVacancyId === v.id ? (isRu ? "Отправка..." : "Sending...") : t.vacancies.apply}
-                                                </button>
+                                                {isOwnVacancy ? (
+                                                    <span className="px-3.5 py-2 rounded-xl bg-white/5 text-zinc-400 border border-white/10 font-medium text-xs select-none light:bg-zinc-100 light:text-zinc-600 light:border-zinc-200">
+                                                        {isRu ? "Ваша вакансия" : "Your vacancy"}
+                                                    </span>
+                                                ) : v.hasApplied ? (
+                                                    <span className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold text-xs select-none light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200">
+                                                        <CheckCircle2 size={14} />
+                                                        {t.vacancies.applied}
+                                                    </span>
+                                                ) : stNum === 0 ? (
+                                                    <button
+                                                        onClick={() => handleApplyVacancy(v.id)}
+                                                        disabled={isApplyingVacancyId === v.id}
+                                                        className="px-4 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
+                                                    >
+                                                        {isApplyingVacancyId === v.id ? (isRu ? "Отправка..." : "Sending...") : t.vacancies.apply}
+                                                    </button>
+                                                ) : null}
                                             </div>
                                         </div>
 
@@ -1007,7 +1297,8 @@ export default function Profile() {
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -1071,12 +1362,14 @@ export default function Profile() {
 
                 {activeTab === 'employees' && (
                     <div className="p-6 md:p-8 space-y-6">
-                        {isCanEdit && isCompany && pendingEmployees.length > 0 && (
+                        {isCanEdit && pendingEmployees.length > 0 && (
                             <div className="p-5 rounded-2xl bg-amber-500/[0.03] border border-amber-500/20 space-y-3 light:bg-amber-50/50 light:border-amber-200">
                                 <div className="flex items-center justify-between">
                                     <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 light:text-amber-700">
                                         <Users size={14} />
-                                        {isRu ? `Заявки на подтверждение работы (${pendingEmployees.length})` : `Employment Verification Requests (${pendingEmployees.length})`}
+                                        {isCompany
+                                            ? (isRu ? `Заявки на подтверждение работы (${pendingEmployees.length})` : `Employment Verification Requests (${pendingEmployees.length})`)
+                                            : (isRu ? `Заявки на вступление (${pendingEmployees.length})` : `Join Requests (${pendingEmployees.length})`)}
                                     </h4>
                                 </div>
 
@@ -1086,29 +1379,29 @@ export default function Profile() {
                                             key={cand.id}
                                             className="p-3 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3 light:bg-white light:border-zinc-200 light:shadow-xs"
                                         >
-                                            <div className="flex items-center gap-2.5 min-w-0">
+                                            <Link href={`/profile/${cand.username}`} className="flex items-center gap-2.5 min-w-0 group">
                                                 <Avatar
                                                     src={cand.avatar}
                                                     name={cand.name || cand.username}
                                                     className="w-8 h-8 text-[10px]"
                                                 />
                                                 <div className="flex flex-col truncate">
-                                                    <span className="text-xs font-semibold text-zinc-100 truncate light:text-zinc-900">{cand.name}</span>
+                                                    <span className="text-xs font-semibold text-zinc-100 group-hover:underline truncate light:text-zinc-900">{cand.name}</span>
                                                     <span className="text-[10px] text-zinc-500 truncate light:text-zinc-500">@{cand.username}</span>
                                                 </div>
-                                            </div>
+                                            </Link>
 
                                             <div className="flex items-center gap-1.5 shrink-0">
                                                 <button
                                                     onClick={() => handleAcceptEmployee(cand.id)}
-                                                    className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition text-xs font-semibold light:bg-emerald-50 light:text-emerald-700 light:hover:bg-emerald-100"
-                                                    title={isRu ? "Принять в штат" : "Approve employee"}
+                                                    className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition text-xs font-semibold cursor-pointer light:bg-emerald-50 light:text-emerald-700 light:hover:bg-emerald-100"
+                                                    title={isCompany ? (isRu ? "Принять в штат" : "Approve employee") : (isRu ? "Принять заявку" : "Approve request")}
                                                 >
                                                     <Check size={14} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleRejectEmployee(cand.id)}
-                                                    className="p-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/30 transition text-xs font-semibold light:bg-red-50 light:text-red-600 light:hover:bg-red-100"
+                                                    className="p-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/30 transition text-xs font-semibold cursor-pointer light:bg-red-50 light:text-red-600 light:hover:bg-red-100"
                                                     title={isRu ? "Отклонить" : "Reject"}
                                                 >
                                                     <X size={14} />
@@ -1196,11 +1489,16 @@ export default function Profile() {
                         </div>
                     </div>
                 )}
+                    </>
+                )}
             </div>
 
             <Modal
                 isOpen={isCreateVacancyOpen}
-                onClose={() => setIsCreateVacancyOpen(false)}
+                onClose={() => {
+                    setIsCreateVacancyOpen(false);
+                    setEditingVacancyId(null);
+                }}
                 className="w-full max-w-[880px] max-h-[90vh] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-y-auto md:overflow-hidden flex flex-col md:grid md:grid-cols-12 relative shadow-[0_24px_80px_rgba(0,0,0,0.85)] light:bg-white light:border-zinc-200 light:text-zinc-900 light:shadow-2xl"
             >
                         <div className="md:col-span-4 bg-white/[0.015] border-b md:border-b-0 md:border-r border-white/10 p-5 sm:p-6 flex flex-col justify-between gap-4 shrink-0 light:bg-zinc-50/80 light:border-zinc-200">
@@ -1211,7 +1509,10 @@ export default function Profile() {
                                     </span>
                                     <button
                                         type="button"
-                                        onClick={() => setIsCreateVacancyOpen(false)}
+                                        onClick={() => {
+                                            setIsCreateVacancyOpen(false);
+                                            setEditingVacancyId(null);
+                                        }}
                                         className="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                     >
                                         <X size={16} />
@@ -1258,12 +1559,17 @@ export default function Profile() {
                         <div className="md:col-span-8 p-5 sm:p-7 md:overflow-y-auto md:no-scrollbar md:max-h-[90vh]">
                             <div className="flex justify-between items-start gap-4 pb-4 mb-5 border-b border-white/10 light:border-zinc-200">
                                 <div>
-                                    <h3 className="text-lg font-bold text-neutral-100 tracking-tight light:text-zinc-900">{isRu ? "Создать вакансию" : "Create Vacancy"}</h3>
+                                    <h3 className="text-lg font-bold text-neutral-100 tracking-tight light:text-zinc-900">
+                                        {editingVacancyId ? (isRu ? "Редактировать вакансию" : "Edit Vacancy") : (isRu ? "Создать вакансию" : "Create Vacancy")}
+                                    </h3>
                                     <p className="text-xs text-neutral-400 mt-0.5 light:text-zinc-500">{community.name}</p>
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setIsCreateVacancyOpen(false)}
+                                    onClick={() => {
+                                        setIsCreateVacancyOpen(false);
+                                        setEditingVacancyId(null);
+                                    }}
                                     className="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 items-center justify-center text-neutral-400 hover:text-white transition cursor-pointer shrink-0 light:bg-zinc-100 light:border-zinc-200 light:text-zinc-500 light:hover:text-zinc-900 light:hover:bg-zinc-200"
                                 >
                                     <X size={16} />
@@ -1284,6 +1590,23 @@ export default function Profile() {
                                         className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:placeholder:text-zinc-400 light:focus:border-zinc-400"
                                     />
                                 </div>
+
+                                {editingVacancyId && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
+                                            {isRu ? "Статус вакансии" : "Vacancy Status"}
+                                        </label>
+                                        <select
+                                            value={vacancyStatus}
+                                            onChange={(e) => setVacancyStatus(parseInt(e.target.value, 10))}
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-[#050505]/90 text-neutral-100 text-sm border border-white/10 focus:outline-none focus:border-white/25 light:bg-white light:border-zinc-200 light:text-zinc-900 light:focus:border-zinc-400"
+                                        >
+                                            <option value={0}>{isRu ? "Открыта" : "Open"}</option>
+                                            <option value={1}>{isRu ? "На паузе" : "Paused"}</option>
+                                            <option value={2}>{isRu ? "Закрыта" : "Closed"}</option>
+                                        </select>
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
@@ -1389,7 +1712,10 @@ export default function Profile() {
                                 <div className="flex items-center justify-end gap-3 pt-4 pb-2 border-t border-white/10 light:border-zinc-200">
                                     <button
                                         type="button"
-                                        onClick={() => setIsCreateVacancyOpen(false)}
+                                        onClick={() => {
+                                            setIsCreateVacancyOpen(false);
+                                            setEditingVacancyId(null);
+                                        }}
                                         className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-semibold transition cursor-pointer light:bg-zinc-100 light:text-zinc-700 light:hover:bg-zinc-200"
                                     >
                                         {t.common.cancel}
@@ -1399,7 +1725,9 @@ export default function Profile() {
                                         disabled={isSubmittingVacancy}
                                         className="px-6 py-2.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition active:scale-[0.98] disabled:opacity-50 cursor-pointer light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
                                     >
-                                        {isSubmittingVacancy ? (isRu ? "Публикация..." : "Publishing...") : (isRu ? "Опубликовать вакансию" : "Publish Vacancy")}
+                                        {isSubmittingVacancy
+                                            ? (editingVacancyId ? (isRu ? "Сохранение..." : "Saving...") : (isRu ? "Публикация..." : "Publishing..."))
+                                            : (editingVacancyId ? t.common.save : (isRu ? "Опубликовать вакансию" : "Publish Vacancy"))}
                                     </button>
                                 </div>
                             </form>
@@ -1669,7 +1997,7 @@ export default function Profile() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">{isRu ? "Кто может публиковать" : "Who can post"}</label>
                                         <div className="grid grid-cols-2 gap-2">
@@ -1702,7 +2030,7 @@ export default function Profile() {
 
                                     <div className="space-y-1.5">
                                         <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">{isRu ? "Доступ к сообществу" : "Community Access"}</label>
-                                        <div className="grid grid-cols-2 gap-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => setEditType(0)}
@@ -1726,6 +2054,18 @@ export default function Profile() {
                                             >
                                                 <div className="text-xs font-semibold">{isRu ? "Ограниченное" : "Restricted"}</div>
                                                 <div className={`text-[10px] mt-0.5 ${editType === 1 ? "text-neutral-400 light:text-zinc-300" : "text-neutral-500 light:text-zinc-500"}`}>{isRu ? "По заявкам" : "By request"}</div>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditType(2)}
+                                                className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                                                    editType === 2
+                                                        ? "border-white/30 bg-white/10 text-white light:border-zinc-900 light:bg-zinc-900 light:text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 light:border-zinc-200 light:bg-zinc-50 light:text-zinc-600 light:hover:bg-zinc-100"
+                                                }`}
+                                            >
+                                                <div className="text-xs font-semibold">{isRu ? "Приватное" : "Private"}</div>
+                                                <div className={`text-[10px] mt-0.5 ${editType === 2 ? "text-neutral-400 light:text-zinc-300" : "text-neutral-500 light:text-zinc-500"}`}>{isRu ? "Скрыто от всех" : "Hidden & private"}</div>
                                             </button>
                                         </div>
                                     </div>

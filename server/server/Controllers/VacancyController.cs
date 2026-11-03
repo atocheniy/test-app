@@ -5,10 +5,12 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using server.Data;
 using server.DTOs;
 using server.Helpers;
+using server.Hubs;
 using server.Models;
 
 namespace server.Controllers;
@@ -18,10 +20,36 @@ namespace server.Controllers;
 public class VacancyController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly IHubContext<ChatHub> _hubContext;
 
-    public VacancyController(ApplicationDbContext context)
+    public VacancyController(ApplicationDbContext context, IHubContext<ChatHub> hubContext)
     {
         _context = context;
+        _hubContext = hubContext;
+    }
+
+    private static string BuildApplicationGreeting(string title, string companyName)
+    {
+        return $"Здравствуйте. Я откликаюсь на вакансию «{title}» в компании {companyName}.";
+    }
+
+    private async Task<HashSet<string>> GetAppliedGreetingsAsync(string? userId)
+    {
+        if (string.IsNullOrEmpty(userId)) return new HashSet<string>(StringComparer.Ordinal);
+
+        var contents = await _context.Message
+            .Where(m => m.SenderId == userId && m.Content != null && m.Content.StartsWith("Здравствуйте. Я откликаюсь на вакансию «"))
+            .Select(m => m.Content!)
+            .ToListAsync();
+
+        var set = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var c in contents)
+        {
+            var lineEnd = c.IndexOf('\n');
+            var firstLine = lineEnd >= 0 ? c.Substring(0, lineEnd).Trim() : c.Trim();
+            set.Add(firstLine);
+        }
+        return set;
     }
 
     private async Task<VacancyRecommendationScorer.UserVacancyProfile?> BuildUserProfileAsync(string? userId)
@@ -93,6 +121,7 @@ public class VacancyController : ControllerBase
         [FromQuery] string? companySlug,
         [FromQuery] string? stack,
         [FromQuery] string? sort = "recommended",
+        [FromQuery] bool includeAllStatuses = false,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
@@ -100,10 +129,30 @@ public class VacancyController : ControllerBase
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
 
+        var activeCommIds = string.IsNullOrEmpty(currentUserId)
+            ? new List<Guid>()
+            : await _context.CommunityMembers
+                .Where(cm => cm.UserId == currentUserId && cm.Status == MemberStatus.Active)
+                .Select(cm => cm.CommunityId)
+                .ToListAsync();
+
+        var canViewAllStatuses = false;
+        if (includeAllStatuses && !string.IsNullOrWhiteSpace(companySlug) && !string.IsNullOrEmpty(currentUserId))
+        {
+            var targetSlug = companySlug.Trim().ToLower();
+            canViewAllStatuses = await _context.CommunityMembers.AnyAsync(cm =>
+                cm.Community.Slug.ToLower() == targetSlug
+                && cm.UserId == currentUserId
+                && cm.Status == MemberStatus.Active
+                && (cm.Role == CommunityRole.Owner || cm.Role == CommunityRole.Admin));
+        }
+
         var query = _context.Vacancies
             .Include(v => v.Company)
             .Include(v => v.CreatedBy)
-            .Where(v => v.Status == VacancyStatus.Open)
+            .Where(v => v.Company.Kind == CommunityKind.Company
+                && (canViewAllStatuses || v.Status == VacancyStatus.Open)
+                && (v.Company.Type != CommunityType.Private || (currentUserId != null && activeCommIds.Contains(v.CompanyId))))
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(companySlug))
@@ -140,6 +189,7 @@ public class VacancyController : ControllerBase
         var allFiltered = await query.ToListAsync();
 
         var profile = await BuildUserProfileAsync(currentUserId);
+        var appliedGreetings = await GetAppliedGreetingsAsync(currentUserId);
         var ranked = VacancyRecommendationScorer.RankVacancies(allFiltered, profile);
 
         IEnumerable<VacancyRecommendationScorer.ScoredVacancy> ordered = ranked;
@@ -179,6 +229,7 @@ public class VacancyController : ControllerBase
                 CreatedByUsername = x.Vacancy.CreatedBy.UserName,
                 CreatedByAvatar = x.Vacancy.CreatedBy.Avatar,
                 Created = x.Vacancy.Created,
+                HasApplied = appliedGreetings.Contains(BuildApplicationGreeting(x.Vacancy.Title, x.Vacancy.Company.Name)),
                 MatchPercent = x.MatchPercent,
                 MatchReason = x.MatchReason,
                 Score = x.Score
@@ -199,10 +250,19 @@ public class VacancyController : ControllerBase
 
         var profile = await BuildUserProfileAsync(currentUserId);
 
+        var activeCommIds = string.IsNullOrEmpty(currentUserId)
+            ? new List<Guid>()
+            : await _context.CommunityMembers
+                .Where(cm => cm.UserId == currentUserId && cm.Status == MemberStatus.Active)
+                .Select(cm => cm.CommunityId)
+                .ToListAsync();
+
         var openVacancies = await _context.Vacancies
             .Include(v => v.Company)
             .Include(v => v.CreatedBy)
-            .Where(v => v.Status == VacancyStatus.Open)
+            .Where(v => v.Company.Kind == CommunityKind.Company
+                && v.Status == VacancyStatus.Open
+                && (v.Company.Type != CommunityType.Private || (currentUserId != null && activeCommIds.Contains(v.CompanyId))))
             .ToListAsync();
 
         if (openVacancies.Count == 0)
@@ -210,6 +270,7 @@ public class VacancyController : ControllerBase
             return Ok(Array.Empty<VacancyDto>());
         }
 
+        var appliedGreetings = await GetAppliedGreetingsAsync(currentUserId);
         var ranked = VacancyRecommendationScorer.RankVacancies(openVacancies, profile);
         
         List<VacancyRecommendationScorer.ScoredVacancy> paged;
@@ -250,6 +311,7 @@ public class VacancyController : ControllerBase
             CreatedByUsername = x.Vacancy.CreatedBy.UserName,
             CreatedByAvatar = x.Vacancy.CreatedBy.Avatar,
             Created = x.Vacancy.Created,
+            HasApplied = appliedGreetings.Contains(BuildApplicationGreeting(x.Vacancy.Title, x.Vacancy.Company.Name)),
             MatchPercent = x.MatchPercent,
             MatchReason = x.MatchReason,
             Score = x.Score
@@ -261,12 +323,39 @@ public class VacancyController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         var v = await _context.Vacancies
             .Include(v => v.Company)
             .Include(v => v.CreatedBy)
             .FirstOrDefaultAsync(v => v.Id == id);
 
-        if (v == null) return NotFound("Вакансия не найдена");
+        if (v == null || v.Company.Kind != CommunityKind.Company) return NotFound("Вакансия не найдена");
+
+        if (v.Company.Type == CommunityType.Private)
+        {
+            var isMember = !string.IsNullOrEmpty(currentUserId) && await _context.CommunityMembers
+                .AnyAsync(cm => cm.CommunityId == v.CompanyId && cm.UserId == currentUserId && cm.Status == MemberStatus.Active);
+            if (!isMember)
+            {
+                return StatusCode(403, new { message = "Доступ ограничен", isLocked = true });
+            }
+        }
+
+        if (v.Status != VacancyStatus.Open)
+        {
+            var canManage = !string.IsNullOrEmpty(currentUserId) && await _context.CommunityMembers
+                .AnyAsync(cm => cm.CommunityId == v.CompanyId
+                    && cm.UserId == currentUserId
+                    && cm.Status == MemberStatus.Active
+                    && (cm.Role == CommunityRole.Owner || cm.Role == CommunityRole.Admin));
+            if (!canManage)
+            {
+                return NotFound(new { message = "Вакансия закрыта или приостановлена" });
+            }
+        }
+
+        var appliedGreetings = await GetAppliedGreetingsAsync(currentUserId);
 
         var dto = new VacancyDto
         {
@@ -290,7 +379,8 @@ public class VacancyController : ControllerBase
             CreatedByName = v.CreatedBy.FullName,
             CreatedByUsername = v.CreatedBy.UserName,
             CreatedByAvatar = v.CreatedBy.Avatar,
-            Created = v.Created
+            Created = v.Created,
+            HasApplied = appliedGreetings.Contains(BuildApplicationGreeting(v.Title, v.Company.Name))
         };
 
         return Ok(dto);
@@ -303,27 +393,50 @@ public class VacancyController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
+        if (string.IsNullOrWhiteSpace(model.Title))
+        {
+            return BadRequest(new { message = "Укажите название должности" });
+        }
+
         var cleanSlug = companySlug.Trim().ToLower();
         var company = await _context.Communities
             .Include(c => c.Members)
             .FirstOrDefaultAsync(c => c.Slug == cleanSlug);
 
-        if (company == null) return NotFound("Компания не найдена");
+        if (company == null) return NotFound(new { message = "Компания не найдена" });
 
-        var member = company.Members.FirstOrDefault(m => m.UserId == userId);
+        if (company.Kind != CommunityKind.Company)
+        {
+            return BadRequest(new { message = "Публиковать вакансии могут только страницы компаний" });
+        }
+
+        var member = company.Members.FirstOrDefault(m => m.UserId == userId && m.Status == MemberStatus.Active);
         if (member == null || (member.Role != CommunityRole.Owner && member.Role != CommunityRole.Admin))
         {
             return Forbid();
+        }
+
+        if ((model.SalaryFrom.HasValue && model.SalaryFrom.Value < 0) || (model.SalaryTo.HasValue && model.SalaryTo.Value < 0))
+        {
+            return BadRequest(new { message = "Зарплата не может быть отрицательной" });
+        }
+
+        int? salaryFrom = model.SalaryFrom.HasValue && model.SalaryFrom.Value > 0 ? model.SalaryFrom.Value : null;
+        int? salaryTo = model.SalaryTo.HasValue && model.SalaryTo.Value > 0 ? model.SalaryTo.Value : null;
+
+        if (salaryFrom.HasValue && salaryTo.HasValue && salaryFrom.Value > salaryTo.Value)
+        {
+            return BadRequest(new { message = "Минимальная зарплата не может превышать максимальную" });
         }
 
         var vacancy = new Vacancy
         {
             CompanyId = company.Id,
             Title = model.Title.Trim(),
-            Description = model.Description,
-            SalaryFrom = model.SalaryFrom,
-            SalaryTo = model.SalaryTo,
-            Currency = model.Currency ?? "USD",
+            Description = model.Description ?? string.Empty,
+            SalaryFrom = salaryFrom,
+            SalaryTo = salaryTo,
+            Currency = string.IsNullOrWhiteSpace(model.Currency) ? "USD" : model.Currency.Trim(),
             Format = model.Format,
             Level = model.Level,
             Stack = model.Stack ?? Array.Empty<string>(),
@@ -350,19 +463,43 @@ public class VacancyController : ControllerBase
             .ThenInclude(c => c.Members)
             .FirstOrDefaultAsync(v => v.Id == id);
 
-        if (vacancy == null) return NotFound("Вакансия не найдена");
+        if (vacancy == null) return NotFound(new { message = "Вакансия не найдена" });
 
-        var member = vacancy.Company.Members.FirstOrDefault(m => m.UserId == userId);
+        if (vacancy.Company.Kind != CommunityKind.Company)
+        {
+            return BadRequest(new { message = "Редактирование вакансий доступно только для страниц компаний" });
+        }
+
+        var member = vacancy.Company.Members.FirstOrDefault(m => m.UserId == userId && m.Status == MemberStatus.Active);
         if (member == null || (member.Role != CommunityRole.Owner && member.Role != CommunityRole.Admin))
         {
             return Forbid();
         }
 
+        if ((model.SalaryFromSpecified && model.SalaryFrom.HasValue && model.SalaryFrom.Value < 0)
+            || (model.SalaryToSpecified && model.SalaryTo.HasValue && model.SalaryTo.Value < 0))
+        {
+            return BadRequest(new { message = "Зарплата не может быть отрицательной" });
+        }
+
+        var nextSalaryFrom = model.SalaryFromSpecified
+            ? (model.SalaryFrom.HasValue && model.SalaryFrom.Value > 0 ? model.SalaryFrom.Value : null)
+            : vacancy.SalaryFrom;
+
+        var nextSalaryTo = model.SalaryToSpecified
+            ? (model.SalaryTo.HasValue && model.SalaryTo.Value > 0 ? model.SalaryTo.Value : null)
+            : vacancy.SalaryTo;
+
+        if (nextSalaryFrom.HasValue && nextSalaryTo.HasValue && nextSalaryFrom.Value > nextSalaryTo.Value)
+        {
+            return BadRequest(new { message = "Минимальная зарплата не может превышать максимальную" });
+        }
+
         if (!string.IsNullOrWhiteSpace(model.Title)) vacancy.Title = model.Title.Trim();
         if (model.Description != null) vacancy.Description = model.Description;
-        if (model.SalaryFrom.HasValue) vacancy.SalaryFrom = model.SalaryFrom.Value;
-        if (model.SalaryTo.HasValue) vacancy.SalaryTo = model.SalaryTo.Value;
-        if (!string.IsNullOrWhiteSpace(model.Currency)) vacancy.Currency = model.Currency;
+        vacancy.SalaryFrom = nextSalaryFrom;
+        vacancy.SalaryTo = nextSalaryTo;
+        if (!string.IsNullOrWhiteSpace(model.Currency)) vacancy.Currency = model.Currency.Trim();
         if (model.Format.HasValue) vacancy.Format = model.Format.Value;
         if (model.Level.HasValue) vacancy.Level = model.Level.Value;
         if (model.Stack != null) vacancy.Stack = model.Stack;
@@ -385,9 +522,9 @@ public class VacancyController : ControllerBase
             .ThenInclude(c => c.Members)
             .FirstOrDefaultAsync(v => v.Id == id);
 
-        if (vacancy == null) return NotFound("Вакансия не найдена");
+        if (vacancy == null) return NotFound(new { message = "Вакансия не найдена" });
 
-        var member = vacancy.Company.Members.FirstOrDefault(m => m.UserId == userId);
+        var member = vacancy.Company.Members.FirstOrDefault(m => m.UserId == userId && m.Status == MemberStatus.Active);
         if (member == null || (member.Role != CommunityRole.Owner && member.Role != CommunityRole.Admin))
         {
             return Forbid();
@@ -410,7 +547,22 @@ public class VacancyController : ControllerBase
             .Include(v => v.Company)
             .FirstOrDefaultAsync(v => v.Id == id);
 
-        if (vacancy == null) return NotFound("Вакансия не найдена");
+        if (vacancy == null) return NotFound(new { message = "Вакансия не найдена" });
+
+        if (vacancy.Company.Kind != CommunityKind.Company || vacancy.Status != VacancyStatus.Open)
+        {
+            return BadRequest(new { message = "Отклик невозможен: вакансия закрыта или приостановлена" });
+        }
+
+        if (vacancy.Company.Type == CommunityType.Private)
+        {
+            var isMember = await _context.CommunityMembers
+                .AnyAsync(cm => cm.CommunityId == vacancy.CompanyId && cm.UserId == currentUserId && cm.Status == MemberStatus.Active);
+            if (!isMember)
+            {
+                return Forbid();
+            }
+        }
 
         var recruiterId = !string.IsNullOrEmpty(vacancy.CreatedById) 
             ? vacancy.CreatedById 
@@ -420,6 +572,17 @@ public class VacancyController : ControllerBase
         {
             return BadRequest(new { message = "Вы не можете откликнуться на собственную вакансию" });
         }
+
+        var recruiter = await _context.Users.FindAsync(recruiterId);
+        if (recruiter == null)
+        {
+            return NotFound(new { message = "Автор вакансии не найден" });
+        }
+
+        if (!recruiter.AllowDirectMessages)
+        {
+            return BadRequest(new { message = "Автор вакансии ограничил приём личных сообщений", code = "DM_DISABLED" });
+        }
         
         var chat = await _context.Chat
             .Include(c => c.Participants)
@@ -427,7 +590,22 @@ public class VacancyController : ControllerBase
                                       c.Participants.Any(p => p.UserId == currentUserId) &&
                                       c.Participants.Any(p => p.UserId == recruiterId));
 
-        if (chat == null)
+        var greeting = BuildApplicationGreeting(vacancy.Title, vacancy.Company.Name);
+
+        if (chat != null)
+        {
+            var alreadyApplied = await _context.Message.AnyAsync(m =>
+                m.ChatId == chat.Id &&
+                m.SenderId == currentUserId &&
+                m.Content != null &&
+                m.Content.StartsWith(greeting));
+
+            if (alreadyApplied)
+            {
+                return BadRequest(new { chatId = chat.Id, alreadyApplied = true, message = "Вы уже откликались на эту вакансию" });
+            }
+        }
+        else
         {
             chat = new Chat
             {
@@ -440,7 +618,7 @@ public class VacancyController : ControllerBase
         }
 
         var candidate = await _context.Users.FindAsync(currentUserId);
-        var appMsgContent = $"Здравствуйте. Я откликаюсь на вакансию «{vacancy.Title}» в компании {vacancy.Company.Name}.";
+        var appMsgContent = greeting;
         
         if (candidate != null)
         {
@@ -462,6 +640,7 @@ public class VacancyController : ControllerBase
 
         var message = new Message
         {
+            Id = Guid.NewGuid(),
             ChatId = chat.Id,
             SenderId = currentUserId,
             Content = appMsgContent,
@@ -471,6 +650,21 @@ public class VacancyController : ControllerBase
         _context.Message.Add(message);
         chat.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
+
+        var messageResponse = new
+        {
+            Id = message.Id,
+            ChatId = message.ChatId,
+            SenderId = message.SenderId,
+            Content = message.Content,
+            Attachments = message.Attachments,
+            Time = message.SentAt.ToString("HH:mm"),
+            replyTo = (object?)null
+        };
+
+        var participantIds = chat.Participants.Select(p => p.UserId).ToList();
+        await _hubContext.Clients.Users(participantIds).SendAsync("ReceiveMessage", messageResponse);
+        await _hubContext.Clients.Group(chat.Id.ToString().ToLower()).SendAsync("ReceiveMessage", messageResponse);
 
         return Ok(new 
         { 

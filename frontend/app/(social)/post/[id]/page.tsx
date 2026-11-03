@@ -9,14 +9,14 @@ import { useApplication } from "@/context/ApplicationContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatPostTime } from "@/libs/format";
 import { CommentsService } from "@/services/commentService";
-import { Check, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { AlertCircle, Check, Copy, Lock, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function PagePost() {
 
-    const { currentPost, refreshCurrentPost, userData } = useApplication();
+    const { currentPost, currentPostError, refreshCurrentPost, userData } = useApplication();
     const { language, t } = useLanguage();
     const isRu = language === 'ru';
     
@@ -96,6 +96,46 @@ export default function PagePost() {
         }
     };
 
+    if (currentPostError === 'locked') {
+        return (
+            <div className="flex flex-col min-h-full animate-fade-in">
+                <TitlebarBack title={isRu ? "Публикация" : "Post"} />
+                <div className="p-8 sm:p-14 m-4 sm:m-6 rounded-3xl border border-white/5 bg-zinc-950/20 flex flex-col items-center justify-center text-center light:bg-zinc-50 light:border-zinc-200/80">
+                    <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4 text-zinc-300 border border-white/10 light:bg-zinc-200/80 light:text-zinc-700 light:border-zinc-300">
+                        <Lock size={26} />
+                    </div>
+                    <h3 className="text-base font-bold text-zinc-100 light:text-zinc-900 mb-1.5">
+                        {isRu ? "Доступ к публикации ограничен" : "Post access is restricted"}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-zinc-500 light:text-zinc-600 max-w-md">
+                        {isRu
+                            ? "Эта публикация принадлежит закрытому профилю или приватному сообществу. Дождитесь одобрения заявки на чтение или вступление."
+                            : "This post belongs to a private profile or private community. You need approved access to view it."}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (currentPostError === 'not_found') {
+        return (
+            <div className="flex flex-col min-h-full animate-fade-in">
+                <TitlebarBack title={isRu ? "Публикация" : "Post"} />
+                <div className="p-8 sm:p-14 m-4 sm:m-6 rounded-3xl border border-white/5 bg-zinc-950/20 flex flex-col items-center justify-center text-center light:bg-zinc-50 light:border-zinc-200/80">
+                    <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4 text-zinc-400 border border-white/10 light:bg-zinc-200/80 light:text-zinc-600 light:border-zinc-300">
+                        <AlertCircle size={26} />
+                    </div>
+                    <h3 className="text-base font-bold text-zinc-100 light:text-zinc-900 mb-1.5">
+                        {isRu ? "Публикация не найдена" : "Post not found"}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-zinc-500 light:text-zinc-600 max-w-md">
+                        {isRu ? "Возможно, она была удалена автором." : "It may have been deleted by the author."}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     const isPostLoading = !currentPost || currentPost.id !== idFromUrl;
     
     if (isPostLoading) {
@@ -132,7 +172,7 @@ export default function PagePost() {
                     <TitlebarBack title={isRu ? `Публикация от ${currentPost.authorName}` : `Post from ${currentPost.authorName}`} />
                         
                     <div className="flex flex-col lg:p-6 md:p-6 py-6">
-                        <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={formatPostTime(currentPost.created)} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount} repostsCount={currentPost.repostsCount} repostOfPost={currentPost.repostOfPost} community={currentPost.community} project={currentPost.project} isPinned={currentPost.isPinned} onPinToggle={() => refreshCurrentPost(idFromUrl)}></Post>
+                        <Post Id={idFromUrl} Name={currentPost.authorName} Avatar={currentPost.authorAvatar} Attachments={currentPost.attachments} UserName={`@${currentPost.authorUsername}`} Content={currentPost.content} Time={formatPostTime(currentPost.created)} Likes={currentPost.likesCount} isLikedByMe={currentPost.isLikedByMe} Comments={currentPost.commentsCount} repostsCount={currentPost.repostsCount} repostOfPost={currentPost.repostOfPost} community={currentPost.community} project={currentPost.project} isPinned={currentPost.isPinned} canPin={currentPost.canPin} canDelete={currentPost.canDelete} onPinToggle={() => refreshCurrentPost(idFromUrl)} onDelete={() => router.back()}></Post>
                     </div>
 
                     <div className="w-full border-t border-white/5 light:border-zinc-200/80"></div>

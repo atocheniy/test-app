@@ -5,10 +5,12 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using server.Data;
 using server.DTOs;
+using server.Hubs;
 using server.Models;
 
 namespace server.Controllers;
@@ -20,30 +22,79 @@ public class AuthController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IConfiguration _config;
     private readonly ApplicationDbContext _context;
+    private readonly IHubContext<ChatHub> _hubContext;
 
-    public AuthController(UserManager<ApplicationUser> userManager, IConfiguration config, ApplicationDbContext context)
+    public AuthController(UserManager<ApplicationUser> userManager, IConfiguration config, ApplicationDbContext context, IHubContext<ChatHub> hubContext)
     {
         _userManager = userManager;
         _config = config;
         _context = context;
+        _hubContext = hubContext;
     }
     
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterInfo model)
     {
-        var user = new ApplicationUser { UserName = model.UserName, Email = model.Email, FullName = model.FullName,   Room = string.IsNullOrEmpty(model.Room) ? "general" : model.Room,  ConnectedAt = DateTime.UtcNow};
+        var cleanUserName = (model.UserName ?? string.Empty).Trim().TrimStart('@');
+        var cleanEmail = (model.Email ?? string.Empty).Trim();
+        var cleanFullName = (model.FullName ?? string.Empty).Trim();
+
+        if (string.IsNullOrWhiteSpace(cleanFullName) || string.IsNullOrWhiteSpace(cleanUserName) || string.IsNullOrWhiteSpace(cleanEmail))
+        {
+            return BadRequest(new { code = "MissingFields", message = "Заполните все обязательные поля" });
+        }
+
+        if (string.IsNullOrEmpty(model.Password) || model.Password.Length < 6)
+        {
+            return BadRequest(new { code = "PasswordTooShort", message = "Пароль должен содержать минимум 6 символов" });
+        }
+
+        if (!Regex.IsMatch(cleanUserName, @"^[a-zA-Z0-9_.-]{3,32}$"))
+        {
+            return BadRequest(new { code = "InvalidUserName", message = "Имя пользователя должно быть от 3 до 32 символов и содержать только латинские буквы, цифры, точку, дефис или подчёркивание" });
+        }
+
+        var normalizedUserName = _userManager.NormalizeName(cleanUserName);
+        if (await _userManager.Users.AnyAsync(u => u.NormalizedUserName == normalizedUserName))
+        {
+            return BadRequest(new { code = "DuplicateUserName", message = "Это имя пользователя уже занято" });
+        }
+
+        var normalizedEmail = _userManager.NormalizeEmail(cleanEmail);
+        if (await _userManager.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail))
+        {
+            return BadRequest(new { code = "DuplicateEmail", message = "Этот Email уже зарегистрирован" });
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = cleanUserName,
+            Email = cleanEmail,
+            FullName = cleanFullName,
+            Room = string.IsNullOrEmpty(model.Room) ? "general" : model.Room,
+            ConnectedAt = DateTime.UtcNow
+        };
         var result = await _userManager.CreateAsync(user, model.Password);
 
         if (result.Succeeded) return Ok(new { message = "Регистрация успешна" });
 
-        return BadRequest(result.Errors);
+        var firstError = result.Errors.FirstOrDefault();
+        return BadRequest(new
+        {
+            code = firstError?.Code ?? "RegistrationFailed",
+            message = firstError?.Description ?? "Ошибка регистрации",
+            errors = result.Errors
+        });
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginInfo model)
     {
-        var user = await _userManager.FindByEmailAsync(model.Email);
-        if (user == null) user = await _userManager.FindByNameAsync(model.Email);
+        var identifier = (model.Email ?? string.Empty).Trim();
+        var cleanIdentifier = identifier.TrimStart('@');
+        var normalizedEmail = _userManager.NormalizeEmail(identifier);
+        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
+        if (user == null) user = await _userManager.FindByNameAsync(cleanIdentifier);
 
         if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
         {
@@ -81,8 +132,9 @@ public class AuthController : ControllerBase
                 userName = u.UserName,
                 fullName = u.FullName,
                 avatar = u.Avatar,
-                bio_FirstLine = u.Bio_FirstLine,
-                followers = u.Followers
+                bio_FirstLine = u.IsPrivate ? null : u.Bio_FirstLine,
+                isPrivate = u.IsPrivate,
+                followers = _context.UserWatchers.Count(uw => uw.TargetUserId == u.Id && uw.Status == MemberStatus.Active)
             })
             .ToListAsync();
 
@@ -95,7 +147,8 @@ public class AuthController : ControllerBase
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         limit = Math.Clamp(limit, 1, 20);
 
-        List<string> watchedUserIds = new();
+        List<string> excludedUserIds = new();
+        List<string> activeWatchedUserIds = new();
         List<string> userTechs = new();
         Dictionary<string, int> mutualWatchers = new();
 
@@ -110,31 +163,38 @@ public class AuthController : ControllerBase
                     .ToList();
             }
 
-            watchedUserIds = await _context.UserWatchers
+            var myWatchRecords = await _context.UserWatchers
                 .Where(w => w.WatcherId == currentUserId)
-                .Select(w => w.TargetUserId)
+                .Select(w => new { w.TargetUserId, w.Status })
                 .ToListAsync();
 
-            if (watchedUserIds.Any())
+            excludedUserIds = myWatchRecords.Select(w => w.TargetUserId).ToList();
+            activeWatchedUserIds = myWatchRecords
+                .Where(w => w.Status == MemberStatus.Active)
+                .Select(w => w.TargetUserId)
+                .ToList();
+
+            if (activeWatchedUserIds.Any())
             {
                 mutualWatchers = await _context.UserWatchers
-                    .Where(w => watchedUserIds.Contains(w.WatcherId)
+                    .Where(w => w.Status == MemberStatus.Active
+                                && activeWatchedUserIds.Contains(w.WatcherId)
                                 && w.TargetUserId != currentUserId
-                                && !watchedUserIds.Contains(w.TargetUserId))
+                                && !excludedUserIds.Contains(w.TargetUserId))
                     .GroupBy(w => w.TargetUserId)
                     .Select(g => new { UserId = g.Key, Count = g.Count() })
                     .ToDictionaryAsync(x => x.UserId, x => x.Count);
             }
         }
 
-        var query = _userManager.Users.AsQueryable();
+        var query = _userManager.Users.Where(u => !u.IsPrivate);
 
         if (!string.IsNullOrEmpty(currentUserId))
         {
             query = query.Where(u => u.Id != currentUserId);
-            if (watchedUserIds.Any())
+            if (excludedUserIds.Any())
             {
-                query = query.Where(u => !watchedUserIds.Contains(u.Id));
+                query = query.Where(u => !excludedUserIds.Contains(u.Id));
             }
         }
 
@@ -366,6 +426,24 @@ public class AuthController : ControllerBase
         if (model.IsPrivate.HasValue)
         {
             user.IsPrivate = model.IsPrivate.Value;
+
+            if (!user.IsPrivate && !string.IsNullOrEmpty(userId))
+            {
+                var pendingRequests = await _context.UserWatchers
+                    .Include(uw => uw.Watcher)
+                    .Where(uw => uw.TargetUserId == userId && uw.Status == MemberStatus.Pending)
+                    .ToListAsync();
+
+                foreach (var req in pendingRequests)
+                {
+                    req.Status = MemberStatus.Active;
+                    user.Followers = (user.Followers ?? 0) + 1;
+                    if (req.Watcher != null)
+                    {
+                        req.Watcher.Followings = (req.Watcher.Followings ?? 0) + 1;
+                    }
+                }
+            }
         }
 
         await _context.SaveChangesAsync();
@@ -385,10 +463,13 @@ public class AuthController : ControllerBase
         if (user == null) return NotFound();
 
         var watchersCount = await _context.UserWatchers
-            .CountAsync(uw => uw.TargetUserId == user.Id);
+            .CountAsync(uw => uw.TargetUserId == user.Id && uw.Status == MemberStatus.Active);
 
         var watchingCount = await _context.UserWatchers
-            .CountAsync(uw => uw.WatcherId == user.Id);
+            .CountAsync(uw => uw.WatcherId == user.Id && uw.Status == MemberStatus.Active);
+
+        var pendingWatchRequestsCount = await _context.UserWatchers
+            .CountAsync(uw => uw.TargetUserId == user.Id && uw.Status == MemberStatus.Pending);
 
         var projects = await _context.UserProjects
             .Where(p => p.UserId == user.Id)
@@ -447,6 +528,7 @@ public class AuthController : ControllerBase
             followings = watchingCount,
             watchersCount = watchersCount,
             watchingCount = watchingCount,
+            pendingWatchRequestsCount = pendingWatchRequestsCount,
             projects = projects,
             experiences = experiences,
             preferredLanguage = user.PreferredLanguage ?? "ru",
@@ -464,17 +546,21 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByNameAsync(username);
         if (user == null) return NotFound();
 
-        var isWatching = currentUserId != null && await _context.UserWatchers
-            .AnyAsync(uw => uw.WatcherId == currentUserId && uw.TargetUserId == user.Id);
+        var watchRecord = currentUserId != null
+            ? await _context.UserWatchers.FirstOrDefaultAsync(uw => uw.WatcherId == currentUserId && uw.TargetUserId == user.Id)
+            : null;
+
+        var isWatching = watchRecord != null && watchRecord.Status == MemberStatus.Active;
+        var isWatchPending = watchRecord != null && watchRecord.Status == MemberStatus.Pending;
 
         var isOwn = currentUserId != null && currentUserId == user.Id;
         var isLocked = user.IsPrivate && !isOwn && !isWatching;
 
         var watchersCount = await _context.UserWatchers
-            .CountAsync(uw => uw.TargetUserId == user.Id);
+            .CountAsync(uw => uw.TargetUserId == user.Id && uw.Status == MemberStatus.Active);
 
         var watchingCount = await _context.UserWatchers
-            .CountAsync(uw => uw.WatcherId == user.Id);
+            .CountAsync(uw => uw.WatcherId == user.Id && uw.Status == MemberStatus.Active);
 
         var projects = isLocked ? (object)Array.Empty<object>() : await _context.UserProjects
             .Where(p => p.UserId == user.Id)
@@ -511,21 +597,21 @@ public class AuthController : ControllerBase
             .ToListAsync();
             
         return Ok(new { 
-            id =  user.Id,
+            id = user.Id,
             fullName = user.FullName,
             userName = user.UserName,
-            bio_FirstLine = user.Bio_FirstLine,
-            bio_SecondLine = user.Bio_SecondLine,
-            location = user.Location,
-            workStatus = user.WorkStatus,
-            focus = user.Focus,
-            technologies = user.Technologies ?? Array.Empty<string>(),
-            githubUrl = user.GithubUrl,
-            telegramUrl = user.TelegramUrl,
-            vkUrl = user.VKUrl,
-            xUrl = user.XUrl,
-            discordUrl = user.DiscordUrl,
-            websiteUrl = user.WebsiteUrl,
+            bio_FirstLine = isLocked ? null : user.Bio_FirstLine,
+            bio_SecondLine = isLocked ? null : user.Bio_SecondLine,
+            location = isLocked ? null : user.Location,
+            workStatus = isLocked ? null : user.WorkStatus,
+            focus = isLocked ? null : user.Focus,
+            technologies = isLocked ? Array.Empty<string>() : (user.Technologies ?? Array.Empty<string>()),
+            githubUrl = isLocked ? null : user.GithubUrl,
+            telegramUrl = isLocked ? null : user.TelegramUrl,
+            vkUrl = isLocked ? null : user.VKUrl,
+            xUrl = isLocked ? null : user.XUrl,
+            discordUrl = isLocked ? null : user.DiscordUrl,
+            websiteUrl = isLocked ? null : user.WebsiteUrl,
             avatar = user.Avatar,
             banner = user.Banner,
             followers = watchersCount,
@@ -533,6 +619,7 @@ public class AuthController : ControllerBase
             watchersCount = watchersCount,
             watchingCount = watchingCount,
             isWatching = isWatching,
+            isWatchPending = isWatchPending,
             projects = projects,
             experiences = experiences,
             preferredLanguage = user.PreferredLanguage ?? "ru",
@@ -692,6 +779,11 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
     {
+        if (string.IsNullOrEmpty(model.NewPassword) || model.NewPassword.Length < 6)
+        {
+            return BadRequest(new { message = "Пароль должен содержать минимум 6 символов" });
+        }
+
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return NotFound();
 
@@ -726,37 +818,162 @@ public class AuthController : ControllerBase
             .FirstOrDefaultAsync(uw => uw.WatcherId == currentUserId && uw.TargetUserId == targetUser.Id);
 
         bool isWatching;
+        bool isWatchPending;
+        bool notifyTarget = false;
+
         if (existingWatcher != null)
         {
+            if (existingWatcher.Status == MemberStatus.Active)
+            {
+                targetUser.Followers = Math.Max(0, (targetUser.Followers ?? 1) - 1);
+                currentUser.Followings = Math.Max(0, (currentUser.Followings ?? 1) - 1);
+            }
+            else if (existingWatcher.Status == MemberStatus.Pending)
+            {
+                notifyTarget = true;
+            }
+
             _context.UserWatchers.Remove(existingWatcher);
-            targetUser.Followers = Math.Max(0, (targetUser.Followers ?? 1) - 1);
-            currentUser.Followings = Math.Max(0, (currentUser.Followings ?? 1) - 1);
             isWatching = false;
+            isWatchPending = false;
         }
         else
         {
+            var initialStatus = targetUser.IsPrivate ? MemberStatus.Pending : MemberStatus.Active;
             var newWatcher = new UserWatcher
             {
                 WatcherId = currentUserId,
                 TargetUserId = targetUser.Id,
+                Status = initialStatus,
                 CreatedAt = DateTime.UtcNow
             };
             _context.UserWatchers.Add(newWatcher);
-            targetUser.Followers = (targetUser.Followers ?? 0) + 1;
-            currentUser.Followings = (currentUser.Followings ?? 0) + 1;
-            isWatching = true;
+
+            if (initialStatus == MemberStatus.Active)
+            {
+                targetUser.Followers = (targetUser.Followers ?? 0) + 1;
+                currentUser.Followings = (currentUser.Followings ?? 0) + 1;
+                isWatching = true;
+                isWatchPending = false;
+            }
+            else
+            {
+                isWatching = false;
+                isWatchPending = true;
+                notifyTarget = true;
+            }
         }
 
         await _context.SaveChangesAsync();
 
-        var watchersCount = await _context.UserWatchers.CountAsync(uw => uw.TargetUserId == targetUser.Id);
+        if (notifyTarget)
+        {
+            await _hubContext.Clients.User(targetUser.Id).SendAsync("watchRequestsChanged");
+        }
+
+        var watchersCount = await _context.UserWatchers
+            .CountAsync(uw => uw.TargetUserId == targetUser.Id && uw.Status == MemberStatus.Active);
 
         return Ok(new 
         { 
             isWatching, 
+            isWatchPending,
             watchersCount, 
             followers = watchersCount 
         });
+    }
+
+    [HttpGet("watchRequests")]
+    [Authorize]
+    public async Task<IActionResult> GetWatchRequests()
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+        var requests = await _context.UserWatchers
+            .Include(uw => uw.Watcher)
+            .Where(uw => uw.TargetUserId == currentUserId && uw.Status == MemberStatus.Pending)
+            .OrderByDescending(uw => uw.CreatedAt)
+            .Select(uw => new
+            {
+                id = uw.WatcherId,
+                userName = uw.Watcher.UserName,
+                fullName = uw.Watcher.FullName,
+                avatar = uw.Watcher.Avatar,
+                bio_FirstLine = uw.Watcher.Bio_FirstLine,
+                createdAt = uw.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(requests);
+    }
+
+    [HttpPost("watchRequests/{requesterId}/accept")]
+    [Authorize]
+    public async Task<IActionResult> AcceptWatchRequest(string requesterId)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+        var currentUser = await _userManager.FindByIdAsync(currentUserId);
+        if (currentUser == null) return Unauthorized();
+
+        var request = await _context.UserWatchers
+            .Include(uw => uw.Watcher)
+            .FirstOrDefaultAsync(uw => uw.WatcherId == requesterId && uw.TargetUserId == currentUserId && uw.Status == MemberStatus.Pending);
+
+        if (request == null) return NotFound(new { message = "Заявка не найдена" });
+
+        request.Status = MemberStatus.Active;
+        currentUser.Followers = (currentUser.Followers ?? 0) + 1;
+        if (request.Watcher != null)
+        {
+            request.Watcher.Followings = (request.Watcher.Followings ?? 0) + 1;
+        }
+
+        await _context.SaveChangesAsync();
+
+        var watchersCount = await _context.UserWatchers
+            .CountAsync(uw => uw.TargetUserId == currentUserId && uw.Status == MemberStatus.Active);
+
+        await _hubContext.Clients.User(requesterId).SendAsync("watchRequestResolved", new
+        {
+            username = currentUser.UserName,
+            accepted = true
+        });
+
+        await _hubContext.Clients.User(currentUserId).SendAsync("watchRequestsChanged");
+
+        return Ok(new { message = "Заявка принята", watchersCount });
+    }
+
+    [HttpPost("watchRequests/{requesterId}/reject")]
+    [Authorize]
+    public async Task<IActionResult> RejectWatchRequest(string requesterId)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+        var currentUser = await _userManager.FindByIdAsync(currentUserId);
+        if (currentUser == null) return Unauthorized();
+
+        var request = await _context.UserWatchers
+            .FirstOrDefaultAsync(uw => uw.WatcherId == requesterId && uw.TargetUserId == currentUserId && uw.Status == MemberStatus.Pending);
+
+        if (request == null) return NotFound(new { message = "Заявка не найдена" });
+
+        _context.UserWatchers.Remove(request);
+        await _context.SaveChangesAsync();
+
+        await _hubContext.Clients.User(requesterId).SendAsync("watchRequestResolved", new
+        {
+            username = currentUser.UserName,
+            accepted = false
+        });
+
+        await _hubContext.Clients.User(currentUserId).SendAsync("watchRequestsChanged");
+
+        return Ok(new { message = "Заявка отклонена" });
     }
     
     private string GenerateJwtToken(ApplicationUser user)

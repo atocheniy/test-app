@@ -59,6 +59,7 @@ export default function Profile() {
 
     const [loadingChat, setLoadingChat] = useState(false);
     const [isWatchingUser, setIsWatchingUser] = useState(false);
+    const [isWatchPending, setIsWatchPending] = useState(false);
     const [watchersCount, setWatchersCount] = useState<number>(0);
     const [isLinksExpanded, setIsLinksExpanded] = useState(false);
     const [profileTab, setProfileTab] = useState<'details' | 'projects' | 'experience'>('details');
@@ -88,6 +89,7 @@ export default function Profile() {
     useEffect(() => {
         if (otherUserData && otherUserData.userName?.toLowerCase() === usernameFromUrl?.toLowerCase()) {
             setIsWatchingUser(Boolean(otherUserData.isWatching));
+            setIsWatchPending(Boolean(otherUserData.isWatchPending));
             setWatchersCount(otherUserData.watchersCount ?? otherUserData.followers ?? 0);
         }
     }, [otherUserData, usernameFromUrl]);
@@ -100,7 +102,14 @@ export default function Profile() {
         try {
             const res = await UserService.toggleWatchUser(usernameFromUrl);
             setIsWatchingUser(res.isWatching);
+            setIsWatchPending(Boolean(res.isWatchPending));
             setWatchersCount(res.watchersCount);
+            if (otherUserData.isPrivate && !res.isWatching) {
+                await Promise.all([
+                    refreshOtherUserData(usernameFromUrl),
+                    refreshOtherUserPostsData(usernameFromUrl)
+                ]);
+            }
         } catch (e: any) {
             console.error("Ошибка изменения статуса отслеживания:", e);
             const msg = e?.response?.data?.message || (isRu ? "Не удалось изменить статус отслеживания" : "Failed to update watch status");
@@ -263,10 +272,18 @@ export default function Profile() {
                                         className={`px-4 sm:px-5 py-2 text-sm font-semibold rounded-3xl transition active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 text-center min-w-[90px] sm:min-w-[100px] ${
                                             isWatchingUser 
                                                 ? "bg-white/10 text-white border border-white/20 hover:bg-white/15 light:bg-zinc-100 light:text-zinc-900 light:border-zinc-300 light:hover:bg-zinc-200" 
+                                                : isWatchPending
+                                                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 light:bg-amber-50 light:text-amber-700 light:border-amber-200 light:hover:bg-amber-100"
                                                 : "bg-white/10 text-zinc-200 border border-white/10 hover:bg-white/15 hover:text-white light:bg-zinc-100 light:text-zinc-700 light:border-zinc-200 light:hover:bg-zinc-200 light:hover:text-zinc-900"
                                         }`}
                                     >
-                                        {isWatchingUser ? (isRu ? "Вы читаете" : "Following") : t.profile.watchBtn}
+                                        {isWatchingUser
+                                            ? (isRu ? "Вы читаете" : "Following")
+                                            : isWatchPending
+                                            ? (isRu ? "Заявка отправлена" : "Request sent")
+                                            : otherUserData.isPrivate
+                                            ? (isRu ? "Подать заявку" : "Request to follow")
+                                            : t.profile.watchBtn}
                                     </button>
                                     {otherUserData.allowDirectMessages === false ? (
                                         <button 
@@ -288,36 +305,6 @@ export default function Profile() {
                             )}
                         </div>
                     </div>
-                    <div className="mt-6">
-                        <p className="text-md font-bold text-zinc-300 light:text-zinc-800">
-                            {otherUserData.bio_FirstLine || ""}
-                        </p>
-                    </div>
-
-                    <div className="mt-6 max-w-2xl">
-                        <p className="text-sm text-zinc-300 leading-relaxed light:text-zinc-700">
-                            {otherUserData.bio_SecondLine || ""}
-                        </p>
-                    </div>
-
-                    <div className="space-y-3 mt-6">
-                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider light:text-zinc-500">{t.profile.techStack}</h3>
-                        {otherUserData.technologies && otherUserData.technologies.length > 0 ? (
-                            <div className="flex flex-wrap gap-1.5">
-                                {otherUserData.technologies.map((tech) => (
-                                    <span 
-                                        key={tech} 
-                                        className="px-3 py-1.5 rounded-xl border border-white/5 bg-zinc-950/40 text-xs text-zinc-300 hover:border-white/10 hover:bg-zinc-950/80 transition-all duration-200 cursor-default light:bg-zinc-100 light:border-zinc-200 light:text-zinc-700 light:hover:bg-zinc-200/70 light:hover:border-zinc-300"
-                                    >
-                                        {tech}
-                                    </span>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-zinc-500 py-1 light:text-zinc-500">{isRu ? "Навыки еще не указаны" : "No skills listed yet"}</p>
-                        )}
-                    </div>
-
                     {isAccountLocked ? (
                         <div className="mt-8 p-8 sm:p-12 rounded-3xl border border-white/5 bg-zinc-950/20 flex flex-col items-center justify-center text-center light:bg-zinc-50 light:border-zinc-200/80">
                             <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4 text-zinc-300 border border-white/10 light:bg-zinc-200/80 light:text-zinc-700 light:border-zinc-300">
@@ -327,11 +314,62 @@ export default function Profile() {
                                 {t.settings.privateAccountNoticeTitle}
                             </h3>
                             <p className="text-xs sm:text-sm text-zinc-500 light:text-zinc-600 max-w-md">
-                                {t.settings.privateAccountNoticeDesc}
+                                {isWatchPending
+                                    ? (isRu ? "Ваша заявка на чтение отправлена. Как только автор примет её, публикации, проекты и контакты станут доступны." : "Your follow request has been sent. Once the author approves it, posts, projects, and details will become visible.")
+                                    : t.settings.privateAccountNoticeDesc}
                             </p>
+                            {!isOwnProfile && (
+                                <button
+                                    type="button"
+                                    onClick={handleToggleWatchUser}
+                                    className={`mt-5 px-5 py-2.5 text-xs font-semibold rounded-2xl transition active:scale-[0.97] cursor-pointer ${
+                                        isWatchPending
+                                            ? "bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 light:bg-amber-50 light:text-amber-700 light:border-amber-200 light:hover:bg-amber-100"
+                                            : "bg-white text-black hover:bg-zinc-200 light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
+                                    }`}
+                                >
+                                    {isWatchPending
+                                        ? (isRu ? "Заявка отправлена (отменить)" : "Request sent (cancel)")
+                                        : (isRu ? "Подать заявку на чтение" : "Send follow request")}
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <>
+                            {otherUserData.bio_FirstLine && (
+                                <div className="mt-6">
+                                    <p className="text-md font-bold text-zinc-300 light:text-zinc-800">
+                                        {otherUserData.bio_FirstLine}
+                                    </p>
+                                </div>
+                            )}
+
+                            {otherUserData.bio_SecondLine && (
+                                <div className="mt-6 max-w-2xl">
+                                    <p className="text-sm text-zinc-300 leading-relaxed light:text-zinc-700">
+                                        {otherUserData.bio_SecondLine}
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="space-y-3 mt-6">
+                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider light:text-zinc-500">{t.profile.techStack}</h3>
+                                {otherUserData.technologies && otherUserData.technologies.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {otherUserData.technologies.map((tech) => (
+                                            <span 
+                                                key={tech} 
+                                                className="px-3 py-1.5 rounded-xl border border-white/5 bg-zinc-950/40 text-xs text-zinc-300 hover:border-white/10 hover:bg-zinc-950/80 transition-all duration-200 cursor-default light:bg-zinc-100 light:border-zinc-200 light:text-zinc-700 light:hover:bg-zinc-200/70 light:hover:border-zinc-300"
+                                            >
+                                                {tech}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-zinc-500 py-1 light:text-zinc-500">{isRu ? "Навыки еще не указаны" : "No skills listed yet"}</p>
+                                )}
+                            </div>
+
                             <div className="mt-8 border-b border-white/5 flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar light:border-zinc-200/80">
                         <button
                             type="button"

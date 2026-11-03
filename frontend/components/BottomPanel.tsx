@@ -1,5 +1,6 @@
 'use client'
 
+import { useApplication } from "@/context/ApplicationContext";
 import { useLanguage } from "@/context/LanguageContext";
 import clsx from "clsx";
 import { Briefcase, LayoutGrid, MessageCircle, Newspaper, Search, UserPen } from "lucide-react";
@@ -8,6 +9,7 @@ import { usePathname } from "next/navigation";
 
 export default function BottomPanel() {
   const pathname = usePathname();
+  const { userData } = useApplication();
   const { t, language } = useLanguage();
   const isRu = language === 'ru';
 
@@ -41,13 +43,16 @@ export default function BottomPanel() {
                 title={link.name}
                 aria-label={link.name}
                 className={clsx(
-                  "flex items-center justify-center p-2.5 rounded-full transition-all duration-150 shrink-0",
+                  "relative flex items-center justify-center p-2.5 rounded-full transition-all duration-150 shrink-0",
                   active
                     ? "text-zinc-100 bg-white/10 light:bg-zinc-100 light:text-zinc-950"
                     : "text-zinc-400 hover:text-zinc-100 hover:bg-white/5 light:text-zinc-600 light:hover:text-zinc-950 light:hover:bg-zinc-100"
                 )}
               >
                 <LinkIcon className="w-5 h-5 stroke-[1.8]" />
+                {link.href === '/profile' && (userData.pendingWatchRequestsCount ?? 0) > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-[#0a0a0a] light:ring-white" />
+                )}
               </Link>
             );
           })}

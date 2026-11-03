@@ -25,6 +25,7 @@ import {
     Globe,
     Layers,
     Loader2,
+    Lock,
     Maximize2,
     Pencil,
     Plus,
@@ -47,6 +48,7 @@ export default function ProjectPage() {
     const [mounted, setMounted] = useState(false);
     const [project, setProject] = useState<ProjectDetails | null>(null);
     const [isLoadingProject, setIsLoadingProject] = useState(true);
+    const [isProjectLocked, setIsProjectLocked] = useState(false);
 
     const [posts, setPosts] = useState<PostType[]>([]);
     const [isPostsLoading, setIsPostsLoading] = useState(true);
@@ -86,13 +88,17 @@ export default function ProjectPage() {
     const loadProject = async () => {
         if (!id) return;
         setIsLoadingProject(true);
+        setIsProjectLocked(false);
         try {
             const data = await ProjectService.getProject(id);
             setProject(data);
             setIsStarred(data.isStarredByMe);
             setStarsCount(data.starsCount ?? 0);
             document.title = `${data.name} — ${isRu ? 'Проект' : 'Project'}`;
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.response?.status === 403) {
+                setIsProjectLocked(true);
+            }
             console.error("Ошибка загрузки проекта:", err);
         } finally {
             setIsLoadingProject(false);
@@ -151,28 +157,109 @@ export default function ProjectPage() {
         if (!connection || !id) return;
 
         const handlePostCreated = (newPost: any) => {
-            if (newPost?.project?.id === id) {
-                setPosts(prev => [newPost, ...prev]);
-                setProject(prev => prev ? { ...prev, postsCount: (prev.postsCount ?? 0) + 1 } : prev);
+            if (newPost?.project?.id && newPost.project.id.toLowerCase() === id.toLowerCase()) {
+                setPosts((prev) => {
+                    if (prev.some((p) => p.id === newPost.id)) return prev;
+                    return [newPost, ...prev];
+                });
+                setProject((prev) => prev ? { ...prev, postsCount: (prev.postsCount ?? 0) + 1 } : prev);
             }
         };
 
-        const handlePostDeleted = ({ id: deletedId }: { id: string }) => {
-            setPosts(prev => prev.filter(p => p.id !== deletedId));
-            setProject(prev => prev ? { ...prev, postsCount: Math.max(0, (prev.postsCount ?? 1) - 1) } : prev);
+        const handlePostDeleted = (data: { id: string; projectId?: string | null }) => {
+            setPosts((prev) => prev.filter((p) => p.id !== data.id));
+            if (data?.projectId && data.projectId.toLowerCase() === id.toLowerCase()) {
+                setProject((prev) => prev ? { ...prev, postsCount: Math.max(0, (prev.postsCount ?? 1) - 1) } : prev);
+            }
         };
 
-        const handlePostPinChanged = () => {
-            loadPosts();
+        const handlePostUpdated = (data: { id: string; content: string; attachments?: string[] }) => {
+            setPosts((prev) =>
+                prev.map((p) => {
+                    const updatedRepost = p.repostOfPost && p.repostOfPost.id === data.id
+                        ? { ...p.repostOfPost, content: data.content, attachments: data.attachments ?? p.repostOfPost.attachments }
+                        : p.repostOfPost;
+
+                    if (p.id === data.id) {
+                        return { ...p, content: data.content, attachments: data.attachments ?? p.attachments, repostOfPost: updatedRepost };
+                    }
+                    if (updatedRepost !== p.repostOfPost) {
+                        return { ...p, repostOfPost: updatedRepost };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handleCommentCreated = (newComment: any) => {
+            setPosts((prev) =>
+                prev.map((p) => {
+                    if (p.id === newComment.postId) {
+                        const list = p.commentsList || [];
+                        if (list.some((c: any) => c.id === newComment.id)) return p;
+                        return {
+                            ...p,
+                            commentsCount: p.commentsCount + 1,
+                            commentsList: [newComment, ...list].slice(0, 3)
+                        };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handleCommentUpdated = (data: { id: string; postId: string; content: string }) => {
+            setPosts((prev) =>
+                prev.map((p) => {
+                    if (p.id === data.postId && p.commentsList) {
+                        return {
+                            ...p,
+                            commentsList: p.commentsList.map((c: any) =>
+                                c.id === data.id ? { ...c, content: data.content } : c
+                            )
+                        };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handleCommentDeleted = (data: { id: string; postId: string; commentsCount: number; latestComments?: any[] }) => {
+            setPosts((prev) =>
+                prev.map((p) => {
+                    if (p.id === data.postId) {
+                        return {
+                            ...p,
+                            commentsCount: data.commentsCount,
+                            commentsList: data.latestComments ?? (p.commentsList || []).filter((c: any) => c.id !== data.id)
+                        };
+                    }
+                    return p;
+                })
+            );
+        };
+
+        const handlePostPinChanged = (data?: { id?: string; projectId?: string | null }) => {
+            if (data?.projectId && data.projectId.toLowerCase() === id.toLowerCase()) {
+                loadPosts();
+            }
         };
 
         connection.on("postCreated", handlePostCreated);
         connection.on("postDeleted", handlePostDeleted);
+        connection.on("postUpdated", handlePostUpdated);
+        connection.on("commentCreated", handleCommentCreated);
+        connection.on("commentUpdated", handleCommentUpdated);
+        connection.on("commentDeleted", handleCommentDeleted);
         connection.on("postPinChanged", handlePostPinChanged);
 
         return () => {
             connection.off("postCreated", handlePostCreated);
             connection.off("postDeleted", handlePostDeleted);
+            connection.off("postUpdated", handlePostUpdated);
+            connection.off("commentCreated", handleCommentCreated);
+            connection.off("commentUpdated", handleCommentUpdated);
+            connection.off("commentDeleted", handleCommentDeleted);
             connection.off("postPinChanged", handlePostPinChanged);
         };
     }, [connection, id]);
@@ -220,6 +307,10 @@ export default function ProjectPage() {
         setIsUploadingBanner(true);
         try {
             const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 1080, quality: 0.85 });
+            if (compressed.size > 5 * 1024 * 1024) {
+                alert(isRu ? "Размер изображения превышает 5 МБ" : "Image size exceeds 5 MB");
+                return;
+            }
             const blob = await upload(compressed.name, compressed, {
                 access: 'public',
                 handleUploadUrl: '/api/img/upload',
@@ -242,6 +333,10 @@ export default function ProjectPage() {
             const compressedFiles = await Promise.all(
                 files.map(f => compressImage(f, { maxWidth: 1920, maxHeight: 1920, quality: 0.85 }))
             );
+            if (compressedFiles.some(f => f.size > 5 * 1024 * 1024)) {
+                alert(isRu ? "Размер изображения превышает 5 МБ" : "Image size exceeds 5 MB");
+                return;
+            }
             const uploadPromises = compressedFiles.map(file =>
                 upload(file.name, file, {
                     access: 'public',
@@ -354,9 +449,27 @@ export default function ProjectPage() {
 
             {!project ? (
                 <div className="p-12 text-center flex flex-col items-center justify-center animate-fade-in">
-                    <FolderKanban className="w-12 h-12 text-zinc-600 light:text-zinc-400 mb-3" />
-                    <h3 className="text-lg font-semibold text-zinc-200 light:text-zinc-900">{isRu ? "Проект не найден" : "Project not found"}</h3>
-                    <p className="text-sm text-zinc-400 light:text-zinc-600 mt-1">{isRu ? "Возможно, он был удалён или ссылка некорректна." : "It may have been deleted or the link is invalid."}</p>
+                    {isProjectLocked ? (
+                        <>
+                            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4 text-zinc-300 border border-white/10 light:bg-zinc-200/80 light:text-zinc-700 light:border-zinc-300">
+                                <Lock className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-zinc-200 light:text-zinc-900">
+                                {isRu ? "Доступ к проекту ограничен" : "Project access is restricted"}
+                            </h3>
+                            <p className="text-sm text-zinc-400 light:text-zinc-600 mt-1 max-w-md">
+                                {isRu
+                                    ? "Этот проект принадлежит закрытому профилю. Дождитесь одобрения вашей заявки на чтение автора."
+                                    : "This project belongs to a private profile. Wait for the author to approve your follow request."}
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <FolderKanban className="w-12 h-12 text-zinc-600 light:text-zinc-400 mb-3" />
+                            <h3 className="text-lg font-semibold text-zinc-200 light:text-zinc-900">{isRu ? "Проект не найден" : "Project not found"}</h3>
+                            <p className="text-sm text-zinc-400 light:text-zinc-600 mt-1">{isRu ? "Возможно, он был удалён или ссылка некорректна." : "It may have been deleted or the link is invalid."}</p>
+                        </>
+                    )}
                     <button
                         onClick={() => router.back()}
                         className="mt-4 px-4 py-2 bg-white text-black text-sm font-medium rounded-xl hover:bg-zinc-200 transition light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"

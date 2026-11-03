@@ -99,7 +99,7 @@ export default function Sidebar() {
             </div>
 
             <div 
-                onClick={(e) => {
+                onClick={() => {
                     router.push('/profile');
                 }} 
                 className="mt-4 p-3 bg-white/[0.02] border rounded-2xl text-sm text-zinc-400 flex flex-row gap-3 items-center justify-start hover:bg-stone-950 hover:border border-white/5 cursor-pointer transition-all duration-150 light:bg-white light:border-zinc-200/80 light:shadow-sm light:hover:bg-zinc-50 light:text-zinc-600"
@@ -107,14 +107,22 @@ export default function Sidebar() {
                 <Avatar
                     src={userData.avatar}
                     name={userData.fullName || UserNameNormalized}
-                    className="w-10 h-10 text-xs"
+                    className="w-10 h-10 text-xs shrink-0"
                 />
-                <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer light:text-zinc-900">
+                <div className="flex flex-col gap-1 min-w-0 flex-1">
+                    <span className="font-semibold text-zinc-100 text-[15px] hover:underline cursor-pointer truncate light:text-zinc-900">
                         {userData.fullName}
                     </span>
-                    <span className="text-zinc-500 text-sm light:text-zinc-500">{UserNameNormalized}</span>
+                    <span className="text-zinc-500 text-sm truncate light:text-zinc-500">{UserNameNormalized}</span>
                 </div>
+                {(userData.pendingWatchRequestsCount ?? 0) > 0 && (
+                    <span
+                        title={`${userData.pendingWatchRequestsCount}`}
+                        className="px-2 py-0.5 rounded-full bg-amber-500 text-black text-[11px] font-bold shrink-0"
+                    >
+                        {userData.pendingWatchRequestsCount}
+                    </span>
+                )}
             </div>
         </aside>
     )

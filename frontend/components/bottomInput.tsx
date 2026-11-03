@@ -46,6 +46,10 @@ export default function BottomInput({ value, onChange, onSend, onKeyDown, disabl
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 1920, quality: 0.85 });
+                if (compressed.size > 5 * 1024 * 1024) {
+                    alert(isRu ? "Размер изображения превышает 5 МБ" : "Image size exceeds 5 MB");
+                    continue;
+                }
                 
                 const newBlob = await upload(compressed.name, compressed, {
                     access: 'public',

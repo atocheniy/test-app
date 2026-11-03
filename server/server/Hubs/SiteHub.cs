@@ -21,15 +21,21 @@ public class ChatHub : Hub
     
     public async Task JoinSite(string roomName, string userName)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, roomName);
+        var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return;
 
-        var dbUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserName == userName);
-        var showOnline = dbUser?.ShowOnlineStatus ?? true;
+        var dbUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+        if (dbUser == null || string.IsNullOrEmpty(dbUser.UserName)) return;
+
+        var actualUserName = dbUser.UserName;
+        var showOnline = dbUser.ShowOnlineStatus;
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, roomName);
 
         _connectedUsers[Context.ConnectionId] = new ApplicationUser()
         {
-            Id = dbUser?.Id ?? Context.ConnectionId,
-            UserName = userName,
+            Id = dbUser.Id,
+            UserName = actualUserName,
             Room = roomName,
             ShowOnlineStatus = showOnline,
             ConnectedAt = DateTime.UtcNow
@@ -41,7 +47,7 @@ public class ChatHub : Hub
         {
             await Clients.Group(roomName).SendAsync("userJoined", new
             {
-                userName,
+                userName = actualUserName,
                 timestamp = DateTime.UtcNow,
                 activeUsers
             });
@@ -50,7 +56,7 @@ public class ChatHub : Hub
         {
             await Clients.Caller.SendAsync("userJoined", new
             {
-                userName,
+                userName = actualUserName,
                 timestamp = DateTime.UtcNow,
                 activeUsers
             });
@@ -138,17 +144,51 @@ public class ChatHub : Hub
     
     public async Task JoinChat(string chatId)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, chatId);
+        var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(chatId, out var chatGuid)) return;
+
+        var isParticipant = await _context.ChatParticipant
+            .AnyAsync(cp => cp.ChatId == chatGuid && cp.UserId == userId);
+
+        if (!isParticipant) return;
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, chatGuid.ToString().ToLower());
     }
 
     public async Task LeaveChat(string chatId)
     {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatId);
+        if (!Guid.TryParse(chatId, out var chatGuid)) return;
+
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatGuid.ToString().ToLower());
     }
 
     public async Task SendTyping(string chatId, string userName)
     {
-        await Clients.OthersInGroup(chatId).SendAsync("UserTyping", new { chatId, userName });
+        var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(chatId, out var chatGuid)) return;
+
+        var isParticipant = await _context.ChatParticipant
+            .AnyAsync(cp => cp.ChatId == chatGuid && cp.UserId == userId);
+
+        if (!isParticipant) return;
+
+        string? actualUserName = null;
+        if (_connectedUsers.TryGetValue(Context.ConnectionId, out var connectedUser) && !string.IsNullOrEmpty(connectedUser.UserName))
+        {
+            actualUserName = connectedUser.UserName;
+        }
+        else
+        {
+            actualUserName = await _context.Users.AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => u.UserName)
+                .FirstOrDefaultAsync();
+        }
+
+        if (string.IsNullOrEmpty(actualUserName)) return;
+
+        var normalizedChatId = chatGuid.ToString().ToLower();
+        await Clients.OthersInGroup(normalizedChatId).SendAsync("UserTyping", new { chatId = normalizedChatId, userName = actualUserName });
     }
     
     private List<string> GetUsersInRoom(string room)

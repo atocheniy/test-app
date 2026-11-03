@@ -8,5 +8,6 @@ public class ChangePasswordDto
     public string OldPassword { get; set; } = string.Empty;
 
     [Required]
+    [MinLength(6, ErrorMessage = "Пароль должен содержать минимум 6 символов")]
     public string NewPassword { get; set; } = string.Empty;
 }

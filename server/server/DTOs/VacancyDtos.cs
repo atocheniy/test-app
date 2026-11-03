@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using server.Models;
 
 namespace server.DTOs;
@@ -24,11 +25,39 @@ public class CreateVacancyDto
 
 public class UpdateVacancyDto
 {
+    private int? _salaryFrom;
+    private int? _salaryTo;
+
+    [JsonIgnore]
+    public bool SalaryFromSpecified { get; private set; }
+
+    [JsonIgnore]
+    public bool SalaryToSpecified { get; private set; }
+
     [MaxLength(200)]
     public string? Title { get; set; }
     public string? Description { get; set; }
-    public int? SalaryFrom { get; set; }
-    public int? SalaryTo { get; set; }
+
+    public int? SalaryFrom
+    {
+        get => _salaryFrom;
+        set
+        {
+            _salaryFrom = value;
+            SalaryFromSpecified = true;
+        }
+    }
+
+    public int? SalaryTo
+    {
+        get => _salaryTo;
+        set
+        {
+            _salaryTo = value;
+            SalaryToSpecified = true;
+        }
+    }
+
     public string? Currency { get; set; }
     public WorkFormat? Format { get; set; }
     public SeniorityLevel? Level { get; set; }
@@ -62,6 +91,8 @@ public class VacancyDto
     public string? CreatedByAvatar { get; set; }
 
     public DateTime Created { get; set; }
+
+    public bool HasApplied { get; set; }
 
     public int? MatchPercent { get; set; }
     public string? MatchReason { get; set; }

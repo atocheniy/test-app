@@ -97,9 +97,9 @@ export const translations = {
             directMessagesTitle: 'Разрешить личные сообщения',
             directMessagesDesc: 'Любой пользователь сообщества может начать с вами личный диалог',
             privateProfileTitle: 'Закрытый профиль',
-            privateProfileDesc: 'Только ваши читатели могут видеть ваши публикации, проекты и опыт работы',
+            privateProfileDesc: 'Читать ваш профиль, публикации и проекты смогут только одобренные вами подписчики',
             privateAccountNoticeTitle: 'Это закрытый профиль',
-            privateAccountNoticeDesc: 'Подпишитесь на пользователя, чтобы видеть его проекты, опыт работы и публикации.',
+            privateAccountNoticeDesc: 'Отправьте заявку на чтение и дождитесь одобрения автора, чтобы видеть его проекты, опыт работы и публикации.',
 
             interfaceTitle: 'Интерфейс и эффекты',
             themeTitle: 'Тема оформления',
@@ -301,9 +301,9 @@ export const translations = {
             directMessagesTitle: 'Allow Direct Messages',
             directMessagesDesc: 'Anyone in the community can start a private chat with you',
             privateProfileTitle: 'Private Profile',
-            privateProfileDesc: 'Only your watchers can view your posts, projects, and work experience',
+            privateProfileDesc: 'Only followers you approve can view your profile details, posts, and projects',
             privateAccountNoticeTitle: 'This profile is private',
-            privateAccountNoticeDesc: 'Follow this user to see their projects, work experience, and posts.',
+            privateAccountNoticeDesc: 'Send a follow request and wait for the author to approve it to view their projects, work experience, and posts.',
 
             interfaceTitle: 'Interface & Effects',
             themeTitle: 'Color Theme',

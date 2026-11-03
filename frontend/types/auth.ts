@@ -41,6 +41,8 @@ export interface User{
     watchersCount?: number;
     watchingCount?: number;
     isWatching?: boolean;
+    isWatchPending?: boolean;
+    pendingWatchRequestsCount?: number;
     
     technologies?: string[];
     focus?: string;
@@ -139,6 +141,8 @@ export interface Post{
     commentsCount: number;
     repostsCount?: number;
     isPinned?: boolean;
+    canPin?: boolean;
+    canDelete?: boolean;
 
     authorName: string;
     authorUsername: string;
@@ -316,6 +320,7 @@ export interface Vacancy {
     createdByUsername?: string;
     createdByAvatar?: string;
     created: string;
+    hasApplied?: boolean;
     matchPercent?: number;
     matchReason?: string;
     score?: number;
@@ -372,7 +377,17 @@ export interface Community {
     }[];
     isMember?: boolean;
     isWatching?: boolean;
-    myRole?: number | null;
-    myMemberStatus?: number | null;
+    isLocked?: boolean;
+    myRole?: number | string | null;
+    myMemberStatus?: number | string | null;
+}
+
+export interface WatchRequestUser {
+    id: string;
+    userName: string;
+    fullName: string;
+    avatar?: string;
+    bio_FirstLine?: string;
+    createdAt?: string;
 }
 

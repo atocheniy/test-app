@@ -741,6 +741,9 @@ namespace server.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.HasKey("WatcherId", "TargetUserId");
 
                     b.HasIndex("TargetUserId");
@@ -981,7 +984,8 @@ namespace server.Migrations
 
                     b.HasOne("server.Models.Post", "RepostOfPost")
                         .WithMany()
-                        .HasForeignKey("RepostOfPostId");
+                        .HasForeignKey("RepostOfPostId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("server.Models.ApplicationUser", "User")
                         .WithMany()

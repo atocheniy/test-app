@@ -1,14 +1,15 @@
 'use client';
 import { AuthService } from '@/services/authService';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import Cookies from 'js-cookie';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { useApplication } from "@/context/ApplicationContext";
 import { useLanguage } from "@/context/LanguageContext";
 
-export default function Login() {
+function LoginForm() {
     const router = useRouter();
-    const { language, setLanguage, t } = useLanguage();
+    const searchParams = useSearchParams();
+    const { language, setLanguage } = useLanguage();
     const isRu = language === 'ru';
 
     const [email, setEmail] = useState('');
@@ -21,13 +22,15 @@ export default function Login() {
         try 
         {
             setError("");
-            await AuthService.login({ email, password });
+            await AuthService.login({ email: email.trim(), password });
             
             await refreshUserData();
             await refreshPostsData();
             await refreshUserPostsData();
 
-            router.push('/feed');  
+            const from = searchParams.get('from');
+            const redirectTo = from && from.startsWith('/') && !from.startsWith('//') ? from : '/feed';
+            router.push(redirectTo);  
         } 
         catch (err: any) 
         {
@@ -79,6 +82,7 @@ export default function Login() {
             </label>
             <input
               type="text"
+              value={email}
               placeholder="name@example.com"
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
@@ -90,12 +94,11 @@ export default function Login() {
               <label className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
                 {isRu ? 'Пароль' : 'Password'}
               </label>
-              <a href="#" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-                {isRu ? 'Забыли?' : 'Forgot?'}
-              </a>
             </div>
             <input
               type="password"
+              value={password}
+              autoComplete="current-password"
               placeholder="••••••••"
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-zinc-950 text-zinc-100 text-sm border border-white/5 placeholder-zinc-700 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-white/10 transition-all duration-200"
@@ -104,48 +107,34 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full py-3 mt-2 rounded-xl bg-white text-zinc-950 text-sm font-medium hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200"
+            className="w-full py-3 mt-2 rounded-xl bg-white text-zinc-950 text-sm font-medium hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200 cursor-pointer"
           >
             {isRu ? 'Войти' : 'Sign In'}
           </button>
 
-          <div className="relative my-6 z-10 flex items-center justify-center">
-            {error && <p className="align-center text-red-500 text-xs mt-2">{error}</p>}
-          </div>
+          {error && (
+            <div className="relative z-10 flex items-center justify-center pt-1">
+              <p className="text-center text-red-500 text-xs">{error}</p>
+            </div>
+          )}
         </form>
 
-        <div className="relative my-6 z-10 flex items-center justify-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/5"></div>
-          </div>
-          <span className="relative px-3 text-[10px] text-zinc-500 bg-[#0a0a0a] uppercase tracking-wider">
-            {isRu ? 'или' : 'or'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 relative z-10">
-          <button className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-white/5 bg-zinc-950/40 text-xs text-zinc-300 hover:bg-zinc-900 hover:border-white/10 transition-all duration-200">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-            </svg>
-            GitHub
-          </button>
-          <button className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-white/5 bg-zinc-950/40 text-xs text-zinc-300 hover:bg-zinc-900 hover:border-white/10 transition-all duration-200">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12.24 10.285V13.4h6.887C18.2 15.614 15.645 18 12.24 18c-3.86 0-7-3.14-7-7s3.14-7 7-7c1.7 0 3.3.61 4.5 1.7l2.42-2.42C17.29 1.75 14.93 1 12.24 1c-5.52 0-10 4.48-10 10s4.48 10 10 10c5.77 0 9.6-4.06 9.6-9.78 0-.66-.08-1.3-.21-1.935H12.24z"/>
-            </svg>
-            Google
-          </button>
-        </div>
-
-        <p className="text-center text-xs text-zinc-500 mt-8 relative z-10">
+        <p className="text-center text-xs text-zinc-500 mt-6 relative z-10">
           {isRu ? 'Нет аккаунта?' : "Don't have an account?"}{' '}
-          <a href="/register" className="text-zinc-300 hover:underline transition-all">
+          <Link href="/register" className="text-zinc-300 hover:underline transition-all">
             {isRu ? 'Зарегистрироваться' : 'Sign up'}
-          </a>
+          </Link>
         </p>
 
       </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#050505]" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

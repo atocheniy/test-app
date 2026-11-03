@@ -76,10 +76,14 @@ export default function VacanciesPage() {
         try {
             setIsApplyingId(vacancyId);
             const res = await VacancyService.apply(vacancyId);
+            setVacancies((prev) => prev.map((item) => item.id === vacancyId ? { ...item, hasApplied: true } : item));
             alert(res.message || (isRu ? "Отклик отправлен. Переходим в диалог." : "Application sent. Redirecting to chat."));
-            router.push('/messages');
+            router.push(res.chatId ? `/messages?chatId=${res.chatId}` : '/messages');
         } catch (error: any) {
             console.error("Ошибка отклика:", error);
+            if (error?.response?.data?.alreadyApplied) {
+                setVacancies((prev) => prev.map((item) => item.id === vacancyId ? { ...item, hasApplied: true } : item));
+            }
             const msg = error?.response?.data?.message || (isRu ? "Не удалось отправить отклик" : "Failed to submit application");
             alert(msg);
         } finally {
@@ -384,13 +388,24 @@ export default function VacanciesPage() {
                                         </div>
 
                                         <div className="flex items-center gap-2 shrink-0">
-                                            <button
-                                                onClick={() => handleApply(v.id)}
-                                                disabled={isApplyingId === v.id}
-                                                className="w-full sm:w-auto flex justify-center px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-lg shadow-white/5 light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
-                                            >
-                                                {isApplyingId === v.id ? (isRu ? "Отправка..." : "Sending...") : t.vacancies.apply}
-                                            </button>
+                                            {userData?.id && v.createdById === userData.id ? (
+                                                <span className="w-full sm:w-auto flex justify-center px-4 py-2 rounded-xl bg-white/5 text-zinc-400 border border-white/10 font-medium text-xs select-none light:bg-zinc-100 light:text-zinc-600 light:border-zinc-200">
+                                                    {isRu ? "Ваша вакансия" : "Your vacancy"}
+                                                </span>
+                                            ) : v.hasApplied ? (
+                                                <span className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold text-xs select-none light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200">
+                                                    <CheckCircle2 size={14} />
+                                                    {t.vacancies.applied}
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleApply(v.id)}
+                                                    disabled={isApplyingId === v.id}
+                                                    className="w-full sm:w-auto flex justify-center px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-lg shadow-white/5 light:bg-zinc-900 light:text-white light:hover:bg-zinc-800"
+                                                >
+                                                    {isApplyingId === v.id ? (isRu ? "Отправка..." : "Sending...") : t.vacancies.apply}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
 

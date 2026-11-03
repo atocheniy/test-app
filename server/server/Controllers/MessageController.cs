@@ -106,10 +106,7 @@ namespace server.Controllers
         [HttpPost]
         public async Task<IActionResult> PostMessage([FromBody] SendMessageDto dto)
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
-                                ?? User.FindFirstValue("sub") 
-                                ?? User.FindFirstValue("id")
-                                ?? User.Identity?.Name;
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(currentUserId))
                 return Unauthorized();
             
@@ -127,31 +124,17 @@ namespace server.Controllers
                 return BadRequest(new { message = "Пользователь ограничил отправку личных сообщений", code = "DM_DISABLED" });
             }
 
-            var message = new Message
-            {
-                Id = Guid.NewGuid(),
-                ChatId = dto.ChatId,
-                SenderId = currentUserId,
-                Content = dto.Content ?? string.Empty,
-                Attachments = dto.Attachments ?? Array.Empty<string>(),
-                ReplyToId = dto.ReplyToId, 
-                SentAt = DateTime.UtcNow
-            };
-            
-            chat.UpdatedAt = DateTime.UtcNow;
-
-            _context.Message.Add(message);
-            await _context.SaveChangesAsync();
-            
+            Guid? validReplyToId = null;
             object? replyToData = null;
             if (dto.ReplyToId.HasValue)
             {
                 var replyMsg = await _context.Message
                     .Include(m => m.Sender)
-                    .FirstOrDefaultAsync(m => m.Id == dto.ReplyToId.Value);
+                    .FirstOrDefaultAsync(m => m.Id == dto.ReplyToId.Value && m.ChatId == dto.ChatId);
 
                 if (replyMsg != null)
                 {
+                    validReplyToId = replyMsg.Id;
                     replyToData = new
                     {
                         id = replyMsg.Id,
@@ -161,6 +144,22 @@ namespace server.Controllers
                     };
                 }
             }
+
+            var message = new Message
+            {
+                Id = Guid.NewGuid(),
+                ChatId = dto.ChatId,
+                SenderId = currentUserId,
+                Content = dto.Content ?? string.Empty,
+                Attachments = dto.Attachments ?? Array.Empty<string>(),
+                ReplyToId = validReplyToId,
+                SentAt = DateTime.UtcNow
+            };
+            
+            chat.UpdatedAt = DateTime.UtcNow;
+
+            _context.Message.Add(message);
+            await _context.SaveChangesAsync();
             
             var messageResponse = new
             {
@@ -233,6 +232,14 @@ namespace server.Controllers
         public async Task<IActionResult> MarkAsRead(Guid chatId)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId))
+                return Unauthorized();
+
+            var isParticipant = await _context.ChatParticipant
+                .AnyAsync(cp => cp.ChatId == chatId && cp.UserId == currentUserId);
+
+            if (!isParticipant)
+                return Forbid();
             
             var unreadMessages = await _context.Message
                 .Where(m => m.ChatId == chatId && m.SenderId != currentUserId && !m.IsRead)

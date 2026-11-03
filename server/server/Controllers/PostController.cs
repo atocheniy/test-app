@@ -36,11 +36,114 @@ namespace server.Controllers
             _hubContext = hubContext;
         }
 
-        // GET: api/Post
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Post>>> GetPost()
+        private async Task<(List<string> ApprovedWatchedUserIds, List<Guid> ActiveCommunityIds)> GetAllowedViewerListsAsync(string? currentUserId)
         {
-            return await _context.Post.ToListAsync();
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return (new List<string>(), new List<Guid>());
+            }
+
+            var watchedIds = await _context.UserWatchers
+                .Where(uw => uw.WatcherId == currentUserId && uw.Status == MemberStatus.Active)
+                .Select(uw => uw.TargetUserId)
+                .ToListAsync();
+
+            var commIds = await _context.CommunityMembers
+                .Where(cm => cm.UserId == currentUserId && cm.Status == MemberStatus.Active)
+                .Select(cm => cm.CommunityId)
+                .ToListAsync();
+
+            return (watchedIds, commIds);
+        }
+
+        private async Task<bool> CanUserViewPostAsync(Post post, string? currentUserId)
+        {
+            if (post.CommunityId.HasValue && post.Community != null && post.Community.Type == CommunityType.Private)
+            {
+                if (string.IsNullOrEmpty(currentUserId)) return false;
+                var isActiveMember = await _context.CommunityMembers
+                    .AnyAsync(m => m.CommunityId == post.CommunityId.Value && m.UserId == currentUserId && m.Status == MemberStatus.Active);
+                if (!isActiveMember) return false;
+            }
+
+            if (post.User != null && post.User.IsPrivate && !post.IsPostedAsCommunity)
+            {
+                if (string.IsNullOrEmpty(currentUserId)) return false;
+                if (post.UserId != currentUserId)
+                {
+                    var isApprovedWatcher = await _context.UserWatchers
+                        .AnyAsync(uw => uw.WatcherId == currentUserId && uw.TargetUserId == post.UserId && uw.Status == MemberStatus.Active);
+                    if (!isApprovedWatcher) return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool CanViewPostInMemory(Post? post, string? currentUserId, HashSet<string> approvedWatchedSet, HashSet<Guid> activeCommSet)
+        {
+            if (post == null) return false;
+
+            if (post.CommunityId.HasValue && post.Community != null && post.Community.Type == CommunityType.Private)
+            {
+                if (string.IsNullOrEmpty(currentUserId) || !activeCommSet.Contains(post.CommunityId.Value))
+                {
+                    return false;
+                }
+            }
+
+            if (post.User != null && post.User.IsPrivate && !post.IsPostedAsCommunity)
+            {
+                if (string.IsNullOrEmpty(currentUserId)) return false;
+                if (post.UserId != currentUserId && !approvedWatchedSet.Contains(post.UserId))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private async Task<List<string>?> GetAllowedRecipientIdsForPostAsync(string postAuthorId, bool authorIsPrivate, bool isPostedAsCommunity, Guid? communityId, CommunityType? communityType)
+        {
+            bool restrictByAuthor = authorIsPrivate && !isPostedAsCommunity;
+            bool restrictByCommunity = communityId.HasValue && communityType == CommunityType.Private;
+
+            if (!restrictByAuthor && !restrictByCommunity)
+            {
+                return null;
+            }
+
+            HashSet<string>? allowed = null;
+
+            if (restrictByCommunity)
+            {
+                var memberIds = await _context.CommunityMembers
+                    .Where(m => m.CommunityId == communityId!.Value && m.Status == MemberStatus.Active)
+                    .Select(m => m.UserId)
+                    .ToListAsync();
+                allowed = new HashSet<string>(memberIds);
+            }
+
+            if (restrictByAuthor)
+            {
+                var watcherIds = await _context.UserWatchers
+                    .Where(uw => uw.TargetUserId == postAuthorId && uw.Status == MemberStatus.Active)
+                    .Select(uw => uw.WatcherId)
+                    .ToListAsync();
+                watcherIds.Add(postAuthorId);
+
+                if (allowed == null)
+                {
+                    allowed = new HashSet<string>(watcherIds);
+                }
+                else
+                {
+                    allowed.IntersectWith(watcherIds);
+                }
+            }
+
+            return allowed!.ToList();
         }
 
         // GET: api/Post/trending
@@ -51,8 +154,9 @@ namespace server.Controllers
 
             var cutoff = DateTime.UtcNow.AddDays(-7);
             var recentPosts = await _context.Post
+                .Include(p => p.User)
                 .Include(p => p.Community)
-                .Where(p => p.Created >= cutoff)
+                .Where(p => p.Created >= cutoff && !p.User.IsPrivate && (p.Community == null || p.Community.Type != CommunityType.Private))
                 .OrderByDescending(p => p.Created)
                 .Take(200)
                 .ToListAsync();
@@ -61,8 +165,9 @@ namespace server.Controllers
             {
                 cutoff = DateTime.UtcNow.AddDays(-30);
                 recentPosts = await _context.Post
+                    .Include(p => p.User)
                     .Include(p => p.Community)
-                    .Where(p => p.Created >= cutoff)
+                    .Where(p => p.Created >= cutoff && !p.User.IsPrivate && (p.Community == null || p.Community.Type != CommunityType.Private))
                     .OrderByDescending(p => p.Created)
                     .Take(200)
                     .ToListAsync();
@@ -118,6 +223,7 @@ namespace server.Controllers
             {
                 var existingTags = new HashSet<string>(result.Select(r => r.Tag), StringComparer.OrdinalIgnoreCase);
                 var activeCommunities = await _context.Communities
+                    .Where(c => c.Type != CommunityType.Private)
                     .OrderByDescending(c => c.MembersCount)
                     .Take(limit * 2)
                     .ToListAsync();
@@ -128,7 +234,7 @@ namespace server.Controllers
                     var commTag = "#" + Regex.Replace(comm.Slug.ToLower(), @"[^a-z0-9_]", "");
                     if (!existingTags.Contains(commTag))
                     {
-                        var postsCount = await _context.Post.CountAsync(p => p.CommunityId == comm.Id);
+                        var postsCount = await _context.Post.CountAsync(p => p.CommunityId == comm.Id && !p.User.IsPrivate);
                         var count = Math.Max(postsCount, comm.MembersCount);
                         result.Add(new TrendingTopicDto
                         {
@@ -152,6 +258,35 @@ namespace server.Controllers
         public async Task<ActionResult<Post>> GetPost(Guid id)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var postEntity = await _context.Post
+                .Include(p => p.User)
+                .Include(p => p.Community)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (postEntity == null)
+            {
+                return NotFound();
+            }
+
+            if (!await CanUserViewPostAsync(postEntity, currentUserId))
+            {
+                return StatusCode(403, new { message = "Доступ к публикации ограничен", isLocked = true });
+            }
+
+            var (approvedWatchedIds, activeCommIds) = await GetAllowedViewerListsAsync(currentUserId);
+
+            var canManageCommunityPost = !string.IsNullOrEmpty(currentUserId)
+                && postEntity.CommunityId.HasValue
+                && await _context.CommunityMembers.AnyAsync(cm =>
+                    cm.CommunityId == postEntity.CommunityId.Value
+                    && cm.UserId == currentUserId
+                    && cm.Status == MemberStatus.Active
+                    && (cm.Role == CommunityRole.Owner || cm.Role == CommunityRole.Admin || cm.Role == CommunityRole.Moderator));
+
+            var canPinPost = !string.IsNullOrEmpty(currentUserId)
+                && (postEntity.CommunityId.HasValue ? canManageCommunityPost : postEntity.UserId == currentUserId);
+            var canDeletePost = !string.IsNullOrEmpty(currentUserId)
+                && (postEntity.UserId == currentUserId || canManageCommunityPost);
             
             var post = await _context.Post
                 .Include(p => p.User)
@@ -166,7 +301,12 @@ namespace server.Controllers
                     commentsCount = p.CommentsCount,
                     repostsCount = p.RepostsCount,
                     isPinned = p.IsPinned,
-                    repostOfPost = p.RepostOfPost == null ? null : new {
+                    canPin = canPinPost,
+                    canDelete = canDeletePost,
+                    repostOfPost = (p.RepostOfPost == null
+                        || (p.RepostOfPost.User.IsPrivate && !p.RepostOfPost.IsPostedAsCommunity && !(currentUserId != null && (p.RepostOfPost.UserId == currentUserId || approvedWatchedIds.Contains(p.RepostOfPost.UserId))))
+                        || (p.RepostOfPost.Community != null && p.RepostOfPost.Community.Type == CommunityType.Private && !(currentUserId != null && p.RepostOfPost.CommunityId.HasValue && activeCommIds.Contains(p.RepostOfPost.CommunityId.Value))))
+                        ? null : new {
                         id = p.RepostOfPost.Id,
                         content = p.RepostOfPost.Content,
                         created = p.RepostOfPost.Created,
@@ -223,7 +363,10 @@ namespace server.Controllers
         public async Task<IActionResult> PutPost(Guid id, [FromBody] UpdatePostDto model)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var post = await _context.Post.FindAsync(id);
+            var post = await _context.Post
+                .Include(p => p.User)
+                .Include(p => p.Community)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (post == null) return NotFound();
             
@@ -232,10 +375,36 @@ namespace server.Controllers
                 return Forbid();
             }
 
-            post.Content = model.Content;
-            post.Attachments = model.Attachments;
+            post.Content = model.Content ?? string.Empty;
+            post.Attachments = model.Attachments ?? Array.Empty<string>();
 
             await _context.SaveChangesAsync();
+
+            var updatePayload = new
+            {
+                id = post.Id,
+                content = post.Content,
+                attachments = post.Attachments,
+                communityId = post.CommunityId,
+                projectId = post.ProjectId
+            };
+
+            var allowedRecipientIds = await GetAllowedRecipientIdsForPostAsync(
+                post.UserId,
+                post.User?.IsPrivate ?? false,
+                post.IsPostedAsCommunity,
+                post.CommunityId,
+                post.Community?.Type);
+
+            if (allowedRecipientIds == null)
+            {
+                await _hubContext.Clients.All.SendAsync("postUpdated", updatePayload);
+            }
+            else if (allowedRecipientIds.Count > 0)
+            {
+                await _hubContext.Clients.Users(allowedRecipientIds).SendAsync("postUpdated", updatePayload);
+            }
+
             return NoContent();
         }
 
@@ -264,21 +433,30 @@ namespace server.Controllers
             {
                 var originalPost = await _context.Post
                     .Include(p => p.User)
+                    .Include(p => p.Community)
                     .FirstOrDefaultAsync(p => p.Id == model.RepostOfPostId.Value);
 
-                if (originalPost != null)
+                if (originalPost == null)
                 {
-                    originalPost.RepostsCount++;
-                    repostInfo = new {
-                        id = originalPost.Id,
-                        content = originalPost.Content,
-                        created = originalPost.Created,
-                        attachments = originalPost.Attachments,
-                        authorName = originalPost.User?.FullName,
-                        authorUsername = originalPost.User?.UserName,
-                        authorAvatar = originalPost.User?.Avatar
-                    };
+                    return NotFound("Исходный пост не найден.");
                 }
+
+                if ((originalPost.User != null && originalPost.User.IsPrivate && !originalPost.IsPostedAsCommunity)
+                    || (originalPost.Community != null && originalPost.Community.Type == CommunityType.Private))
+                {
+                    return BadRequest("Нельзя сделать репост записи из закрытого профиля или приватного сообщества.");
+                }
+
+                originalPost.RepostsCount++;
+                repostInfo = new {
+                    id = originalPost.Id,
+                    content = originalPost.Content,
+                    created = originalPost.Created,
+                    attachments = originalPost.Attachments,
+                    authorName = originalPost.User?.FullName,
+                    authorUsername = originalPost.User?.UserName,
+                    authorAvatar = originalPost.User?.Avatar
+                };
             }
             
             Community? community = null;
@@ -292,10 +470,16 @@ namespace server.Controllers
                 if (community != null)
                 {
                     var member = community.Members.FirstOrDefault(m => m.UserId == userId);
+
+                    if ((community.Type == CommunityType.Private || community.Type == CommunityType.Restricted)
+                        && (member == null || member.Status != MemberStatus.Active))
+                    {
+                        return Forbid();
+                    }
                     
                     if (community.PostingPolicy == CommunityPostingPolicy.AdminsAndModerators)
                     {
-                        if (member == null || (member.Role != CommunityRole.Admin && member.Role != CommunityRole.Owner && member.Role != CommunityRole.Moderator))
+                        if (member == null || member.Status != MemberStatus.Active || (member.Role != CommunityRole.Admin && member.Role != CommunityRole.Owner && member.Role != CommunityRole.Moderator))
                         {
                             return Forbid();
                         }
@@ -353,7 +537,7 @@ namespace server.Controllers
                 }
             }
 
-            await _hubContext.Clients.All.SendAsync("postCreated", new {
+            var postPayload = new {
                 id = post.Id,
                 content = post.Content,
                 created = post.Created,
@@ -394,7 +578,23 @@ namespace server.Controllers
                     imageUrl = project.ImageUrl,
                     status = (int)project.Status
                 },
-            });
+            };
+
+            var allowedRecipientIds = await GetAllowedRecipientIdsForPostAsync(
+                userId,
+                user.IsPrivate,
+                post.IsPostedAsCommunity,
+                community?.Id,
+                community?.Type);
+
+            if (allowedRecipientIds == null)
+            {
+                await _hubContext.Clients.All.SendAsync("postCreated", postPayload);
+            }
+            else if (allowedRecipientIds.Count > 0)
+            {
+                await _hubContext.Clients.Users(allowedRecipientIds).SendAsync("postCreated", postPayload);
+            }
             
             return Ok(new { id = post.Id, message = "Пост успешно создан" });
         }
@@ -408,7 +608,18 @@ namespace server.Controllers
             var post = await _context.Post.FindAsync(id);
     
             if (post == null) return NotFound();
-            if (post.UserId != userId) return Forbid();
+
+            var isAuthor = post.UserId == userId;
+            var isCommunityModerator = !isAuthor
+                && !string.IsNullOrEmpty(userId)
+                && post.CommunityId.HasValue
+                && await _context.CommunityMembers.AnyAsync(cm =>
+                    cm.CommunityId == post.CommunityId.Value
+                    && cm.UserId == userId
+                    && cm.Status == MemberStatus.Active
+                    && (cm.Role == CommunityRole.Owner || cm.Role == CommunityRole.Admin || cm.Role == CommunityRole.Moderator));
+
+            if (!isAuthor && !isCommunityModerator) return Forbid();
             
             if (post.RepostOfPostId.HasValue)
             {
@@ -422,6 +633,15 @@ namespace server.Controllers
                         postId = originalPost.Id,
                         repostsCount = originalPost.RepostsCount
                     });
+                }
+            }
+
+            if (post.CommunityId.HasValue)
+            {
+                var comm = await _context.Communities.FindAsync(post.CommunityId.Value);
+                if (comm != null)
+                {
+                    comm.PostsCount = Math.Max(0, comm.PostsCount - 1);
                 }
             }
 
@@ -449,7 +669,7 @@ namespace server.Controllers
             _context.Post.Remove(post);
             await _context.SaveChangesAsync();
 
-            await _hubContext.Clients.All.SendAsync("postDeleted", new { id = post.Id });
+            await _hubContext.Clients.All.SendAsync("postDeleted", new { id = post.Id, communityId = post.CommunityId, projectId = post.ProjectId });
             return NoContent();
         }
 
@@ -466,6 +686,7 @@ namespace server.Controllers
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             limit = Math.Clamp(limit, 1, 50);
+            var (approvedWatchedIds, activeCommIds) = await GetAllowedViewerListsAsync(currentUserId);
             
             if (filter == "watching")
             {
@@ -478,12 +699,7 @@ namespace server.Controllers
                     });
                 }
 
-                var watchedUserIds = await _context.UserWatchers
-                    .Where(uw => uw.WatcherId == currentUserId)
-                    .Select(uw => uw.TargetUserId)
-                    .ToListAsync();
-
-                if (!watchedUserIds.Any())
+                if (!approvedWatchedIds.Any())
                 {
                     return Ok(new {
                         items = Array.Empty<object>(),
@@ -496,7 +712,10 @@ namespace server.Controllers
                     .Include(p => p.User)
                     .Include(p => p.Community)
                     .Include(p => p.Project)
-                    .Where(p => watchedUserIds.Contains(p.UserId) && !p.IsPostedAsCommunity && (p.ProjectId == null || p.ShowInGeneralFeed));
+                    .Where(p => approvedWatchedIds.Contains(p.UserId)
+                        && !p.IsPostedAsCommunity
+                        && (p.ProjectId == null || p.ShowInGeneralFeed)
+                        && (p.CommunityId == null || p.Community!.Type != CommunityType.Private || activeCommIds.Contains(p.CommunityId.Value)));
 
                 if (!string.IsNullOrEmpty(cursor) && DateTime.TryParse(cursor, null, System.Globalization.DateTimeStyles.RoundtripKind, out var watchingCursorDate))
                 {
@@ -520,7 +739,10 @@ namespace server.Controllers
                         commentsCount = p.CommentsCount,
                         repostsCount = p.RepostsCount,
                         isPinned = p.IsPinned,
-                        repostOfPost = p.RepostOfPost == null ? null : new {
+                        repostOfPost = (p.RepostOfPost == null
+                            || (p.RepostOfPost.User.IsPrivate && !p.RepostOfPost.IsPostedAsCommunity && p.RepostOfPost.UserId != currentUserId && !approvedWatchedIds.Contains(p.RepostOfPost.UserId))
+                            || (p.RepostOfPost.Community != null && p.RepostOfPost.Community.Type == CommunityType.Private && (!p.RepostOfPost.CommunityId.HasValue || !activeCommIds.Contains(p.RepostOfPost.CommunityId.Value))))
+                            ? null : new {
                             id = p.RepostOfPost.Id,
                             content = p.RepostOfPost.Content,
                             created = p.RepostOfPost.Created,
@@ -578,6 +800,9 @@ namespace server.Controllers
                 {
                     int.TryParse(cursor["rec_".Length..], out offset);
                 }
+
+                var approvedWatchedSet = new HashSet<string>(approvedWatchedIds, StringComparer.OrdinalIgnoreCase);
+                var activeCommSet = new HashSet<Guid>(activeCommIds);
                 
                 FeedRecommendationScorer.UserInterestProfile? profile = null;
                 if (!string.IsNullOrEmpty(currentUserId))
@@ -586,10 +811,6 @@ namespace server.Controllers
                     var userWatchedCommunities = await _context.CommunityWatchers
                         .Where(w => w.UserId == currentUserId)
                         .Select(w => w.CommunityId)
-                        .ToListAsync();
-                    var userWatchedUsers = await _context.UserWatchers
-                        .Where(uw => uw.WatcherId == currentUserId)
-                        .Select(uw => uw.TargetUserId)
                         .ToListAsync();
                     var userLikes = await _context.PostLikes
                         .Where(l => l.UserId == currentUserId)
@@ -601,7 +822,7 @@ namespace server.Controllers
                         UserId = currentUserId,
                         Focus = currentUser?.Focus,
                         WatchedCommunityIds = new HashSet<Guid>(userWatchedCommunities),
-                        WatchedUserIds = new HashSet<string>(userWatchedUsers, StringComparer.OrdinalIgnoreCase),
+                        WatchedUserIds = new HashSet<string>(approvedWatchedIds, StringComparer.OrdinalIgnoreCase),
                         LikedPostIds = new HashSet<Guid>(userLikes)
                     };
 
@@ -624,8 +845,11 @@ namespace server.Controllers
                     .Include(p => p.Community)
                     .Include(p => p.Project)
                     .Include(p => p.RepostOfPost).ThenInclude(r => r!.User)
+                    .Include(p => p.RepostOfPost).ThenInclude(r => r!.Community)
                     .Include(p => p.Comments).ThenInclude(c => c.User)
-                    .Where(p => p.ProjectId == null || p.ShowInGeneralFeed)
+                    .Where(p => (p.ProjectId == null || p.ShowInGeneralFeed)
+                        && (!p.User.IsPrivate || p.IsPostedAsCommunity || (currentUserId != null && (p.UserId == currentUserId || approvedWatchedIds.Contains(p.UserId))))
+                        && (p.CommunityId == null || p.Community!.Type != CommunityType.Private || (currentUserId != null && activeCommIds.Contains(p.CommunityId.Value))))
                     .AsQueryable();
 
                 var candidates = await candidateQuery
@@ -668,7 +892,10 @@ namespace server.Controllers
                     var oldestCandidate = candidates.OrderBy(c => c.Created).FirstOrDefault();
                     if (oldestCandidate != null)
                     {
-                        var hasArchive = await _context.Post.AnyAsync(p => p.Created < oldestCandidate.Created);
+                        var hasArchive = await _context.Post.AnyAsync(p => p.Created < oldestCandidate.Created
+                            && (p.ProjectId == null || p.ShowInGeneralFeed)
+                            && (!p.User.IsPrivate || p.IsPostedAsCommunity || (currentUserId != null && (p.UserId == currentUserId || approvedWatchedIds.Contains(p.UserId))))
+                            && (p.CommunityId == null || p.Community!.Type != CommunityType.Private || (currentUserId != null && activeCommIds.Contains(p.CommunityId.Value))));
                         if (hasArchive)
                         {
                             hasMore = true;
@@ -683,6 +910,7 @@ namespace server.Controllers
 
                 var items = currentBatch.Select(sp => {
                     var p = sp.Post;
+                    bool canSeeRepost = CanViewPostInMemory(p.RepostOfPost, currentUserId, approvedWatchedSet, activeCommSet);
                     return new {
                         id = p.Id,
                         content = p.Content,
@@ -694,7 +922,7 @@ namespace server.Controllers
                         repostsCount = p.RepostsCount,
                         isPinned = p.IsPinned,
                         recommendationReason = sp.RecommendationReason,
-                        repostOfPost = p.RepostOfPost == null ? null : new {
+                        repostOfPost = !canSeeRepost || p.RepostOfPost == null ? null : new {
                             id = p.RepostOfPost.Id,
                             content = p.RepostOfPost.Content,
                             created = p.RepostOfPost.Created,
@@ -744,7 +972,9 @@ namespace server.Controllers
                     .Include(p => p.User)
                     .Include(p => p.Community)
                     .Include(p => p.Project)
-                    .Where(p => p.ProjectId == null || p.ShowInGeneralFeed)
+                    .Where(p => (p.ProjectId == null || p.ShowInGeneralFeed)
+                        && (!p.User.IsPrivate || p.IsPostedAsCommunity || (currentUserId != null && (p.UserId == currentUserId || approvedWatchedIds.Contains(p.UserId))))
+                        && (p.CommunityId == null || p.Community!.Type != CommunityType.Private || (currentUserId != null && activeCommIds.Contains(p.CommunityId.Value))))
                     .AsQueryable();
 
                 if (DateTime.TryParse(cursor, null, System.Globalization.DateTimeStyles.RoundtripKind, out var archiveCursorDate))
@@ -770,7 +1000,10 @@ namespace server.Controllers
                         repostsCount = p.RepostsCount,
                         isPinned = p.IsPinned,
                         recommendationReason = (string?)null,
-                        repostOfPost = p.RepostOfPost == null ? null : new {
+                        repostOfPost = (p.RepostOfPost == null
+                            || (p.RepostOfPost.User.IsPrivate && !p.RepostOfPost.IsPostedAsCommunity && !(currentUserId != null && (p.RepostOfPost.UserId == currentUserId || approvedWatchedIds.Contains(p.RepostOfPost.UserId))))
+                            || (p.RepostOfPost.Community != null && p.RepostOfPost.Community.Type == CommunityType.Private && !(currentUserId != null && p.RepostOfPost.CommunityId.HasValue && activeCommIds.Contains(p.RepostOfPost.CommunityId.Value))))
+                            ? null : new {
                             id = p.RepostOfPost.Id,
                             content = p.RepostOfPost.Content,
                             created = p.RepostOfPost.Created,
@@ -827,8 +1060,16 @@ namespace server.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var post = await _context.Post.FindAsync(id);
+            var post = await _context.Post
+                .Include(p => p.User)
+                .Include(p => p.Community)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (post == null) return NotFound();
+
+            if (!await CanUserViewPostAsync(post, userId))
+            {
+                return Forbid();
+            }
             
             var existingLike = await _context.PostLikes
                 .FirstOrDefaultAsync(l => l.PostId == id && l.UserId == userId);
@@ -853,13 +1094,30 @@ namespace server.Controllers
             }
 
             await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("postLiked", new 
+
+            var likePayload = new 
             {
                 postId = post.Id,
                 likesCount = post.LikesCount,
                 userId = userId,
                 isLiked = isLiked
-            });
+            };
+
+            var allowedRecipientIds = await GetAllowedRecipientIdsForPostAsync(
+                post.UserId,
+                post.User?.IsPrivate == true,
+                post.IsPostedAsCommunity,
+                post.CommunityId,
+                post.Community?.Type);
+
+            if (allowedRecipientIds == null)
+            {
+                await _hubContext.Clients.All.SendAsync("postLiked", likePayload);
+            }
+            else if (allowedRecipientIds.Count > 0)
+            {
+                await _hubContext.Clients.Users(allowedRecipientIds).SendAsync("postLiked", likePayload);
+            }
             
             return Ok(new 
             { 
@@ -975,6 +1233,7 @@ namespace server.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             limit = Math.Clamp(limit, 1, 50);
+            var (approvedWatchedIds, activeCommIds) = await GetAllowedViewerListsAsync(userId);
 
             var query = _context.Post
                 .Include(p => p.User)
@@ -1015,7 +1274,10 @@ namespace server.Controllers
                         status = (int)p.Project.Status
                     },
                     
-                    repostOfPost = p.RepostOfPost == null ? null : new {
+                    repostOfPost = (p.RepostOfPost == null
+                        || (p.RepostOfPost.User.IsPrivate && !p.RepostOfPost.IsPostedAsCommunity && !(userId != null && (p.RepostOfPost.UserId == userId || approvedWatchedIds.Contains(p.RepostOfPost.UserId))))
+                        || (p.RepostOfPost.Community != null && p.RepostOfPost.Community.Type == CommunityType.Private && !(userId != null && p.RepostOfPost.CommunityId.HasValue && activeCommIds.Contains(p.RepostOfPost.CommunityId.Value))))
+                        ? null : new {
                         id = p.RepostOfPost.Id,
                         content = p.RepostOfPost.Content,
                         created = p.RepostOfPost.Created,
@@ -1061,10 +1323,30 @@ namespace server.Controllers
             var cleanSlug = slug.Trim().ToLower();
             limit = Math.Clamp(limit, 1, 50);
 
+            var community = await _context.Communities
+                .FirstOrDefaultAsync(c => c.Slug == cleanSlug);
+            if (community == null)
+            {
+                return NotFound("Сообщество не найдено");
+            }
+
+            var (approvedWatchedIds, activeCommIds) = await GetAllowedViewerListsAsync(currentUserId);
+
+            if (community.Type == CommunityType.Private && (currentUserId == null || !activeCommIds.Contains(community.Id)))
+            {
+                return Ok(new {
+                    items = Array.Empty<object>(),
+                    nextCursor = (string?)null,
+                    hasMore = false,
+                    isLocked = true
+                });
+            }
+
             var query = _context.Post
                 .Include(p => p.User)
                 .Include(p => p.Community)
-                .Where(p => p.Community != null && p.Community.Slug == cleanSlug);
+                .Where(p => p.CommunityId == community.Id
+                    && (!p.User.IsPrivate || p.IsPostedAsCommunity || (currentUserId != null && (p.UserId == currentUserId || approvedWatchedIds.Contains(p.UserId)))));
 
             if (cursor.HasValue)
             {
@@ -1090,7 +1372,10 @@ namespace server.Controllers
                     repostsCount = p.RepostsCount,
                     isPinned = p.IsPinned,
                     
-                    repostOfPost = p.RepostOfPost == null ? null : new {
+                    repostOfPost = (p.RepostOfPost == null
+                        || (p.RepostOfPost.User.IsPrivate && !p.RepostOfPost.IsPostedAsCommunity && !(currentUserId != null && (p.RepostOfPost.UserId == currentUserId || approvedWatchedIds.Contains(p.RepostOfPost.UserId))))
+                        || (p.RepostOfPost.Community != null && p.RepostOfPost.Community.Type == CommunityType.Private && !(currentUserId != null && p.RepostOfPost.CommunityId.HasValue && activeCommIds.Contains(p.RepostOfPost.CommunityId.Value))))
+                        ? null : new {
                         id = p.RepostOfPost.Id,
                         content = p.RepostOfPost.Content,
                         created = p.RepostOfPost.Created,
@@ -1105,7 +1390,7 @@ namespace server.Controllers
                     authorAvatar = p.User.Avatar,
                     
                     community = new {
-                        id = p.Community.Id,
+                        id = p.Community!.Id,
                         name = p.Community.Name,
                         slug = p.Community.Slug,
                         avatar = p.Community.Avatar
@@ -1132,7 +1417,8 @@ namespace server.Controllers
             return Ok(new {
                 items,
                 nextCursor,
-                hasMore
+                hasMore,
+                isLocked = false
             });
         }
         
@@ -1146,12 +1432,13 @@ namespace server.Controllers
             var user = await _userManager.FindByNameAsync(username);
             if (user == null) return NotFound();
 
+            var (approvedWatchedIds, activeCommIds) = await GetAllowedViewerListsAsync(currentUserId);
+
             var isOwn = currentUserId != null && currentUserId == user.Id;
-            var isWatching = currentUserId != null && await _context.UserWatchers
-                .AnyAsync(uw => uw.WatcherId == currentUserId && uw.TargetUserId == user.Id);
+            var isWatching = currentUserId != null && approvedWatchedIds.Contains(user.Id);
             if (user.IsPrivate && !isOwn && !isWatching)
             {
-                return Ok(new { posts = Array.Empty<object>(), nextCursor = (DateTime?)null, hasMore = false, isLocked = true });
+                return Ok(new { items = Array.Empty<object>(), posts = Array.Empty<object>(), nextCursor = (string?)null, hasMore = false, isLocked = true });
             }
 
             limit = Math.Clamp(limit, 1, 50);
@@ -1159,7 +1446,9 @@ namespace server.Controllers
             var query = _context.Post
                 .Include(p => p.User)
                 .Include(p => p.Project)
-                .Where(p => p.UserId == user.Id);
+                .Include(p => p.Community)
+                .Where(p => p.UserId == user.Id
+                    && (p.CommunityId == null || p.Community!.Type != CommunityType.Private || (currentUserId != null && activeCommIds.Contains(p.CommunityId.Value))));
 
             if (cursor.HasValue)
             {
@@ -1195,7 +1484,10 @@ namespace server.Controllers
                         status = (int)p.Project.Status
                     },
                     
-                    repostOfPost = p.RepostOfPost == null ? null : new {
+                    repostOfPost = (p.RepostOfPost == null
+                        || (p.RepostOfPost.User.IsPrivate && !p.RepostOfPost.IsPostedAsCommunity && !(currentUserId != null && (p.RepostOfPost.UserId == currentUserId || approvedWatchedIds.Contains(p.RepostOfPost.UserId))))
+                        || (p.RepostOfPost.Community != null && p.RepostOfPost.Community.Type == CommunityType.Private && !(currentUserId != null && p.RepostOfPost.CommunityId.HasValue && activeCommIds.Contains(p.RepostOfPost.CommunityId.Value))))
+                        ? null : new {
                         id = p.RepostOfPost.Id,
                         content = p.RepostOfPost.Content,
                         created = p.RepostOfPost.Created,
@@ -1227,7 +1519,8 @@ namespace server.Controllers
             return Ok(new {
                 items,
                 nextCursor,
-                hasMore
+                hasMore,
+                isLocked = false
             });
         }
         
@@ -1240,6 +1533,7 @@ namespace server.Controllers
             }
 
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var (approvedWatchedIds, activeCommIds) = await GetAllowedViewerListsAsync(currentUserId);
             var cleanQuery = query.Trim().ToLower();
             var noHash = cleanQuery.TrimStart('#');
             var collapsed = Regex.Replace(noHash, @"[\s\-_]+", "");
@@ -1250,7 +1544,9 @@ namespace server.Controllers
                 .Include(p => p.Project)
                 .Include(p => p.RepostOfPost)
                     .ThenInclude(rp => rp.User)
-                .Where(p => (p.Content != null && (
+                .Where(p => (!p.User.IsPrivate || p.IsPostedAsCommunity || (currentUserId != null && (p.UserId == currentUserId || approvedWatchedIds.Contains(p.UserId))))
+                         && (p.CommunityId == null || p.Community!.Type != CommunityType.Private || (currentUserId != null && activeCommIds.Contains(p.CommunityId.Value)))
+                         && ((p.Content != null && (
                                 p.Content.ToLower().Contains(cleanQuery) || 
                                 (!string.IsNullOrEmpty(noHash) && p.Content.ToLower().Contains(noHash)) ||
                                 (!string.IsNullOrEmpty(collapsed) && p.Content.ToLower().Replace(" ", "").Replace("-", "").Replace("_", "").Contains(collapsed))
@@ -1262,7 +1558,7 @@ namespace server.Controllers
                                     p.Community.Slug.ToLower().Replace("-", "").Replace("_", "").Contains(collapsed) ||
                                     p.Community.Name.ToLower().Replace(" ", "").Replace("-", "").Replace("_", "").Contains(collapsed)
                                 ))
-                            )))
+                            ))))
                 .OrderByDescending(p => p.Created)
                 .Take(20) 
                 .Select(p => new {
@@ -1276,7 +1572,10 @@ namespace server.Controllers
                     repostsCount = p.RepostsCount,
                     isPinned = p.IsPinned,
                     
-                    repostOfPost = p.RepostOfPost == null ? null : new {
+                    repostOfPost = (p.RepostOfPost == null
+                        || (p.RepostOfPost.User.IsPrivate && !p.RepostOfPost.IsPostedAsCommunity && !(currentUserId != null && (p.RepostOfPost.UserId == currentUserId || approvedWatchedIds.Contains(p.RepostOfPost.UserId))))
+                        || (p.RepostOfPost.Community != null && p.RepostOfPost.Community.Type == CommunityType.Private && !(currentUserId != null && p.RepostOfPost.CommunityId.HasValue && activeCommIds.Contains(p.RepostOfPost.CommunityId.Value))))
+                        ? null : new {
                         id = p.RepostOfPost.Id,
                         content = p.RepostOfPost.Content,
                         created = p.RepostOfPost.Created,

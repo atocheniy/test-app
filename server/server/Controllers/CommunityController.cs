@@ -140,8 +140,9 @@ public class CommunityController : ControllerBase
                 id = c.Id,
                 name = c.Name,
                 slug = c.Slug,
-                description = c.Description,
-                rules = c.Rules,
+                isLocked = c.Type == CommunityType.Private && !(currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active)),
+                description = (c.Type == CommunityType.Private && !(currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active))) ? null : c.Description,
+                rules = (c.Type == CommunityType.Private && !(currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active))) ? null : c.Rules,
                 avatar = c.Avatar,
                 banner = c.Banner,
                 created = c.Created,
@@ -151,28 +152,30 @@ public class CommunityController : ControllerBase
                 type = c.Type,
                 postingPolicy = c.PostingPolicy,
                 kind = c.Kind,
-                websiteUrl = c.WebsiteUrl,
-                location = c.Location,
+                websiteUrl = (c.Type == CommunityType.Private && !(currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active))) ? null : c.WebsiteUrl,
+                location = (c.Type == CommunityType.Private && !(currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active))) ? null : c.Location,
                 industry = c.Industry,
-                companySize = c.CompanySize,
+                companySize = (c.Type == CommunityType.Private && !(currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active))) ? null : c.CompanySize,
                 isVerified = c.IsVerified,
-                vacanciesCount = c.Vacancies.Count(v => v.Status == VacancyStatus.Open),
+                vacanciesCount = (c.Type == CommunityType.Private && !(currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active))) ? 0 : c.Vacancies.Count(v => v.Status == VacancyStatus.Open),
                 
                 creatorName = c.Creator.FullName,
                 creatorUsername = c.Creator.UserName,
                 creatorAvatar = c.Creator.Avatar, 
                 
-                membersList = c.Members
-                    .Where(m => m.Status == MemberStatus.Active)
-                    .OrderByDescending(m => m.Role)
-                    .Take(16)
-                    .Select(m => new {
-                        id = m.UserId,
-                        name = m.User.FullName,
-                        username = m.User.UserName,
-                        avatar = m.User.Avatar,
-                        role = m.Role
-                    }),
+                membersList = (c.Type == CommunityType.Private && !(currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active)))
+                    ? Enumerable.Empty<object>()
+                    : c.Members
+                        .Where(m => m.Status == MemberStatus.Active)
+                        .OrderByDescending(m => m.Role)
+                        .Take(16)
+                        .Select(m => (object)new {
+                            id = m.UserId,
+                            name = m.User.FullName,
+                            username = m.User.UserName,
+                            avatar = m.User.Avatar,
+                            role = m.Role
+                        }),
                 
                 isMember = currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active),
                 isWatching = currentUserId != null && c.Watchers.Any(w => w.UserId == currentUserId),
@@ -199,6 +202,7 @@ public class CommunityController : ControllerBase
 
         var community = await _context.Communities
             .Include(c => c.Members)
+            .Include(c => c.Watchers)
             .FirstOrDefaultAsync(c => c.Slug == slug.ToLower());
 
         if (community == null) return NotFound("Сообщество не найдено");
@@ -206,6 +210,8 @@ public class CommunityController : ControllerBase
         var existingMember = community.Members.FirstOrDefault(m => m.UserId == userId);
 
         bool isJoined;
+        MemberStatus? myMemberStatus;
+
         if (existingMember != null)
         {
             if (existingMember.Role == CommunityRole.Owner)
@@ -213,9 +219,29 @@ public class CommunityController : ControllerBase
                 return BadRequest(new { message = "Владелец не может покинуть сообщество" });
             }
 
+            if (existingMember.Status == MemberStatus.Banned)
+            {
+                return StatusCode(403, new { message = "Доступ в это сообщество ограничен" });
+            }
+
+            if (existingMember.Status == MemberStatus.Active)
+            {
+                community.MembersCount = Math.Max(1, community.MembersCount - 1);
+            }
+
+            if (community.Type == CommunityType.Private)
+            {
+                var existingWatcher = community.Watchers.FirstOrDefault(w => w.UserId == userId);
+                if (existingWatcher != null)
+                {
+                    _context.CommunityWatchers.Remove(existingWatcher);
+                    community.WatchersCount = Math.Max(0, community.WatchersCount - 1);
+                }
+            }
+
             _context.CommunityMembers.Remove(existingMember);
-            community.MembersCount = Math.Max(1, community.MembersCount - 1);
             isJoined = false;
+            myMemberStatus = null;
         }
         else
         {
@@ -232,12 +258,13 @@ public class CommunityController : ControllerBase
             {
                 community.MembersCount++;
             }
-            isJoined = true;
+            isJoined = newMember.Status == MemberStatus.Active;
+            myMemberStatus = newMember.Status;
         }
 
         await _context.SaveChangesAsync();
 
-        return Ok(new { isMember = isJoined, membersCount = community.MembersCount });
+        return Ok(new { isMember = isJoined, myMemberStatus, membersCount = community.MembersCount });
     }
 
     [HttpPost("toggleWatch/{slug}")]
@@ -250,6 +277,7 @@ public class CommunityController : ControllerBase
         var cleanSlug = slug.Trim().ToLower();
         var community = await _context.Communities
             .Include(c => c.Watchers)
+            .Include(c => c.Members)
             .FirstOrDefaultAsync(c => c.Slug == cleanSlug);
 
         if (community == null) return NotFound("Сообщество не найдено");
@@ -265,6 +293,11 @@ public class CommunityController : ControllerBase
         }
         else
         {
+            if (community.Type == CommunityType.Private && !community.Members.Any(m => m.UserId == userId && m.Status == MemberStatus.Active))
+            {
+                return Forbid();
+            }
+
             var newWatcher = new CommunityWatcher
             {
                 CommunityId = community.Id,
@@ -284,7 +317,10 @@ public class CommunityController : ControllerBase
     [HttpGet("all")]
     public async Task<IActionResult> GetAll()
     {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         var list = await _context.Communities
+            .Where(c => c.Type != CommunityType.Private || (currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active)))
             .OrderByDescending(c => c.MembersCount)
             .Select(c => new
             {
@@ -295,6 +331,7 @@ public class CommunityController : ControllerBase
                 avatar = c.Avatar,
                 banner = c.Banner,
                 kind = c.Kind,
+                type = c.Type,
                 isVerified = c.IsVerified,
                 location = c.Location,
                 industry = c.Industry,
@@ -316,11 +353,13 @@ public class CommunityController : ControllerBase
             return Ok(new List<object>());
         }
 
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var clean = query.Trim().ToLower().Replace("c/", "").TrimStart('#');
         var collapsed = Regex.Replace(clean, @"[\s\-_]+", "");
 
         var list = await _context.Communities
-            .Where(c => c.Name.ToLower().Contains(clean) || 
+            .Where(c => (c.Type != CommunityType.Private || (currentUserId != null && c.Members.Any(m => m.UserId == currentUserId && m.Status == MemberStatus.Active))) &&
+                        (c.Name.ToLower().Contains(clean) || 
                         c.Slug.ToLower().Contains(clean) || 
                         (!string.IsNullOrEmpty(collapsed) && (
                             c.Name.ToLower().Replace(" ", "").Replace("-", "").Replace("_", "").Contains(collapsed) ||
@@ -329,7 +368,7 @@ public class CommunityController : ControllerBase
                         (c.Description != null && (
                             c.Description.ToLower().Contains(clean) ||
                             (!string.IsNullOrEmpty(collapsed) && c.Description.ToLower().Replace(" ", "").Replace("-", "").Contains(collapsed))
-                        )))
+                        ))))
             .OrderByDescending(c => c.MembersCount)
             .Take(15)
             .Select(c => new
@@ -341,6 +380,7 @@ public class CommunityController : ControllerBase
                 avatar = c.Avatar,
                 banner = c.Banner,
                 kind = c.Kind,
+                type = c.Type,
                 isVerified = c.IsVerified,
                 location = c.Location,
                 industry = c.Industry,
@@ -415,11 +455,14 @@ public class CommunityController : ControllerBase
         var targetMember = community.Members.FirstOrDefault(m => m.UserId == targetUserId);
         if (targetMember == null) return NotFound("Заявка не найдена");
 
-        targetMember.Status = MemberStatus.Active;
-        community.MembersCount++;
+        if (targetMember.Status != MemberStatus.Active)
+        {
+            targetMember.Status = MemberStatus.Active;
+            community.MembersCount++;
+        }
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Сотрудник принят в штат компании" });
+        return Ok(new { message = "Участник принят" });
     }
 
     [HttpPost("{slug}/rejectEmployee/{targetUserId}")]

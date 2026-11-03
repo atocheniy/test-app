@@ -14,11 +14,12 @@ import { useLanguage } from "@/context/LanguageContext";
 import { UserService } from "@/services/userService";
 import { formatPostTime } from "@/libs/format";
 import { compressImage } from "@/libs/imageUtils";
-import type { UserExperience, UserProject } from "@/types/auth";
+import type { UserExperience, UserProject, WatchRequestUser } from "@/types/auth";
 import { upload } from "@vercel/blob/client";
 import {
     ArrowUpRight,
     Briefcase,
+    Check,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
@@ -27,6 +28,7 @@ import {
     Image as ImageIcon,
     LayoutGrid,
     Loader2,
+    Lock,
     Mail,
     MapPin,
     Plus,
@@ -34,6 +36,7 @@ import {
     Settings,
     SlidersHorizontal,
     Sparkles,
+    UserPlus,
     X
 } from "lucide-react";
 import Link from "next/link";
@@ -112,6 +115,43 @@ export default function Profile() {
 
     const [isPostsLoading, setIsPostsLoading] = useState(userPostsData.length === 0);
     const userPostsSentinelRef = useRef<HTMLDivElement>(null);
+    const [watchRequests, setWatchRequests] = useState<WatchRequestUser[]>([]);
+    const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!userData?.id || userData.userName === '...') return;
+        UserService.getWatchRequests()
+            .then((reqs) => setWatchRequests(reqs || []))
+            .catch((err) => console.error("Ошибка загрузки заявок на чтение:", err));
+    }, [userData?.id, userData?.userName, userData?.pendingWatchRequestsCount]);
+
+    const handleAcceptWatchRequest = async (requesterId: string) => {
+        if (resolvingRequestId) return;
+        setResolvingRequestId(requesterId);
+        try {
+            await UserService.acceptWatchRequest(requesterId);
+            setWatchRequests((prev) => prev.filter((r) => r.id !== requesterId));
+            await refreshUserData();
+        } catch (err) {
+            console.error("Ошибка одобрения заявки:", err);
+        } finally {
+            setResolvingRequestId(null);
+        }
+    };
+
+    const handleRejectWatchRequest = async (requesterId: string) => {
+        if (resolvingRequestId) return;
+        setResolvingRequestId(requesterId);
+        try {
+            await UserService.rejectWatchRequest(requesterId);
+            setWatchRequests((prev) => prev.filter((r) => r.id !== requesterId));
+            await refreshUserData();
+        } catch (err) {
+            console.error("Ошибка отклонения заявки:", err);
+        } finally {
+            setResolvingRequestId(null);
+        }
+    };
 
     useEffect(() => {
         setMounted(true);
@@ -263,6 +303,10 @@ export default function Profile() {
     };
 
     const handleCropSave = async (croppedFile: File) => {
+        if (croppedFile.size > 5 * 1024 * 1024) {
+            alert(isRu ? "Размер изображения превышает 5 МБ" : "Image size exceeds 5 MB");
+            return;
+        }
         setIsUploading(true);
         try {
             if (cropModalState.type === 'avatar') {
@@ -350,6 +394,10 @@ export default function Profile() {
             const compressedFiles = await Promise.all(
                 files.map(file => compressImage(file, { maxWidth: 1920, maxHeight: 1920, quality: 0.85 }))
             );
+            if (compressedFiles.some(file => file.size > 5 * 1024 * 1024)) {
+                alert(isRu ? "Размер изображения превышает 5 МБ" : "Image size exceeds 5 MB");
+                return;
+            }
             const uploadPromises = compressedFiles.map(file =>
                 upload(file.name, file, {
                     access: 'public',
@@ -544,7 +592,14 @@ export default function Profile() {
                             )}
                         </div>
                         <div className="mb-1 sm:mb-2 min-w-0">
-                            <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 break-words light:text-zinc-900">{userData.fullName}</h2>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 break-words light:text-zinc-900">{userData.fullName}</h2>
+                                {userData.isPrivate && (
+                                    <span title={isRu ? "Закрытый профиль" : "Private profile"} className="inline-flex items-center text-zinc-400 light:text-zinc-500">
+                                        <Lock size={16} />
+                                    </span>
+                                )}
+                            </div>
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
                                 <p className="text-sm text-zinc-400 break-all light:text-zinc-500">{UserNameNormalized}</p>
                                 <span className="text-sm text-zinc-400 light:text-zinc-400">•</span>
@@ -608,6 +663,64 @@ export default function Profile() {
                             ))}
                         </div>
                     </div>
+
+                    {watchRequests.length > 0 && (
+                        <div className="mt-6 p-4 sm:p-5 rounded-2xl border border-amber-500/20 bg-amber-500/[0.03] space-y-3 light:bg-amber-50/50 light:border-amber-200">
+                            <div className="flex items-center justify-between gap-2">
+                                <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 light:text-amber-700">
+                                    <UserPlus size={14} />
+                                    {isRu ? `Заявки на чтение профиля (${watchRequests.length})` : `Follow Requests (${watchRequests.length})`}
+                                </h4>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {watchRequests.map((req) => (
+                                    <div
+                                        key={req.id}
+                                        className="p-3 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3 light:bg-white light:border-zinc-200 light:shadow-xs"
+                                    >
+                                        <Link href={`/profile/${req.userName}`} className="flex items-center gap-2.5 min-w-0 group">
+                                            <Avatar
+                                                src={req.avatar}
+                                                name={req.fullName || req.userName}
+                                                className="w-9 h-9 text-xs shrink-0"
+                                            />
+                                            <div className="flex flex-col truncate">
+                                                <span className="text-xs font-semibold text-zinc-100 group-hover:underline truncate light:text-zinc-900">
+                                                    {req.fullName || req.userName}
+                                                </span>
+                                                <span className="text-[11px] text-zinc-500 truncate light:text-zinc-500">
+                                                    @{req.userName}
+                                                </span>
+                                            </div>
+                                        </Link>
+
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <button
+                                                type="button"
+                                                disabled={resolvingRequestId === req.id}
+                                                onClick={() => handleAcceptWatchRequest(req.id)}
+                                                className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition text-xs font-semibold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 light:bg-emerald-50 light:text-emerald-700 light:hover:bg-emerald-100"
+                                                title={isRu ? "Принять заявку" : "Approve request"}
+                                            >
+                                                <Check size={14} />
+                                                <span className="hidden sm:inline">{isRu ? "Принять" : "Approve"}</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={resolvingRequestId === req.id}
+                                                onClick={() => handleRejectWatchRequest(req.id)}
+                                                className="p-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/30 transition text-xs font-semibold cursor-pointer disabled:opacity-50 light:bg-red-50 light:text-red-600 light:hover:bg-red-100"
+                                                title={isRu ? "Отклонить" : "Reject"}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="mt-8 border-b border-white/5 flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar light:border-zinc-200/80">
                         <button

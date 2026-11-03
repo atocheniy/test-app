@@ -1,5 +1,5 @@
 import { $api } from "../api/axios";
-import type { UpdateAvatar, UpdateBanner, UpdateBio, UpdateName, UpdateUserName, User } from "../types/auth";
+import type { UpdateAvatar, UpdateBanner, UpdateBio, UpdateName, UpdateUserName, User, WatchRequestUser } from "../types/auth";
 
 export const UserService = {
     async getUser() {
@@ -81,7 +81,22 @@ export const UserService = {
 
     async toggleWatchUser(username: string) {
         const clean = username.replace('@', '').trim();
-        const response = await $api.post<{ isWatching: boolean; watchersCount: number; followers: number }>(`/auth/toggleWatchUser/${clean}`);
+        const response = await $api.post<{ isWatching: boolean; isWatchPending?: boolean; watchersCount: number; followers: number }>(`/auth/toggleWatchUser/${clean}`);
+        return response.data;
+    },
+
+    async getWatchRequests() {
+        const response = await $api.get<WatchRequestUser[]>('/auth/watchRequests');
+        return response.data;
+    },
+
+    async acceptWatchRequest(requesterId: string) {
+        const response = await $api.post<{ message: string; watchersCount: number }>(`/auth/watchRequests/${requesterId}/accept`);
+        return response.data;
+    },
+
+    async rejectWatchRequest(requesterId: string) {
+        const response = await $api.post<{ message: string }>(`/auth/watchRequests/${requesterId}/reject`);
         return response.data;
     },
 

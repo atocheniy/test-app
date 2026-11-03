@@ -1,10 +1,21 @@
-﻿namespace server.DTOs;
+using System.ComponentModel.DataAnnotations;
+
+namespace server.DTOs;
 
 public class RegisterInfo
 {
-    public string Email { get; set; }
-    public string Password { get; set; }
-    public string FullName { get; set; }
-    public string UserName { get; set; }
+    [Required]
+    public string Email { get; set; } = string.Empty;
+
+    [Required]
+    [MinLength(6, ErrorMessage = "Пароль должен содержать минимум 6 символов")]
+    public string Password { get; set; } = string.Empty;
+
+    [Required]
+    public string FullName { get; set; } = string.Empty;
+
+    [Required]
+    public string UserName { get; set; } = string.Empty;
+
     public string? Room { get; set; }
 }

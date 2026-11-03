@@ -69,6 +69,7 @@ namespace server.Controllers
         public async Task<IActionResult> GetChat(Guid id)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
 
             var chat = await _context.Chat
                 .Where(c => c.Id == id && c.Participants.Any(p => p.UserId == currentUserId))
@@ -92,43 +93,13 @@ namespace server.Controllers
             return Ok(chat);
         }
 
-        // PUT: api/Chat/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutChat(Guid id, Chat chat)
-        {
-            if (id != chat.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(chat).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ChatExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
         // POST: api/Chat
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("start/{targetUserId}")]
         public async Task<IActionResult> StartChat(string targetUserId)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
 
             if (currentUserId == targetUserId)
                 return BadRequest("Error");
@@ -241,11 +212,6 @@ namespace server.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool ChatExists(Guid id)
-        {
-            return _context.Chat.Any(e => e.Id == id);
         }
     }
 }

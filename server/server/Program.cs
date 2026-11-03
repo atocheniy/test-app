@@ -57,8 +57,9 @@ namespace server
 						option.Password.RequireUppercase = false;
 						option.Password.RequireLowercase = false;
 
-						option.Password.RequiredLength = 1;
+						option.Password.RequiredLength = 6;
 						option.Password.RequiredUniqueChars = 0;
+						option.User.RequireUniqueEmail = true;
 					}
 				).AddEntityFrameworkStores<ApplicationDbContext>()
 				.AddDefaultTokenProviders();

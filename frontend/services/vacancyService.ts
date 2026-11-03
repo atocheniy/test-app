@@ -9,6 +9,7 @@ export const VacancyService = {
         companySlug?: string;
         stack?: string;
         sort?: string;
+        includeAllStatuses?: boolean;
         page?: number;
         pageSize?: number;
     }) {
@@ -19,6 +20,7 @@ export const VacancyService = {
         if (params?.companySlug) query.append("companySlug", params.companySlug);
         if (params?.stack) query.append("stack", params.stack);
         if (params?.sort) query.append("sort", params.sort);
+        if (params?.includeAllStatuses) query.append("includeAllStatuses", "true");
         if (params?.page) query.append("page", params.page.toString());
         if (params?.pageSize) query.append("pageSize", params.pageSize.toString());
 

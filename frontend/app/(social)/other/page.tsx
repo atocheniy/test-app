@@ -275,6 +275,12 @@ export default function OtherPage() {
                                                         {isRu ? "Компания" : "Company"}
                                                     </span>
                                                 )}
+                                                {(club.type === 2 || club.type === 'Private') && (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 light:bg-rose-50 light:text-rose-700 light:border-rose-200">
+                                                        <Lock size={10} />
+                                                        {isRu ? "Приватное" : "Private"}
+                                                    </span>
+                                                )}
                                                 <span className="text-[11px] font-mono text-zinc-500 light:text-zinc-500">
                                                     {club.membersCount} {isCompanyEntity(club.kind) ? (isRu ? 'сотрудников' : 'employees') : (isRu ? 'участников' : 'members')}
                                                 </span>
@@ -588,12 +594,12 @@ export default function OtherPage() {
                                     </div>
                                 )}
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider light:text-zinc-600">
                                             {isRu ? "Доступ" : "Access"}
                                         </label>
-                                        <div className="grid grid-cols-2 gap-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => setCreateType(0)}
@@ -623,6 +629,21 @@ export default function OtherPage() {
                                                     <span>{isRu ? "Ограниченное" : "Restricted"}</span>
                                                 </div>
                                                 <div className={`text-[10px] mt-0.5 ${createType === 1 ? "text-neutral-400 light:text-zinc-300" : "text-neutral-400 light:text-zinc-500"}`}>{isRu ? "По заявкам" : "By request"}</div>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setCreateType(2)}
+                                                className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                                                    createType === 2
+                                                        ? "border-white/30 bg-white/10 text-white light:border-zinc-900 light:bg-zinc-900 light:text-white"
+                                                        : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 light:border-zinc-200 light:bg-zinc-50 light:text-zinc-600 light:hover:bg-zinc-100"
+                                                }`}
+                                            >
+                                                <div className="text-xs font-semibold flex items-center gap-1.5">
+                                                    <Lock size={13} />
+                                                    <span>{isRu ? "Приватное" : "Private"}</span>
+                                                </div>
+                                                <div className={`text-[10px] mt-0.5 ${createType === 2 ? "text-neutral-400 light:text-zinc-300" : "text-neutral-400 light:text-zinc-500"}`}>{isRu ? "Скрыто от всех" : "Hidden & private"}</div>
                                             </button>
                                         </div>
                                     </div>

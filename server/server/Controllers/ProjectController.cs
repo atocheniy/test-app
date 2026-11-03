@@ -22,6 +22,27 @@ public class ProjectController : ControllerBase
         _context = context;
     }
 
+    private async Task<bool> CanUserViewProjectAsync(UserProject project, string? currentUserId)
+    {
+        if (project.User == null || !project.User.IsPrivate)
+        {
+            return true;
+        }
+
+        if (string.IsNullOrEmpty(currentUserId))
+        {
+            return false;
+        }
+
+        if (project.UserId == currentUserId)
+        {
+            return true;
+        }
+
+        return await _context.UserWatchers
+            .AnyAsync(uw => uw.WatcherId == currentUserId && uw.TargetUserId == project.UserId && uw.Status == MemberStatus.Active);
+    }
+
     // GET: api/Project/{id}
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProject(Guid id)
@@ -33,6 +54,11 @@ public class ProjectController : ControllerBase
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (project == null) return NotFound("Проект не найден");
+
+        if (!await CanUserViewProjectAsync(project, currentUserId))
+        {
+            return StatusCode(403, new { message = "Это проект закрытого профиля", isLocked = true });
+        }
 
         bool isStarred = false;
         if (!string.IsNullOrEmpty(currentUserId))
@@ -131,8 +157,15 @@ public class ProjectController : ControllerBase
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
 
-        var project = await _context.UserProjects.FindAsync(id);
+        var project = await _context.UserProjects
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.Id == id);
         if (project == null) return NotFound("Проект не найден");
+
+        if (!await CanUserViewProjectAsync(project, currentUserId))
+        {
+            return Forbid();
+        }
 
         var star = await _context.ProjectStars
             .FirstOrDefaultAsync(ps => ps.ProjectId == id && ps.UserId == currentUserId);
@@ -173,6 +206,23 @@ public class ProjectController : ControllerBase
         page = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 30);
 
+        var project = await _context.UserProjects
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.Id == id);
+        if (project == null) return NotFound("Проект не найден");
+
+        if (!await CanUserViewProjectAsync(project, currentUserId))
+        {
+            return StatusCode(403, new { message = "Это проект закрытого профиля", isLocked = true });
+        }
+
+        var activeCommIds = string.IsNullOrEmpty(currentUserId)
+            ? new List<Guid>()
+            : await _context.CommunityMembers
+                .Where(cm => cm.UserId == currentUserId && cm.Status == MemberStatus.Active)
+                .Select(cm => cm.CommunityId)
+                .ToListAsync();
+
         var query = _context.Post
             .Include(p => p.User)
             .Include(p => p.Project)
@@ -181,7 +231,8 @@ public class ProjectController : ControllerBase
                 .ThenInclude(ro => ro.User)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
-            .Where(p => p.ProjectId == id)
+            .Where(p => p.ProjectId == id
+                && (p.CommunityId == null || p.Community!.Type != CommunityType.Private || (currentUserId != null && activeCommIds.Contains(p.CommunityId.Value))))
             .OrderByDescending(p => p.IsPinned)
             .ThenByDescending(p => p.Created);
 
