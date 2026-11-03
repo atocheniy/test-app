@@ -1,24 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import {
   ArrowRight,
-  Zap,
-  Layers,
-  Code2,
-  Briefcase,
-  GitBranch,
-  Search,
-  SlidersHorizontal,
-  ChevronDown,
-  Shield,
-  Users,
-  Cpu,
   Bell,
+  Briefcase,
+  ChevronDown,
+  Code2,
+  Cpu,
   FileCode2,
+  GitBranch,
+  Layers,
+  Search,
+  Shield,
+  SlidersHorizontal,
+  Users,
+  Zap,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 function Crosshair({ className = '' }: { className?: string }) {
   return (
@@ -255,7 +255,7 @@ export default function Home() {
 
             <p className="mt-7 text-sm sm:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
               {isRu
-                ? 'Единая платформа для демонстрации пет-проектов, ведения девлогов с подсветкой кода и прямого отклика на вакансии по совпадению стека.'
+                ? 'Единая платформа для демонстрации проектов, ведения записей разработки с подсветкой кода и прямого отклика на вакансии по совпадению стека.'
                 : 'All-in-one platform to showcase engineering projects, publish syntax-highlighted devlogs, and match with tech teams.'}
             </p>
 
